@@ -1,13 +1,44 @@
-#include <iostream>
+extern "C" {
+    #include "../include/kseq.h"
+}
 
+#include <zlib.h>
+#include "../include/constants.hpp"
+#include "../include/quartet_wtree.hpp"
 #include "../external/pthash/external/cmd_line_parser/include/parser.hpp"
-#include "../include/dictionary.hpp"
-#include "bench_utils.hpp"
-#include "check_utils.hpp"
+#include "minimizer.hpp"
 
-using namespace sshash;
+#include "../include/prettyprint.hpp"
 
-int main(int argc, char** argv) {
+using namespace lphash;
+
+typedef pthash::murmurhash2_64 base_hasher_type;
+typedef pthash::single_phf<base_hasher_type,               // base hasher
+                           pthash::dictionary_dictionary,  // encoder type
+                           true                            // minimal output
+                           >
+    pthash_mphf_type;
+
+KSEQ_INIT(gzFile, gzread)
+
+class vector_mmp_to_pthash_itr_adapter : std::forward_iterator_tag {
+    public:
+        typedef mmp_t value_type;
+        vector_mmp_to_pthash_itr_adapter(std::vector<mmp_t>::iterator begin, std::vector<mmp_t>::iterator end) : begin(begin), end(end), current(begin) {};
+        // inline uint64_t minimizer() const {return current->itself;};
+        inline uint64_t operator*() const {return current->itself;};
+        inline void operator++() {
+            uint64_t prev_mm = current->itself;
+            while(current != end && current->itself == prev_mm) {++current;}
+        };
+    private:
+        std::vector<mmp_t>::iterator begin, end, current;
+};
+
+int main (int argc, char* argv[]) 
+{
+    gzFile fp;
+    kseq_t *seq;
     cmd_line_parser::parser parser(argc, argv);
 
     /* mandatory arguments */
@@ -45,7 +76,6 @@ int main(int argc, char** argv) {
                "Canonical parsing of k-mers. This option changes the parsing and results in a "
                "trade-off between index space and lookup time.",
                "--canonical-parsing", true);
-    parser.add("weighted", "Also store the weights in compressed format.", "--weighted", true);
     parser.add("check", "Check correctness after construction.", "--check", true);
     parser.add("bench", "Run benchmark after construction.", "--bench", true);
     parser.add("verbose", "Verbose output during construction.", "--verbose", true);
@@ -53,50 +83,128 @@ int main(int argc, char** argv) {
     if (!parser.parse()) return 1;
 
     auto input_filename = parser.get<std::string>("input_filename");
-    auto k = parser.get<uint64_t>("k");
-    auto m = parser.get<uint64_t>("m");
+    fp = NULL;
+    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << input_filename << "\n";
+        return 2;
+    }
 
-    dictionary dict;
+    if(fp == NULL) {// read file from stdin (not used as of now)
+        if ((fp = gzdopen(fileno(stdin), "r")) == NULL) {
+            fprintf(stderr, "Unable to use stdin as input\n");
+            return 2;
+        }
+    }
 
-    build_configuration build_config;
-    build_config.k = k;
-    build_config.m = m;
-
-    if (parser.parsed("seed")) build_config.seed = parser.get<uint64_t>("seed");
-    if (parser.parsed("l")) build_config.l = parser.get<double>("l");
-    if (parser.parsed("c")) build_config.c = parser.get<double>("c");
-    build_config.canonical_parsing = parser.get<bool>("canonical_parsing");
-    build_config.weighted = parser.get<bool>("weighted");
-    build_config.verbose = parser.get<bool>("verbose");
+    auto k = parser.get<uint32_t>("k");
+    auto m = parser.get<uint32_t>("m");
+    auto seed = parser.get<uint64_t>("seed");
+    std::size_t total_kmers = 0;
+    std::vector<mmp_t> minimizers;
+    seq = kseq_init(fp);
+    
+    /*part 1: read sequences, add to each minimizer its position in the first k-mer of the super-k-mer and the length of the super-k-mer*/
+    std::cerr << "Part 1: file reading and info gathering" << std::endl;
+    while(kseq_read(seq) >= 0) {
+        std::string contig = std::string(seq->seq.s); //we loose a little bit of efficiency here
+        // debug::print_hashes(contig, m, seed);
+        auto n = minimizer::from_string<murmurhash2_64>(contig, k, m, seed, false, minimizers);//not canonical minimizers for now
+        total_kmers += n;
+        std::cout << "read " << n << " k-mers (contig length = " << contig.length() << ")\n";
+        // debug::compute_minimizers_naive<murmurhash2_64>(contig, k, m, seed);
+    }
+    if (seq) kseq_destroy(seq);
+    // std::cerr << std::endl;
+    // for (auto& mm : minimizers) std::cerr << mm << std::endl;
+    
+    /*part 2: build MPHF from minimizers*/
+    std::cerr << "Part 2: build minimizer MPHF" << std::endl;
+    auto mm_compare = [](mmp_t const& a, mmp_t const& b) {return a.itself < b.itself;};
+    std::sort(minimizers.begin(), minimizers.end(), mm_compare);
+    std::cerr << "--- : minimizers are now sorted by their value" << std::endl;
+    std::size_t n_distinct_minimizers = 0;
+    for(auto it = minimizers.begin(), prev = minimizers.end(); it != minimizers.end(); ++it) {
+        if (prev->itself != it->itself) {
+            ++n_distinct_minimizers;
+            prev = it;
+        }
+    }
+    std::cerr << "--- : [Warning] get number of distinct minimizer -> rework pthash interface for this" << std::endl;
+    pthash_mphf_type mm_mphf;
+    pthash::build_configuration mphf_config;
+    mphf_config.c = 6.0;
+    mphf_config.alpha = 0.94;
+    mphf_config.seed = 42;  // my favourite seed
+    mphf_config.minimal_output = true;
+    mphf_config.verbose_output = true;
+    mphf_config.num_threads = 1;
+    uint64_t num_threads = std::thread::hardware_concurrency() >= 8 ? 8 : 1;
+    // if (minimizers.size() >= num_threads) mphf_config.num_threads = num_threads;
+    mphf_config.ram = 2 * essentials::GB;
     if (parser.parsed("tmp_dirname")) {
-        build_config.tmp_dirname = parser.get<std::string>("tmp_dirname");
-        essentials::create_directory(build_config.tmp_dirname);
+        mphf_config.tmp_dir = parser.get<std::string>("tmp_dirname");
+        essentials::create_directory(mphf_config.tmp_dir);
     }
-    build_config.print();
+    std::cerr << "--- : control 1" << std::endl;
+    auto begin = vector_mmp_to_pthash_itr_adapter(minimizers.begin(), minimizers.end());
+    std::cerr << "--- : number of minimizers: " << minimizers.size() << ", of which distinct: " << n_distinct_minimizers << std::endl;
+    mm_mphf.build_in_external_memory(begin, n_distinct_minimizers, mphf_config);
+    std::cerr << "--- : minimizers are now sorted by MPFH" << std::endl;
 
-    dict.build(input_filename, build_config);
-    assert(dict.k() == k);
+    /*part 3: sort vector based on MPHF order*/
+    std::cerr << "Part 3: sort minimizers by MPHF" << std::endl;
+    auto mphf_compare = [&mm_mphf](mmp_t const& a, mmp_t const& b) {return mm_mphf(a.itself) < mm_mphf(b.itself);};
+    std::sort(minimizers.begin(), minimizers.end(), mphf_compare);
 
-    bool check = parser.get<bool>("check");
-    if (check) {
-        check_correctness_lookup_access(dict, input_filename);
-        check_correctness_navigational_kmer_query(dict, input_filename);
-        check_correctness_navigational_contig_query(dict);
-        if (build_config.weighted) check_correctness_weights(dict, input_filename);
-        check_correctness_iterator(dict);
+    /*part 4: build wavelet tree and <positions/size> vectors*/
+    std::cerr << "Part 4: build wavelet tree and offsets" << std::endl;
+    quartet_wtree_builder wtb(minimizers.size());
+    std::vector<uint64_t> colliding;
+    uint64_t n_maximal = 0;
+    std::vector<uint64_t> right_or_collision_sizes;
+    std::vector<uint64_t> left_positions;
+    std::vector<uint64_t> none_positions, none_sizes;
+    for (std::size_t i = 0; i < minimizers.size(); ++i) {
+        // check if minimizer there are multiple minimizers
+        std::size_t j;
+        for (j = i; j < minimizers.size() && minimizers[j].itself == minimizers[i].itself; ++j) {}
+        if ((j-i) == 1) {
+            if (minimizers[i].p1 == k-m+1) {
+                if (minimizers[i].size == k-m+1) {
+                    wtb.push_back(MAXIMAL);
+                    ++n_maximal;
+                } else {
+                    wtb.push_back(RIGHT_OR_COLLISION);
+                    right_or_collision_sizes.push_back(minimizers[i].size);
+                }
+            } else {
+                if (minimizers[i].p1 == minimizers[i].size - 1) {
+                    wtb.push_back(LEFT);
+                    left_positions.push_back(minimizers[i].p1);
+                } else {
+                    wtb.push_back(NONE);
+                    none_positions.push_back(minimizers[i].p1);
+                    none_sizes.push_back(minimizers[i].size);
+                }
+            }
+        } else { // collision
+            wtb.push_back(RIGHT_OR_COLLISION);
+            colliding.push_back(minimizers[i].itself);
+            right_or_collision_sizes.push_back(0);
+        }
     }
-    bool bench = parser.get<bool>("bench");
-    if (bench) {
-        perf_test_lookup_access(dict);
-        if (dict.weighted()) perf_test_lookup_weight(dict);
-        perf_test_iterator(dict);
-    }
-    if (parser.parsed("output_filename")) {
-        auto output_filename = parser.get<std::string>("output_filename");
-        essentials::logger("saving data structure to disk...");
-        essentials::save(dict, output_filename.c_str());
-        essentials::logger("DONE");
-    }
+    assert(none_positions.size() == none_sizes.size());
+    std::cerr << "Number of Maximal minimizers: " << n_maximal << "\n";
+    std::cerr << "Number of Leftmax minimizers: " << left_positions.size() << "\n";
+    std::cerr << "Number of Rightmax minimizers: " << right_or_collision_sizes.size() << "\n";
+    std::cerr << "Number of Uncategorized minimizers: " << none_positions.size() << "\n";
+    std::cerr << "Number of Ambiguous minimizers: " << colliding.size() << "\n";
 
-    return 0;
+    /*part 5: Elias-Fano*/
+
+    /*part 6: build fallback mphf*/
+
+    /*part 7: save everything*/
+
+    /*part 8: check for correctness (query + check minimality)*/
 }

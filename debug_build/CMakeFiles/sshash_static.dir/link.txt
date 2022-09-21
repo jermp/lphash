@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libsshash_static.a CMakeFiles/sshash_static.dir/include/gz/zip_stream.cpp.o CMakeFiles/sshash_static.dir/include/dictionary.cpp.o CMakeFiles/sshash_static.dir/include/info.cpp.o CMakeFiles/sshash_static.dir/include/builder/build.cpp.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libsshash_static.a
