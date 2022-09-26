@@ -264,6 +264,15 @@ void get_colliding_kmers(std::string const & contig, uint32_t k, uint32_t m, uin
             mm_buf_pos = 0; // we always restart at the beginning of the buffer -> this allows to use min_pos as the position of the minimizer inside the first k-mer
         }   
     }
+    if (nbases_since_last_break == k) { // contig.length == 1
+        min_pos = 0;
+        sks = 1;
+        for (std::size_t j = 0; j < mm_buffer.size(); ++j) {
+            if (mm_buffer[j].second < mm_buffer[min_pos].second) {
+                min_pos = j;
+            }
+        }
+    }
     if (min_pos < mm_buffer.size() && std::find(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first) != colliding_minimizers.end()) {
         // std::cerr << "[very last] super-k-mer length = " << sks << ", super-k-mer window length = " << km_buffer.size() << std::endl;
         assert(sks == km_buffer.size());
