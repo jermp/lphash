@@ -1,1 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/c++  -std=c++20 -O3 -ggdb -Wall -Wextra -Wno-missing-braces -Wno-unknown-attributes -lz -pthread -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX11.3.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/build.dir/src/build.cpp.o -o build  liblphash_static.a -lz 

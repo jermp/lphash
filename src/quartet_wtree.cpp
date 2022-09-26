@@ -60,7 +60,7 @@ void quartet_wtree::build(quartet_wtree_builder& unfrozen)
 MinimizerType quartet_wtree::operator[](uint64_t idx) const
 {
     bool msb = root[idx];
-    auto r = rank_switch(msb, root, idx) -1;
+    auto r = rank_switch(msb, root, idx);
     bool lsb;
     if (msb) lsb = max_none[r];
     else lsb = left_right[r];
@@ -77,7 +77,7 @@ std::size_t quartet_wtree::rank(MinimizerType type, std::size_t idx) const
     if (sw_root) leaf_idx = rank_switch(sw_leaf, max_none, leaf_idx);
     else leaf_idx = rank_switch(sw_leaf, left_right, leaf_idx);
     if (leaf_idx == 0) return 0;
-    else return leaf_idx - 1;
+    else return leaf_idx;
 }
 
 std::pair<MinimizerType, std::size_t> quartet_wtree::rank_of(std::size_t idx) const
@@ -85,7 +85,7 @@ std::pair<MinimizerType, std::size_t> quartet_wtree::rank_of(std::size_t idx) co
     bool msb = root[idx];
     bool lsb;
     std::pair<MinimizerType, std::size_t> toRet;
-    auto r = rank_switch(msb, root, idx) - 1;
+    auto r = rank_switch(msb, root, idx);
     if (msb) {
         lsb = max_none[r];
         toRet.second = rank_switch(lsb, max_none, r);
@@ -101,6 +101,11 @@ std::size_t quartet_wtree::rank_switch(bool type, rs_bit_vector const& vec, std:
 {
     if (type) return vec.rank(idx);
     else return vec.rank0(idx);
+}
+
+std::size_t quartet_wtree::num_bits() const
+{
+    return (root.bytes() + left_right.bytes() + max_none.bytes()) * 8;
 }
 
 }

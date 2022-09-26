@@ -44,6 +44,11 @@ constexpr std::array<uint8_t, 256> seq_nt4_table = {
 
 }  // namespace constants
 
+typedef pthash::single_phf<pthash::murmurhash2_64,               // base hasher
+                           pthash::dictionary_dictionary,  // encoder type
+                           true                            // minimal output
+                           > pthash_mphf_type;
+
 struct murmurhash2_64 {
     // specialization for uint64_t
     static inline uint64_t hash(uint64_t val, uint64_t seed) {
@@ -129,11 +134,11 @@ static triplet_t compute_minimizer_triplet(uint64_t kmer, uint64_t k, uint64_t m
     uint64_t mask = (uint64_t(1) << (2 * m)) - 1;
     uint64_t pos = 0;
     for (uint64_t i = 0; i != k - m + 1; ++i) {
-        uint64_t sub_kmer = kmer & mask;
-        uint64_t hash = Hasher::hash(sub_kmer, seed);
-        if (hash < min_hash) {
+        uint64_t mmer = kmer & mask;
+        uint64_t hash = Hasher::hash(mmer, seed);
+        if (hash <= min_hash) { // <= because during construction we take the left-most minimum. Here we start looking from the right so we need to update everytime.
             min_hash = hash;
-            minimizer = sub_kmer;
+            minimizer = mmer;
             pos = i;
         }
         kmer >>= 2;

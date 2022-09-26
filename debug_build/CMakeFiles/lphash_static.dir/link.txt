@@ -1,2 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/ar qc liblphash_static.a CMakeFiles/lphash_static.dir/src/quartet_wtree.cpp.o
-/Library/Developer/CommandLineTools/usr/bin/ranlib liblphash_static.a
