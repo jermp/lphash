@@ -49,19 +49,17 @@ int main(int argc, char* argv[]) {
     parser.add("seed",
                "Seed for construction (default is " + std::to_string(constants::seed) + ").", "-s",
                false);
-    parser.add("l",
-               "A (integer) constant that controls the space/time trade-off of the dictionary. "
-               "A reasonable values lies between 2 and 12 (default is " +
-                   std::to_string(constants::min_l) + ").",
-               "-l", false);
     parser.add("c",
                "A (floating point) constant that trades construction speed for space effectiveness "
                "of minimal perfect hashing. "
                "A reasonable value lies between 3.0 and 10.0 (default is " +
                    std::to_string(constants::c) + ").",
                "-c", false);
-    parser.add("output_filename", "Output file name where the data structure will be serialized.",
-               "-o", false);
+    parser.add("a",
+               "(default is 0.94 ).",
+               "-a", false);
+    // parser.add("output_filename", "Output file name where the data structure will be serialized.",
+    //            "-o", false);
     parser.add(
         "tmp_dirname",
         "Temporary directory used for construction in external memory. Default is directory '" +
@@ -71,22 +69,46 @@ int main(int argc, char* argv[]) {
     //            "Canonical parsing of k-mers. This option changes the parsing and results in a "
     //            "trade-off between index space and lookup time.",
     //            "--canonical-parsing", true);
-    // parser.add("check", "Check correctness after construction.", "--check", true);
+    parser.add("check", "Check correctness after construction.", "--check", true);
     // parser.add("bench", "Run benchmark after construction.", "--bench", true);
-    // parser.add("verbose", "Verbose output during construction.", "--verbose", true);
+    parser.add("verbose", "Verbose output during construction.", "--verbose", true);
 
     if (!parser.parse()) return 1;
 
-    auto input_filename = parser.get<std::string>("input_filename");
+    std::string input_filename = parser.get<std::string>("input_filename");
+    uint32_t k = parser.get<uint32_t>("k");
+    uint32_t m = parser.get<uint32_t>("m");
+    uint64_t seed = parser.get<uint64_t>("seed");
+    double c = constants::c;
+    double alpha = 0.94;
+    std::string tmp_dirname = "";
+    bool verbose = false;
+    if (parser.parsed("c")) c = parser.get<double>("c");
+    if (parser.parsed("a")) alpha = parser.get<double>("a");
+    if (parser.parsed("tmp_dirname")) tmp_dirname = parser.get<std::string>("tmp_dirname");
+    if (parser.parsed("verbose")) verbose = parser.get<bool>("verbose");
+
+    pthash::build_configuration mphf_config;
+    mphf_config.seed = constants::seed;  // my favourite seed, different from the minimizer's seed.
+    mphf_config.c = c;
+    mphf_config.alpha = alpha;
+    mphf_config.minimal_output = true;
+    mphf_config.verbose_output = verbose;
+    mphf_config.num_threads = 1;  // std::thread::hardware_concurrency()
+    mphf_config.ram = 2 * essentials::GB;
+    if (tmp_dirname != "") {
+        mphf_config.tmp_dir = tmp_dirname;
+        essentials::create_directory(mphf_config.tmp_dir);
+    }
+
+    // ------------------------------------------------------------------------------------------------------------------------------
+
     fp = NULL;
     if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
         std::cerr << "Unable to open the input file " << input_filename << "\n";
         return 2;
     }
 
-    auto k = parser.get<uint32_t>("k");
-    auto m = parser.get<uint32_t>("m");
-    auto seed = parser.get<uint64_t>("seed");
     std::size_t total_kmers = 0, total_kmers_check = 0;
     std::vector<mmp_t> minimizers;
     seq = kseq_init(fp);
@@ -111,11 +133,6 @@ int main(int argc, char* argv[]) {
     }
     if (seq) kseq_destroy(seq);
     assert(total_kmers == total_kmers_check);  // valid iff contigs do not contain Ns
-    // {
-    //     std::ofstream mmfile("minimizers.txt");
-    //     for (auto mm : minimizers) mmfile << mm << "\n";
-    // }
-
     std::cout << "\n";
 
     /*part 2: build MPHF from minimizers*/
@@ -123,7 +140,6 @@ int main(int argc, char* argv[]) {
     auto mm_compare = [](mmp_t const& a, mmp_t const& b) { return a.itself < b.itself; };
     std::sort(minimizers.begin(), minimizers.end(), mm_compare);
     std::cout << "--- : minimizers are now sorted by their value\n";
-    // std::set<uint64_t> mm_set;
 
     std::size_t n_distinct_minimizers = 0;
     for (auto it = minimizers.begin(), prev = minimizers.begin(); it != minimizers.end(); ++it) {
@@ -134,24 +150,7 @@ int main(int argc, char* argv[]) {
         }
     }
     if (minimizers.size()) ++n_distinct_minimizers;
-    // std::cerr << n_distinct_minimizers << " vs " << mm_set.size() << "\n";
-    // assert(n_distinct_minimizers == mm_set.size());
     pthash_mphf_type mm_mphf;
-    pthash::build_configuration mphf_config;
-    mphf_config.c = constants::c;
-    mphf_config.seed = 42;  // my favourite seed, different from the minimizer's seed.
-    // mphf_config.seed = constants::seed;
-    if (parser.parsed("c")) mphf_config.c = parser.get<double>("c");
-    mphf_config.alpha = 0.94;
-    mphf_config.minimal_output = true;
-    mphf_config.verbose_output = true;
-    mphf_config.num_threads = 4;  // std::thread::hardware_concurrency()
-    mphf_config.ram = 2 * essentials::GB;
-    // std::cerr << "n threads = " << mphf_config.num_threads << "\n";
-    if (parser.parsed("tmp_dirname")) {
-        mphf_config.tmp_dir = parser.get<std::string>("tmp_dirname");
-        essentials::create_directory(mphf_config.tmp_dir);
-    }
     auto begin = vector_mmp_to_pthash_itr_adapter(minimizers.begin(), minimizers.end());
     std::cout << "--- : number of minimizers: " << minimizers.size()
               << ", of which distinct: " << n_distinct_minimizers << "\n";
@@ -263,40 +262,22 @@ int main(int argc, char* argv[]) {
 
     /*part 6: build fallback mphf*/
     std::cout << "Part 6: fallback MPHF\n";
-    std::sort(colliding_minimizers.begin(),
-              colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better
-                                            // alternative (hash table)
-    std::vector<uint64_t> unbucketable_kmers;
+    std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
+    std::vector<__uint128_t> unbucketable_kmers;
     unbucketable_kmers.reserve(total_kmers);  // at most
-    if ((fp = gzopen(input_filename.c_str(), "r")) ==
-        NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
+    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
         std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
         return 2;
     }
-    std::cout << "6.1" << std::endl;
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
-        // std::cerr << "--------------------------------------------------------------------------"
-        // << std::endl;
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        minimizer::get_colliding_kmers<murmurhash2_64>(contig, k, m, seed, false,
-                                                       colliding_minimizers, unbucketable_kmers);
-        // std::cerr << "//////////////////////////////////////////////////////////////////////////"
-        // << std::endl;
+        minimizer::get_colliding_kmers<murmurhash2_64, __uint128_t>(contig, k, m, seed, false, colliding_minimizers, unbucketable_kmers);
     }
     if (seq) kseq_destroy(seq);
-
     // std::cerr << "colliding k-mers : " << unbucketable_kmers << std::endl;
-
-    std::cout << "6.2" << std::endl;
     pthash_mphf_type kmer_mphf;
-    kmer_mphf.build_in_external_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(),
-                                       mphf_config);
-    {
-        std::cout << "6.3" << std::endl;
-        std::ofstream mmfile("unbucketable_kmers.txt");
-        for (auto kmer : unbucketable_kmers) mmfile << kmer << "\n";
-    }
+    kmer_mphf.build_in_external_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(), mphf_config);
     unbucketable_kmers.clear();
     std::cout << "\n";
 
@@ -310,13 +291,10 @@ int main(int argc, char* argv[]) {
     }
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
-        // std::cerr << "--------------------------------------------------------------------------"
-        // << std::endl;
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        for (std::size_t i = 0; i < contig.size() - k + 1;
-             ++i) {  // This is NOT streaming unlike the previous walks. FIXME: when making a
-                     // separate module for query (for the optimized version of the paper)
-            uint64_t kmer = debug::string_to_uint64_no_reverse(&contig[i], k);
+        for (std::size_t i = 0; i < contig.size() - k + 1; ++i) { 
+            // This is NOT streaming unlike the previous walks. FIXME: when making a separate module for query (for the optimized version of the paper)
+            auto kmer = debug::string_to_integer_no_reverse<__uint128_t>(&contig[i], k);
             debug::triplet_t triplet = debug::compute_minimizer_triplet(kmer, k, m, seed);
             uint64_t mm = triplet.first;
             uint64_t p = triplet.third;
@@ -386,15 +364,15 @@ int main(int argc, char* argv[]) {
             }
             if (mm_type != MAXIMAL)
                 locpres_hash += (k - m + 1) * n_maximal;  // shift of the maximal k-mers
-            // if (mm_type == RIGHT_OR_COLLISION) {
-            // std::cerr << ", ";
-            // std::string explicit_kmer(contig, i, k);
-            // std::cerr << explicit_kmer << ", ";
-            // std::cerr << kmer << ", ";
-            // std::cerr << "minimizer = " << mm << ", ";
-            // std::cerr << "mm pos = " << p << ", ";
-            // std::cerr << "hash = " << locpres_hash << "\n";
-            // }
+            if (false) {
+                std::cerr << ", ";
+                std::string explicit_kmer(contig, i, k);
+                std::cerr << explicit_kmer << ", ";
+                std::cerr << kmer << ", ";
+                std::cerr << "minimizer = " << mm << ", ";
+                std::cerr << "mm pos = " << p << ", ";
+                std::cerr << "hash = " << locpres_hash << "\n";
+            }
             if (locpres_hash > total_kmers) {
                 std::cerr << "[Error] overflow : " << locpres_hash << " > " << total_kmers
                           << std::endl;
@@ -406,18 +384,14 @@ int main(int argc, char* argv[]) {
                 population.set(locpres_hash);
             }
         }
-        // std::cerr << "//////////////////////////////////////////////////////////////////////////"
-        // << std::endl;
     }
     if (seq) kseq_destroy(seq);
     bool perfect = true;
     for (std::size_t i = 0; i < total_kmers; ++i) {
         if (!population.get(i)) perfect = false;
     }
-    if (!perfect)
-        std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
-    else
-        std::cout << "[Info] Everything is ok\n";
+    if (!perfect) std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
+    else std::cout << "[Info] Everything is ok\n";
     std::cout << "\n";
 
     /*part 8: statistics*/

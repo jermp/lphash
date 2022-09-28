@@ -56,6 +56,21 @@ struct murmurhash2_64 {
     }
 };
 
+struct murmurhash2_128 {
+    // specialization for uint64_t
+    static inline __uint128_t hash(__uint128_t val, uint64_t seed) {
+        uint8_t const* dummy = reinterpret_cast<uint8_t const*>(&val);
+        pthash::byte_range vrng;
+        vrng.begin = dummy;
+        vrng.end = &dummy[sizeof(__uint128_t) - 1];
+        pthash::murmurhash2_128 hasher;
+        pthash::hash128 hval = hasher.hash(vrng, seed);
+        __uint128_t to_ret = hval.first();
+        to_ret = (to_ret << 64) | hval.second();
+        return to_ret;
+    }
+};
+
 struct build_configuration {
     build_configuration()
         : k(31)
@@ -103,9 +118,10 @@ struct triplet_t {
 // static uint64_t char_to_uint64(char c) { return (c >> 1) & 3; }
 static uint64_t char_to_uint64(char c) { return constants::seq_nt4_table[static_cast<uint8_t>(c)] & 3; }
 
-[[maybe_unused]] static uint64_t string_to_uint64_no_reverse(char const* str, uint64_t k) {
-    assert(k <= 32);
-    uint64_t y;
+template <typename KMerType>
+[[maybe_unused]] static uint64_t string_to_integer_no_reverse(char const* str, uint64_t k) {
+    KMerType y;
+    assert(k <= 64);
     y = 0;
     for (uint64_t i = 0; i != k; ++i) {
         //x += char_to_uint64(str[i]) << (2 * i);
@@ -116,22 +132,22 @@ static uint64_t char_to_uint64(char c) { return constants::seq_nt4_table[static_
     return y;
 }
 
-template <typename Hasher = lphash::murmurhash2_64>
+template <typename Hasher = lphash::murmurhash2_64, typename KMerType>
 static void print_hashes(std::string contig, uint64_t m, uint64_t seed) {
     for (uint64_t i = 0; i < contig.length() - m + 1; ++i) {
-        uint64_t pmmer = string_to_uint64_no_reverse(&contig.data()[i], m);
+        KMerType pmmer = string_to_integer_no_reverse<KMerType>(&contig.data()[i], m);
         uint64_t hash = Hasher::hash(pmmer, seed);
         std::cerr << "[" << i << "] : " << pmmer << " " << hash << "\n";
     }
 }
 
-template <typename Hasher = lphash::murmurhash2_64>
-static triplet_t compute_minimizer_triplet(uint64_t kmer, uint64_t k, uint64_t m, uint64_t seed) {
+template <typename Hasher = lphash::murmurhash2_64, typename KMerType>
+static triplet_t compute_minimizer_triplet(KMerType kmer, uint64_t k, uint64_t m, uint64_t seed) {
     assert(m < 32);
     assert(m <= k);
     uint64_t min_hash = uint64_t(-1);
     uint64_t minimizer = uint64_t(-1);
-    uint64_t mask = (uint64_t(1) << (2 * m)) - 1;
+    KMerType mask = (static_cast<KMerType>(1) << (2 * m)) - 1;
     uint64_t pos = 0;
     for (uint64_t i = 0; i != k - m + 1; ++i) {
         uint64_t mmer = kmer & mask;
@@ -146,13 +162,13 @@ static triplet_t compute_minimizer_triplet(uint64_t kmer, uint64_t k, uint64_t m
     return triplet_t{minimizer, min_hash, k-(pos+m)};
 }
 
-template <typename Hasher = lphash::murmurhash2_64>
+template <typename Hasher = lphash::murmurhash2_64, typename KMerType>
 static void compute_minimizers_naive(std::string const& contig, uint64_t k, uint64_t m, uint64_t seed) {
     triplet_t prev = {uint64_t(-1), uint64_t(-1), uint64_t(-1)};
     for (std::size_t i = 0; i < contig.size() - k + 1; ++i) {
-        uint64_t uint64_kmer = string_to_uint64_no_reverse(&contig.data()[i], k);
+        KMerType integer_kmer = string_to_integer_no_reverse<KMerType>(&contig.data()[i], k);
         //std::cerr << std::bitset<64>(uint64_kmer) << "\n";
-        auto curr = compute_minimizer_triplet(uint64_kmer, k, m, seed);
+        auto curr = compute_minimizer_triplet(integer_kmer, k, m, seed);
         if (prev.first != curr.first or (prev.third - curr.third > 1)) std::cerr << curr.first << " " << curr.second << " " << curr.third << "\n";
         prev = curr;
     }
