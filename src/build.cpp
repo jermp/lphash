@@ -142,11 +142,10 @@ int main(int argc, char* argv[]) {
     mphf_config.seed = 42;  // my favourite seed, different from the minimizer's seed.
     // mphf_config.seed = constants::seed;
     if (parser.parsed("c")) mphf_config.c = parser.get<double>("c");
-    mphf_config.alpha = 0.99;  // 0.94;
+    mphf_config.alpha = 0.94;
     mphf_config.minimal_output = true;
-    mphf_config.verbose_output = false;
-    mphf_config.num_threads = 1;  // minimizers.size() >= std::thread::hardware_concurrency() ?
-                                  // std::thread::hardware_concurrency() : 1;
+    mphf_config.verbose_output = true;
+    mphf_config.num_threads = 4;  // std::thread::hardware_concurrency()
     mphf_config.ram = 2 * essentials::GB;
     // std::cerr << "n threads = " << mphf_config.num_threads << "\n";
     if (parser.parsed("tmp_dirname")) {
@@ -268,11 +267,13 @@ int main(int argc, char* argv[]) {
               colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better
                                             // alternative (hash table)
     std::vector<uint64_t> unbucketable_kmers;
+    unbucketable_kmers.reserve(total_kmers);  // at most
     if ((fp = gzopen(input_filename.c_str(), "r")) ==
         NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
         std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
         return 2;
     }
+    std::cout << "6.1" << std::endl;
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         // std::cerr << "--------------------------------------------------------------------------"
@@ -287,10 +288,12 @@ int main(int argc, char* argv[]) {
 
     // std::cerr << "colliding k-mers : " << unbucketable_kmers << std::endl;
 
+    std::cout << "6.2" << std::endl;
     pthash_mphf_type kmer_mphf;
     kmer_mphf.build_in_external_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(),
                                        mphf_config);
     {
+        std::cout << "6.3" << std::endl;
         std::ofstream mmfile("unbucketable_kmers.txt");
         for (auto kmer : unbucketable_kmers) mmfile << kmer << "\n";
     }
