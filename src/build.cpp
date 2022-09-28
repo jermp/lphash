@@ -55,10 +55,9 @@ int main(int argc, char* argv[]) {
                "A reasonable value lies between 3.0 and 10.0 (default is " +
                    std::to_string(constants::c) + ").",
                "-c", false);
-    parser.add("a",
-               "(default is 0.94 ).",
-               "-a", false);
-    // parser.add("output_filename", "Output file name where the data structure will be serialized.",
+    parser.add("a", "(default is 0.94 ).", "-a", false);
+    // parser.add("output_filename", "Output file name where the data structure will be
+    // serialized.",
     //            "-o", false);
     parser.add(
         "tmp_dirname",
@@ -262,22 +261,34 @@ int main(int argc, char* argv[]) {
 
     /*part 6: build fallback mphf*/
     std::cout << "Part 6: fallback MPHF\n";
-    std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
+    std::sort(colliding_minimizers.begin(),
+              colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better
+                                            // alternative (hash table)
     std::vector<__uint128_t> unbucketable_kmers;
     unbucketable_kmers.reserve(total_kmers);  // at most
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
+    if ((fp = gzopen(input_filename.c_str(), "r")) ==
+        NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
         std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        minimizer::get_colliding_kmers<murmurhash2_64, __uint128_t>(contig, k, m, seed, false, colliding_minimizers, unbucketable_kmers);
+        minimizer::get_colliding_kmers<murmurhash2_64, __uint128_t>(
+            contig, k, m, seed, false, colliding_minimizers, unbucketable_kmers);
     }
     if (seq) kseq_destroy(seq);
     // std::cerr << "colliding k-mers : " << unbucketable_kmers << std::endl;
+
+    std::sort(unbucketable_kmers.begin(), unbucketable_kmers.end());
+    auto it = std::unique(unbucketable_kmers.begin(), unbucketable_kmers.end());
+    // Giulio: this assert must be true, otherwise it means there are some duplicates in
+    // unbucketable_kmers
+    assert(it == unbucketable_kmers.end());
+
     pthash_mphf_type kmer_mphf;
-    kmer_mphf.build_in_external_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(), mphf_config);
+    kmer_mphf.build_in_internal_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(),
+                                       mphf_config);
     unbucketable_kmers.clear();
     std::cout << "\n";
 
@@ -292,8 +303,9 @@ int main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        for (std::size_t i = 0; i < contig.size() - k + 1; ++i) { 
-            // This is NOT streaming unlike the previous walks. FIXME: when making a separate module for query (for the optimized version of the paper)
+        for (std::size_t i = 0; i < contig.size() - k + 1; ++i) {
+            // This is NOT streaming unlike the previous walks. FIXME: when making a separate module
+            // for query (for the optimized version of the paper)
             auto kmer = debug::string_to_integer_no_reverse<__uint128_t>(&contig[i], k);
             debug::triplet_t triplet = debug::compute_minimizer_triplet(kmer, k, m, seed);
             uint64_t mm = triplet.first;
@@ -390,8 +402,10 @@ int main(int argc, char* argv[]) {
     for (std::size_t i = 0; i < total_kmers; ++i) {
         if (!population.get(i)) perfect = false;
     }
-    if (!perfect) std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
-    else std::cout << "[Info] Everything is ok\n";
+    if (!perfect)
+        std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
+    else
+        std::cout << "[Info] Everything is ok\n";
     std::cout << "\n";
 
     /*part 8: statistics*/

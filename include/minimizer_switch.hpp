@@ -13,9 +13,7 @@ typedef pthash::single_phf<base_hasher_type,               // base hasher
     pthash_mphf_type;
 
 class MinimizerSwitch {
-
 public:
-
     template <typename ForwardIterator>
     MinimizerSwitch(ForwardIterator begin, uint64_t size, build_configuration const& build_config) {
         util::check_hash_collision_probability(size);
@@ -50,4 +48,4 @@ private:
     pthash_mphf_type m_mphf;
 };
 
-}  // namespace sshash
+}  // namespace lphash
