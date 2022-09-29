@@ -117,8 +117,7 @@ int main(int argc, char* argv[]) {
     std::size_t old_size = 0;
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        auto n = minimizer::from_string<murmurhash2_64>(
-            contig, k, m, seed, false, minimizers);  // not canonical minimizers for now
+        auto n = minimizer::from_string<hash64>(contig, k, m, seed, false, minimizers);  // not canonical minimizers for now
         auto n_check = contig.length() - k + 1;
         total_kmers_check += n_check;
         // std::cerr << "read " << n << " k-mers (number of k-mers in contig = " << n_check <<
@@ -259,54 +258,80 @@ int main(int argc, char* argv[]) {
 
     std::cout << "\n";
 
+    /*checks*/
+    kmer_t dummy;
+    dummy.lower = 1;
+    dummy = dummy << 64;
+    dummy = dummy >> 63;
+    std::cerr << dummy << "\n";
+
+    //00011011
+    std::string s = "TAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC";
+    kmer_t packed = debug::string_to_integer_no_reverse<kmer_t>(s.c_str(), s.length());
+    std::cout << "packed = " << packed << "\n";
+
     /*part 6: build fallback mphf*/
     std::cout << "Part 6: fallback MPHF\n";
-    std::sort(colliding_minimizers.begin(),
-              colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better
-                                            // alternative (hash table)
-    std::vector<__uint128_t> unbucketable_kmers;
+    std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
+    {
+        std::ofstream mmlog("colliding_minimizer.txt");
+        for (auto mm : colliding_minimizers) {
+            mmlog << mm << "\n";
+        }
+    }
+    {
+        std::ofstream mmlog("minimizer.txt");
+        for (auto mm : minimizers) {
+            mmlog << mm << "\n";
+        }
+    }
+    std::vector<kmer_t> unbucketable_kmers;
     unbucketable_kmers.reserve(total_kmers);  // at most
-    if ((fp = gzopen(input_filename.c_str(), "r")) ==
-        NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
+
+    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
         std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        minimizer::get_colliding_kmers<murmurhash2_64, __uint128_t>(
-            contig, k, m, seed, false, colliding_minimizers, unbucketable_kmers);
+        minimizer::get_colliding_kmers<hash64, kmer_t>(contig, k, m, seed, false, colliding_minimizers, unbucketable_kmers);
     }
     if (seq) kseq_destroy(seq);
-    // std::cerr << "colliding k-mers : " << unbucketable_kmers << std::endl;
-
+    
     std::sort(unbucketable_kmers.begin(), unbucketable_kmers.end());
     auto it = std::unique(unbucketable_kmers.begin(), unbucketable_kmers.end());
-    // Giulio: this assert must be true, otherwise it means there are some duplicates in
-    // unbucketable_kmers
+    auto print_128 = [](std::ostream& out, kmer128_t num) {
+        out << "(" << num.upper << ", " << num.lower << ")" << "\n";
+    };
+    // {
+    //     std::ofstream kmers("kmers.txt");
+    //     for (auto kmer : unbucketable_kmers) {
+    //         kmers << kmer << "\n";
+    //     }
+    // }
+    // Giulio: this assert must be true, otherwise it means there are some duplicates in unbucketable_kmers
     assert(it == unbucketable_kmers.end());
-
-    pthash_mphf_type kmer_mphf;
-    kmer_mphf.build_in_internal_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(),
-                                       mphf_config);
+    lphash_mphf_type kmer_mphf;
+    kmer_mphf.build_in_internal_memory(unbucketable_kmers.begin(), unbucketable_kmers.size(), mphf_config);
     unbucketable_kmers.clear();
     std::cout << "\n";
 
     /*part 7: check for correctness (query + check minimality)*/
     std::cout << "Part 7: check\n";
-    pthash::bit_vector_builder population(
-        total_kmers);  // bitvector for checking perfection and minimality
+    pthash::bit_vector_builder population(total_kmers);  // bitvector for checking perfection and minimality
     if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
         std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
-    while (kseq_read(seq) >= 0) {
+    while (kseq_read(seq) >= 0) 
+    {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
         for (std::size_t i = 0; i < contig.size() - k + 1; ++i) {
             // This is NOT streaming unlike the previous walks. FIXME: when making a separate module
             // for query (for the optimized version of the paper)
-            auto kmer = debug::string_to_integer_no_reverse<__uint128_t>(&contig[i], k);
+            auto kmer = debug::string_to_integer_no_reverse<kmer_t>(&contig[i], k);
             debug::triplet_t triplet = debug::compute_minimizer_triplet(kmer, k, m, seed);
             uint64_t mm = triplet.first;
             uint64_t p = triplet.third;
@@ -320,58 +345,45 @@ int main(int argc, char* argv[]) {
 
             switch (mm_type) {
                 case LEFT:
-                    locpres_hash = 0;  // because in the elias-fano global vector left positions are
-                                       // the left-most block starting at the beginning
+                    locpres_hash = 0;  // because in the elias-fano global vector left positions are the left-most block starting at the beginning
                     // std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
-                    locpres_hash +=
-                        inv_idx.access(mm_type_rank);  // number of left-KMERS before our bucket
+                    locpres_hash += inv_idx.access(mm_type_rank);  // number of left-KMERS before our bucket
                     // std::cerr << "global shift = " << locpres_hash << ", local shift = " << p;
                     locpres_hash += p;  // add local rank
                     break;
                 case RIGHT_OR_COLLISION:
-                    locpres_hash = inv_idx.access(index.right_coll_sizes_start +
-                                                  mm_type_rank);  // global shift
+                    locpres_hash = inv_idx.access(index.right_coll_sizes_start + mm_type_rank);  // global shift
                     sk_size = inv_idx.diff(index.right_coll_sizes_start + mm_type_rank);
                     if (sk_size == 0) {
                         locpres_hash =
                             inv_idx.access(index.none_pos_start);  // prefix sum of all sizes (sizes
                                                                    // of collisions are 0)
-                        // std::cerr << "[COLLISION] rank = " << index.none_pos_start << ", global
-                        // shift = " << locpres_hash << ", ";
+                        // std::cerr << "[COLLISION] rank = " << index.none_pos_start << ", global shift = " << locpres_hash << ", ";
                         sk_size = kmer_mphf(kmer);
                         locpres_hash += sk_size;
                         // std::cerr << "local shift = " << sk_size;
                     } else {
-                        // std::cerr << "[RIGHT] rank = " << index.right_coll_sizes_start +
-                        // mm_type_rank << ", "; std::cerr << "global shift = " << locpres_hash <<
-                        // ", "; std::cerr << "local shift = " << k - m - p;
+                        // std::cerr << "[RIGHT] rank = " << index.right_coll_sizes_start + mm_type_rank << ", "; 
+                        // std::cerr << "global shift = " << locpres_hash << ", "; 
+                        // std::cerr << "local shift = " << k - m - p;
                         locpres_hash += k - m - p;  // local shift
                     }
                     break;
                 case MAXIMAL:  // easy case
                     // std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
-                    // std::cerr << "global shift = " << (k-m+1) * mm_type_rank << ", local shift =
-                    // " << p;
-                    locpres_hash =
-                        (k - m + 1) * mm_type_rank +
-                        p;  // all maximal k-mer hashes are < than those of all the other types
+                    // std::cerr << "global shift = " << (k-m+1) * mm_type_rank << ", local shift = " << p;
+                    locpres_hash = (k - m + 1) * mm_type_rank + p;  // all maximal k-mer hashes are < than those of all the other types
                     break;
                 case NONE:
-                    // std::cerr << "[NONE] rank = " << index.none_sizes_start + mm_type_rank << " =
-                    // " << index.none_sizes_start << " + " << mm_type_rank << ", ";
-                    locpres_hash = inv_idx.access(index.none_sizes_start +
-                                                  mm_type_rank);  // prefix sum of sizes
+                    // std::cerr << "[NONE] rank = " << index.none_sizes_start + mm_type_rank << " = " << index.none_sizes_start << " + " << mm_type_rank << ", ";
+                    locpres_hash = inv_idx.access(index.none_sizes_start + mm_type_rank);  // prefix sum of sizes
                     // std::cerr << "global rank = " << locpres_hash << ", ";
                     sk_size = inv_idx.diff(index.none_pos_start + mm_type_rank);  // p1 actually
-                    locpres_hash +=
-                        sk_size - p;  // position in the first k-mer - actual position = local shift
-                    // std::cerr << "local shift = " << sk_size - p << ", p1 = " << sk_size << ", p
-                    // = " << p;
+                    locpres_hash += sk_size - p;  // position in the first k-mer - actual position = local shift
+                    // std::cerr << "local shift = " << sk_size - p << ", p1 = " << sk_size << ", p = " << p;
                     break;
                 default:
-                    std::cerr << "[Error] Something went wrong with the Wavelet Tree, minimizer "
-                                 "type not recognised"
-                              << std::endl;
+                    std::cerr << "[Error] Something went wrong with the Wavelet Tree, minimizer type not recognised" << std::endl;
                     return 128;
             }
             if (mm_type != MAXIMAL)
@@ -386,8 +398,7 @@ int main(int argc, char* argv[]) {
                 std::cerr << "hash = " << locpres_hash << "\n";
             }
             if (locpres_hash > total_kmers) {
-                std::cerr << "[Error] overflow : " << locpres_hash << " > " << total_kmers
-                          << std::endl;
+                std::cerr << "[Error] overflow : " << locpres_hash << " > " << total_kmers << std::endl;
                 return 128;
             } else if (population.get(locpres_hash) == 1) {  // Error, we saw a collision
                 std::cerr << "[Error] collision at position (hash) : " << locpres_hash << std::endl;
@@ -438,3 +449,10 @@ int main(int argc, char* argv[]) {
     std::cout << "\n";
     return 0;
 }
+
+// auto cmp128 = [](kmer128_t const& a, kmer128_t const& b) {
+//     return a.upper < b.upper or a.lower < b.lower;
+// };
+// auto eq128 = [](kmer128_t const& a, kmer128_t const& b) {
+//     return a.upper == b.upper and a.lower == b.lower;
+// };
