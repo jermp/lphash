@@ -35,10 +35,19 @@ class quartet_wtree
         std::size_t rank(MinimizerType type, std::size_t idx) const;
         std::pair<MinimizerType, std::size_t> rank_of(std::size_t idx) const;
         std::size_t num_bits() const;
+        template <typename Visitor> void visit(Visitor& visitor);
     private:
         rs_bit_vector root, left_right, max_none;
         std::size_t rank_switch(bool type, rs_bit_vector const& vec, std::size_t idx) const;
 };
+
+template <typename Visitor> 
+void quartet_wtree::visit(Visitor& visitor)
+{
+    visitor.visit(root);
+    visitor.visit(left_right);
+    visitor.visit(max_none);
+}
 
 }
 
