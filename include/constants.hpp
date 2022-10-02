@@ -50,8 +50,8 @@ struct kmer128_t {
     uint64_t lower;
 };
 
-// typedef kmer128_t kmer_t;
-typedef uint64_t kmer_t;
+typedef kmer128_t kmer_t;
+// typedef uint64_t kmer_t;
 
 struct hash64 : public pthash::murmurhash2_64 {
     // specialization for kmer128_t

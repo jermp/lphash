@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
     uint64_t mm_seed;
     std::string tmp_dirname;
     bool verbose;
+    bool canonical;
     bool check;
 
     std::size_t total_kmers, check_total_kmers;
@@ -34,6 +35,8 @@ int main(int argc, char* argv[]) {
     else tmp_dirname = "";
     if (parser.parsed("check")) check = parser.get<bool>("check");
     else check = false;
+    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
+    else canonical = false;
     if (parser.parsed("verbose")) verbose = parser.get<bool>("verbose");
     else verbose = false;
 
@@ -50,7 +53,7 @@ int main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, false, minimizers);  // not canonical minimizers for now
+        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, canonical, minimizers);  // not canonical minimizers for now
         total_kmers += n;
         check_total_kmers += contig.length() - k + 1;
     }
@@ -75,7 +78,7 @@ int main(int argc, char* argv[]) {
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
             std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-            minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, false, colliding_minimizers, unbucketable_kmers);
+            minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, canonical, colliding_minimizers, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
         locpres_mphf.build_fallback_mphf(unbucketable_kmers);
@@ -88,17 +91,14 @@ int main(int argc, char* argv[]) {
         std::cerr << "\tDONE\n";
     }
 
-    if (verbose) {
-        std::cerr << "Statistics:\n";
-        locpres_mphf.print_statistics();
-    }
+    
 
     if (check) {
         std::cerr << "Checking\n";
         if (parser.parsed("output_filename")) {
             mphf loaded;
             [[maybe_unused]] uint64_t num_bytes_read = essentials::load(loaded, parser.get<std::string>("output_filename").c_str());
-            std::cerr << "[Info] Loaded " << num_bytes_read * 8 << "bits\n";
+            std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
             pthash::bit_vector_builder population(loaded.get_kmer_count());  // bitvector for checking perfection and minimality
             if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
                 std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
@@ -108,8 +108,8 @@ int main(int argc, char* argv[]) {
             while (check && kseq_read(seq) >= 0) 
             {
                 std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-                check = check_collisions(loaded, contig, population);
-                if (check) check = check_streaming_correctness(loaded, contig);
+                check = check_collisions(loaded, contig, canonical, population);
+                if (check) check = check_streaming_correctness(loaded, contig, canonical);
                 // std::cerr << std::endl;
             }
             if (seq) kseq_destroy(seq);
@@ -124,8 +124,8 @@ int main(int argc, char* argv[]) {
             while (check && kseq_read(seq) >= 0) 
             {
                 std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-                check = check_collisions(locpres_mphf, contig, population);
-                if (check) check = check_streaming_correctness(locpres_mphf, contig);
+                check = check_collisions(locpres_mphf, contig, canonical, population);
+                if (check) check = check_streaming_correctness(locpres_mphf, contig, canonical);
                 // std::cerr << std::endl;
             }
             if (seq) kseq_destroy(seq);
@@ -133,8 +133,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (verbose) {
+        std::cerr << "Statistics:\n";
+        locpres_mphf.print_statistics();
+    }
+
     //TODO print csv row to file or stdout
-    std::cout << locpres_mphf << "\n";
     
     return 0;
 }

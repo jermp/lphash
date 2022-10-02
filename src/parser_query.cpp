@@ -20,11 +20,11 @@ cmd_line_parser::parser get_query_parser(int argc, char* argv[]) {
                "CSV file to append to",
                "-r",
                false);
-    // parser.add("canonical_parsing",
-    //            "Canonical parsing of k-mers. "
-    //            "This option changes the parsing and results in a trade-off between index space and lookup time.",
-    //            "--canonical-parsing", 
-    //            true);
+    parser.add("canonical_parsing",
+               "Canonical parsing of k-mers. "
+               "This option changes the parsing and results in a trade-off between index space and lookup time.",
+               "--canonical-parsing", 
+               true);
     if (!parser.parse()) throw ParseError();
     return parser;
 }

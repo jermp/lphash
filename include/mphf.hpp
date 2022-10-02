@@ -17,7 +17,7 @@ class mphf {
         uint64_t get_minimizer_L0() const noexcept;
         uint64_t get_kmer_count() const noexcept;
         template <typename MinimizerHasher = hash64> std::vector<uint64_t> operator() (std::string const& contig, bool canonical = false) const;
-        std::vector<uint64_t> dumb_evaluate(std::string const& contig) const;
+        std::vector<uint64_t> dumb_evaluate(std::string const& contig, bool canonical) const;
         void print_statistics() const noexcept;
         template <typename Visitor> void visit(Visitor& visitor);
         pthash_mphf_t minimizer_order;
@@ -184,9 +184,9 @@ void mphf::visit(Visitor& visitor) {
     visitor.visit(fallback_kmer_order);
 }
 
-bool check_collisions(mphf const& hf, std::string const& contig, pthash::bit_vector_builder& population);
+bool check_collisions(mphf const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population);
 bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population);
-bool check_streaming_correctness(mphf const& hf, std::string const& contig);
+bool check_streaming_correctness(mphf const& hf, std::string const& contig, bool canonical);
 
 } // namespace lphash
 

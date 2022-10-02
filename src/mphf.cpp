@@ -242,7 +242,7 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
     return res;
 }
 
-std::vector<uint64_t> mphf::dumb_evaluate(std::string const& contig) const
+std::vector<uint64_t> mphf::dumb_evaluate(std::string const& contig, bool canonical) const
 {
     std::vector<uint64_t> res;
     for (std::size_t i = 0; i < contig.size() - k + 1; ++i) {
@@ -301,9 +301,9 @@ std::ostream& operator<< (std::ostream& out, mphf const& hf)
     return out;
 }
 
-bool check_collisions(mphf const& hf, std::string const& contig, pthash::bit_vector_builder& population)
+bool check_collisions(mphf const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population)
 {
-    auto hashes = hf.dumb_evaluate(contig);
+    auto hashes = hf.dumb_evaluate(contig, canonical);
     assert(hashes.size());
     for (auto hash : hashes) {
         if (hash > hf.get_kmer_count()) {
@@ -332,10 +332,10 @@ bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population)
     return perfect;
 }
 
-bool check_streaming_correctness(mphf const& hf, std::string const& contig)
+bool check_streaming_correctness(mphf const& hf, std::string const& contig, bool canonical)
 {
-    auto dumb_hashes = hf.dumb_evaluate(contig);
-    auto fast_hashes = hf(contig);
+    auto dumb_hashes = hf.dumb_evaluate(contig, canonical);
+    auto fast_hashes = hf(contig, canonical);
     if (dumb_hashes.size() != fast_hashes.size()) {
         std::cerr << "[Error] different number of hashes\n";
         return false;
