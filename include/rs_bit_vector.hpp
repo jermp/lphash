@@ -93,6 +93,13 @@ public:
                essentials::vec_bytes(m_select_hints);
     }
 
+    template <typename Visitor>
+    void visit(Visitor& visitor) {
+        pthash::bit_vector::visit(visitor);
+        visitor.visit(m_block_rank_pairs);
+        visitor.visit(m_select_hints);
+    }
+
 protected:
     inline uint64_t num_blocks() const { return m_block_rank_pairs.size() / 2 - 1; }
 

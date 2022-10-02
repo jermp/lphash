@@ -35,7 +35,6 @@ int main(int argc, char* argv[]) {
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
         essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
-        std::cerr << "computing hashes" << std::endl;
         t.start();
         auto fast_hashes = hf(contig);
         t.stop();
