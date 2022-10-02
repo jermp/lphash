@@ -7,7 +7,6 @@ extern "C" {
 #include "minimizer.hpp"
 #include "../include/mphf.hpp"
 
-#include "../include/quartet_wtree.hpp"
 #include "../include/prettyprint.hpp"
 
 using namespace lphash;
@@ -23,7 +22,7 @@ int main(int argc, char* argv[]) {
     bool verbose;
     bool check;
 
-    std::size_t total_kmers;
+    std::size_t total_kmers, check_total_kmers;
 
     cmd_line_parser::parser parser = get_build_parser(argc, argv);
     std::string input_filename = parser.get<std::string>("input_filename");
@@ -38,11 +37,8 @@ int main(int argc, char* argv[]) {
     if (parser.parsed("verbose")) verbose = parser.get<bool>("verbose");
     else verbose = false;
 
-    std::cerr << uint32_t(k) << " " << uint32_t(m);
-    std::cerr << "mm_seed = " << mm_seed;
-    std::cerr << "\n";
-
     total_kmers = 0;
+    check_total_kmers = 0;
     std::vector<mm_triplet_t> minimizers;
     std::cerr << "Part 1: file reading and info gathering\n";
     
@@ -56,8 +52,11 @@ int main(int argc, char* argv[]) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
         auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, false, minimizers);  // not canonical minimizers for now
         total_kmers += n;
+        check_total_kmers += contig.length() - k + 1;
     }
     if (seq) kseq_destroy(seq);
+
+    assert(total_kmers == check_total_kmers);
 
     std::cerr << "Part 2: build MPHF\n";
     mphf locpres_mphf(k, m, mm_seed, total_kmers, 1, tmp_dirname, verbose);
@@ -76,7 +75,7 @@ int main(int argc, char* argv[]) {
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
             std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-            minimizer::get_colliding_kmers<hash64, kmer_t>(contig, k, m, mm_seed, false, colliding_minimizers, unbucketable_kmers);
+            minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, false, colliding_minimizers, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
         locpres_mphf.build_fallback_mphf(unbucketable_kmers);
@@ -84,36 +83,58 @@ int main(int argc, char* argv[]) {
 
     if (parser.parsed("output_filename")) {
         auto output_filename = parser.get<std::string>("output_filename");
-        std::cerr << "saving data structure to disk\n";
+        std::cerr << "\tSaving data structure to disk...\n";
         essentials::save(locpres_mphf, output_filename.c_str());
-        std::cerr << "DONE\n";
+        std::cerr << "\tDONE\n";
+    }
+
+    if (verbose) {
+        std::cerr << "Statistics:\n";
+        locpres_mphf.print_statistics();
     }
 
     if (check) {
-        std::cerr << "Part 4: check\n";
+        std::cerr << "Checking\n";
         if (parser.parsed("output_filename")) {
             mphf loaded;
-            uint64_t num_bytes_read = essentials::load(loaded, parser.get<std::string>("output_filename").c_str());
-            locpres_mphf = loaded;
+            [[maybe_unused]] uint64_t num_bytes_read = essentials::load(loaded, parser.get<std::string>("output_filename").c_str());
+            std::cerr << "[Info] Loaded " << num_bytes_read * 8 << "bits\n";
+            pthash::bit_vector_builder population(loaded.get_kmer_count());  // bitvector for checking perfection and minimality
+            if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
+                std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
+                return 2;
+            }
+            seq = kseq_init(fp);
+            while (check && kseq_read(seq) >= 0) 
+            {
+                std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
+                check = check_collisions(loaded, contig, population);
+                if (check) check = check_streaming_correctness(loaded, contig);
+                // std::cerr << std::endl;
+            }
+            if (seq) kseq_destroy(seq);
+            check = check && check_perfection(loaded, population);
+        } else {
+            pthash::bit_vector_builder population(locpres_mphf.get_kmer_count());  // bitvector for checking perfection and minimality
+            if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
+                std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
+                return 2;
+            }
+            seq = kseq_init(fp);
+            while (check && kseq_read(seq) >= 0) 
+            {
+                std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
+                check = check_collisions(locpres_mphf, contig, population);
+                if (check) check = check_streaming_correctness(locpres_mphf, contig);
+                // std::cerr << std::endl;
+            }
+            if (seq) kseq_destroy(seq);
+            check = check && check_perfection(locpres_mphf, population);
         }
-        pthash::bit_vector_builder population(locpres_mphf.get_kmer_count());  // bitvector for checking perfection and minimality
-        if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
-            std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
-            return 2;
-        }
-        seq = kseq_init(fp);
-        while (check && kseq_read(seq) >= 0) 
-        {
-            std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-            check = check_collisions(locpres_mphf, contig, population);
-        }
-        if (seq) kseq_destroy(seq);
-        check = check_perfection(locpres_mphf, population);
     }
-    std::cerr << "Statistics:\n";
-    locpres_mphf.print_statistics();
 
-    
+    //TODO print csv row to file or stdout
+    std::cout << locpres_mphf << "\n";
     
     return 0;
 }

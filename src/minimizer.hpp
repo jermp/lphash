@@ -2,29 +2,11 @@
 #include <vector>
 #include <ostream>
 #include "../include/constants.hpp"
+#include "../include/mm_context.hpp"
 
 namespace lphash {
 
 namespace minimizer {
-
-struct mm_quartet_t {
-    mm_quartet_t() : hash(0), p1(0), size(0){};
-    void clear() noexcept {
-        itself = 0;  // AAA...A
-        hash = std::numeric_limits<decltype(hash)>::max();
-        p1 = std::numeric_limits<decltype(p1)>::max();
-        size = std::numeric_limits<decltype(size)>::max();
-    };
-
-    friend std::ostream& operator<<(std::ostream& os, mm_quartet_t const& other) {
-        return os << other.itself << " " << other.hash << ' ' << other.p1 << ' ' << other.size;
-    }
-
-    uint64_t hash;    // minimizer hash
-    uint64_t itself;  // 2-bit minimizer itself
-    uint32_t p1;      // position inside first k-mer of the super-k-mer
-    uint32_t size;    // size (number of k-mers) in the super-k-mer
-};
 
 template <typename MinimizerHasher>
 [[nodiscard]] uint64_t from_string(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<mm_triplet_t>& accumulator) {
@@ -41,14 +23,9 @@ template <typename MinimizerHasher>
     uint8_t z;
     bool find_brand_new_min = false;
 
-    auto update_output = [](std::vector<mm_triplet_t>& accumulator, mm_quartet_t const& added, std::string const& msg) {
+    auto update_output = [](std::vector<mm_triplet_t>& accumulator, mm_quartet_t const& added, [[maybe_unused]] std::string const& msg) {
         // std::cerr << "[" << msg << "] to_be_added = {" << added << "}" << std::endl;
-        mm_triplet_t dummy;
-        dummy.itself = added.itself;
-        dummy.p1 = added.p1;
-        dummy.size = added.size;
-        // accumulator.push_back({added.itself, added.p1, added.size});
-        accumulator.push_back(dummy);
+        accumulator.push_back({added.itself, added.p1, added.size});
     };
 
     assert(k >= m);
@@ -64,7 +41,7 @@ template <typename MinimizerHasher>
         if (c < 4) [[likely]] {
             mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
             mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; /* reverse m-mer */
-            if (canonical_m_mers and mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1; // strand, if symmetric k-mer then use previous strand
+            if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1; // strand, if symmetric k-mer then use previous strand
             ++nbases_since_last_break;
             if (nbases_since_last_break >= m) {
                 current.itself = mm[z];
@@ -109,8 +86,7 @@ template <typename MinimizerHasher>
                 }
                 buffer[buf_pos++] = current;
                 buf_pos %= buffer.size();  // circular buffer
-                if (find_brand_new_min) {  // find new minimum if the old one dropped out the
-                                            // window
+                if (find_brand_new_min) {  // find new minimum if the old one dropped out the window
                     find_brand_new_min = false;
                     min_pos = buf_pos;
                     p1 = 0;
@@ -169,19 +145,19 @@ template <typename MinimizerHasher>
     return kmer_count;
 }
 
-template <typename MinimizerHasher, typename KMerType>
-void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<uint64_t> const& colliding_minimizers, std::vector<KMerType>& accumulator) {
+template <typename MinimizerHasher>
+void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<uint64_t> const& colliding_minimizers, std::vector<kmer_t>& accumulator) {
     typedef std::pair<uint64_t, uint64_t> mm_pair_t;
     std::vector<mm_pair_t> mm_buffer(k - m + 1);
-    std::vector<KMerType> km_buffer;
+    std::vector<kmer_t> km_buffer;
     std::size_t mm_buf_pos = 0, min_pos = mm_buffer.size();
     mm_pair_t current;
     uint64_t mm_shift = 2 * (m - 1);
     uint64_t mm_mask = (1ULL << (2 * m)) - 1;
     uint64_t km_shift = 2 * (k - 1);
-    KMerType km_mask = (static_cast<KMerType>(1) << (2 * k)) - 1;
+    kmer_t km_mask = (static_cast<kmer_t>(1) << (2 * k)) - 1;
     uint64_t mm[2] = {0, 0};
-    KMerType km[2] = {0, 0};
+    kmer_t km[2] = {0, 0};
     uint64_t nbases_since_last_break = 0;
     uint32_t sks = 0;
     uint8_t z = 0;
@@ -189,7 +165,7 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
     int c;
     assert(k >= m);
 
-    auto update_output = [](std::vector<KMerType> const& toadd, std::vector<KMerType>& accumulator) {
+    auto update_output = [](std::vector<kmer_t> const& toadd, std::vector<kmer_t>& accumulator) {
         accumulator.insert(accumulator.end(), toadd.begin(), toadd.end());
     };
     km_buffer.reserve(2 * k - m);
@@ -198,8 +174,8 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
         if (c < 4) [[likely]] {
                 mm[0] = (mm[0] << 2 | c) & mm_mask;            /* forward k-mer */
                 mm[1] = (mm[1] >> 2) | (3ULL ^ c) << mm_shift; /* reverse k-mer */
-                km[0] = (km[0] << 2 | static_cast<KMerType>(c)) & km_mask;
-                km[1] = (km[1] >> 2) | ((static_cast<KMerType>(3) ^ static_cast<KMerType>(c)) << km_shift);
+                km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
+                km[1] = (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
                 if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1; // strand, if symmetric k-mer then use previous strand
                 ++nbases_since_last_break;
 

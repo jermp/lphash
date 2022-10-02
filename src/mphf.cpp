@@ -1,5 +1,7 @@
 #include "../include/mphf.hpp"
 
+#include "../include/prettyprint.hpp"
+
 namespace lphash {
 
 class vector_mm_triplet_to_pthash_itr_adapter : std::forward_iterator_tag 
@@ -161,75 +163,95 @@ uint64_t mphf::get_kmer_count() const noexcept
     return nkmers;
 }
 
-std::vector<uint64_t> mphf::operator() (std::string const& contig) const
+mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const
+{
+    mm_context_t res;
+    uint64_t mp_hash = minimizer_order(minimizer);
+    std::pair<MinimizerType, std::size_t> dummy = wtree.rank_of(mp_hash);
+    MinimizerType mm_type = dummy.first;
+    uint64_t mm_type_rank = dummy.second;
+    uint64_t sk_size;
+    // std::cerr << "mm hash = " << mp_hash << "\n";
+    switch (mm_type) {
+        case LEFT:
+            // locpres_hash = 0;  // because in the elias-fano global vector left positions are the left-most block starting at the beginning
+            // locpres_hash += sizes_and_positions.access(mm_type_rank);  // number of left-KMERS before our bucket
+            // locpres_hash += position;  // add local rank
+            res.global_rank = sizes_and_positions.access(mm_type_rank);  // number of left-KMERS before our bucket
+            res.local_rank = position;
+            res.type = LEFT;
+            // std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
+            // std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
+            break;
+        case RIGHT_OR_COLLISION:
+            sk_size = sizes_and_positions.diff(right_coll_sizes_start + mm_type_rank);
+            if (sk_size == 0) {
+                res.global_rank = sizes_and_positions.access(none_pos_start);  // prefix sum of all sizes (sizes of collisions are 0)
+                res.local_rank = fallback_kmer_order(kmer);
+                res.type = NONE + 1;
+                // std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " << res.global_rank << ", ";
+                // std::cerr << "local shift = " << sk_size;
+            } else {
+                // locpres_hash = sizes_and_positions.access(right_coll_sizes_start + mm_type_rank);  // global shift
+                // locpres_hash += k - m - p;  // local shift
+                res.global_rank = sizes_and_positions.access(right_coll_sizes_start + mm_type_rank);  // global shift
+                res.local_rank = k - m - position;  // local shift
+                res.type = RIGHT_OR_COLLISION; // in this case it is only RIGHT
+                // std::cerr << "[RIGHT] rank = " << right_coll_sizes_start + mm_type_rank << ", "; 
+                // std::cerr << "global shift = " << res.global_rank << ", "; 
+                // std::cerr << "local shift = " << res.local_rank;
+            }
+            break;
+        case MAXIMAL:  // easy case
+            // locpres_hash = (k - m + 1) * mm_type_rank + position;  // all maximal k-mer hashes are < than those of all the other types
+            res.global_rank = (k - m + 1) * mm_type_rank;
+            res.local_rank = position;
+            res.type = MAXIMAL;
+            // std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
+            // std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
+            break;
+        case NONE:
+            // locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  // prefix sum of sizes
+            // locpres_hash += sk_size - position;  // position in the first k-mer - actual position = local shift
+            res.global_rank = sizes_and_positions.access(none_sizes_start + mm_type_rank);  // prefix sum of sizes
+            sk_size = sizes_and_positions.diff(none_pos_start + mm_type_rank);  // p1 actually
+            res.local_rank = sk_size - position;
+            res.type = NONE;
+            // std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " << none_sizes_start << " + " << mm_type_rank << ", ";
+            // std::cerr << "global rank = " << res.global_rank << ", ";
+            // std::cerr << "local shift = " << res.local_rank << ", p1 = " << sk_size << ", p = " << position;
+            break;
+        default:
+            throw std::runtime_error("Unrecognized minimizer type");
+    }
+    if (mm_type != MAXIMAL) 
+    {
+        // locpres_hash += (k - m + 1) * n_maximal;  // shift of the maximal k-mers
+        res.global_rank += (k - m + 1) * n_maximal;  // shift of the maximal k-mers
+    }
+    res.hval = res.global_rank + res.local_rank;
+    // if (false) {
+    //     std::cerr << ", ";
+    //     std::string explicit_kmer(contig, i, k);
+    //     std::cerr << explicit_kmer << ", ";
+    //     std::cerr << kmer << ", ";
+    //     std::cerr << "minimizer = " << mm << ", ";
+    //     std::cerr << "mm pos = " << p << ", ";
+    //     std::cerr << "hash = " << locpres_hash << "\n";
+    // }
+    return res;
+}
+
+std::vector<uint64_t> mphf::dumb_evaluate(std::string const& contig) const
 {
     std::vector<uint64_t> res;
     for (std::size_t i = 0; i < contig.size() - k + 1; ++i) {
-        // This is NOT streaming unlike the previous walks. FIXME: when making a separate module
-        // for query (for the optimized version of the paper)
-        auto kmer = debug::string_to_integer_no_reverse<kmer_t>(&contig[i], k);
+        auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
         debug::triplet_t triplet = debug::compute_minimizer_triplet(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
         uint64_t p = triplet.third;
-        uint64_t mp_hash = minimizer_order(mm);
-        // std::cerr << "mm hash = " << mp_hash << "\n";
-
-        std::pair<MinimizerType, std::size_t> dummy = wtree.rank_of(mp_hash);
-        MinimizerType mm_type = dummy.first;
-        uint64_t mm_type_rank = dummy.second;
-        uint64_t locpres_hash, sk_size;
-
-        switch (mm_type) {
-            case LEFT:
-                locpres_hash = 0;  // because in the elias-fano global vector left positions are the left-most block starting at the beginning
-                // std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
-                locpres_hash += sizes_and_positions.access(mm_type_rank);  // number of left-KMERS before our bucket
-                // std::cerr << "global shift = " << locpres_hash << ", local shift = " << p;
-                locpres_hash += p;  // add local rank
-                break;
-            case RIGHT_OR_COLLISION:
-                locpres_hash = sizes_and_positions.access(right_coll_sizes_start + mm_type_rank);  // global shift
-                sk_size = sizes_and_positions.diff(right_coll_sizes_start + mm_type_rank);
-                if (sk_size == 0) {
-                    locpres_hash = sizes_and_positions.access(none_pos_start);  // prefix sum of all sizes (sizes of collisions are 0)
-                    // std::cerr << "[COLLISION] rank = " << index.none_pos_start << ", global shift = " << locpres_hash << ", ";
-                    sk_size = fallback_kmer_order(kmer);
-                    locpres_hash += sk_size;
-                    // std::cerr << "local shift = " << sk_size;
-                } else {
-                    // std::cerr << "[RIGHT] rank = " << index.right_coll_sizes_start + mm_type_rank << ", "; 
-                    // std::cerr << "global shift = " << locpres_hash << ", "; 
-                    // std::cerr << "local shift = " << k - m - p;
-                    locpres_hash += k - m - p;  // local shift
-                }
-                break;
-            case MAXIMAL:  // easy case
-                // std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
-                // std::cerr << "global shift = " << (k-m+1) * mm_type_rank << ", local shift = " << p;
-                locpres_hash = (k - m + 1) * mm_type_rank + p;  // all maximal k-mer hashes are < than those of all the other types
-                break;
-            case NONE:
-                // std::cerr << "[NONE] rank = " << index.none_sizes_start + mm_type_rank << " = " << index.none_sizes_start << " + " << mm_type_rank << ", ";
-                locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  // prefix sum of sizes
-                // std::cerr << "global rank = " << locpres_hash << ", ";
-                sk_size = sizes_and_positions.diff(none_pos_start + mm_type_rank);  // p1 actually
-                locpres_hash += sk_size - p;  // position in the first k-mer - actual position = local shift
-                // std::cerr << "local shift = " << sk_size - p << ", p1 = " << sk_size << ", p = " << p;
-                break;
-            default:
-                throw std::runtime_error("Unrecognized minimizer type");
-        }
-        if (mm_type != MAXIMAL) locpres_hash += (k - m + 1) * n_maximal;  // shift of the maximal k-mers
-        // if (false) {
-        //     std::cerr << ", ";
-        //     std::string explicit_kmer(contig, i, k);
-        //     std::cerr << explicit_kmer << ", ";
-        //     std::cerr << kmer << ", ";
-        //     std::cerr << "minimizer = " << mm << ", ";
-        //     std::cerr << "mm pos = " << p << ", ";
-        //     std::cerr << "hash = " << locpres_hash << "\n";
-        // }
-        res.push_back(locpres_hash);
+        auto ctx = query(kmer, mm, p);
+        res.push_back(ctx.hval);
     }
     return res;
 }
@@ -242,31 +264,46 @@ void mphf::print_statistics() const noexcept
     auto kmer_mphf_size_bits = fallback_kmer_order.num_bits();
     auto total_bit_size = mm_mphf_size_bits + triplet_tree_size_bits + elias_sequence_size_bits + kmer_mphf_size_bits + 
         (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) + sizeof(nkmers) + sizeof(distinct_minimizers)) * 8;
-    std::cout << "Minimizer MPHF size in bits : " << mm_mphf_size_bits << " ("
+    std::cerr << "Total number of k-mers: " << nkmers << "\n";
+    std::cerr << "Minimizer MPHF size in bits : " << mm_mphf_size_bits << " ("
               << static_cast<double>(mm_mphf_size_bits) / total_bit_size * 100 << "%)\n";
-    std::cout << "\t = " << static_cast<double>(mm_mphf_size_bits) / minimizer_order.num_keys()
+    std::cerr << "\t = " << static_cast<double>(mm_mphf_size_bits) / minimizer_order.num_keys()
               << " bits/minimizer\n\n";
-    std::cout << "Wavelet tree size in bits : " << triplet_tree_size_bits << " ("
+    std::cerr << "Wavelet tree size in bits : " << triplet_tree_size_bits << " ("
               << static_cast<double>(triplet_tree_size_bits) / total_bit_size * 100 << "%)\n";
-    std::cout << "\t = " << static_cast<double>(triplet_tree_size_bits) / minimizer_order.num_keys()
+    std::cerr << "\t = " << static_cast<double>(triplet_tree_size_bits) / minimizer_order.num_keys()
               << " bits/minimizer\n\n";
-    std::cout << "Compressed arrays (EF) : " << elias_sequence_size_bits << " ("
+    std::cerr << "Compressed arrays (EF) : " << elias_sequence_size_bits << " ("
               << static_cast<double>(elias_sequence_size_bits) / total_bit_size * 100 << "%)\n";
-    std::cout << "\t = " << static_cast<double>(elias_sequence_size_bits) / sizes_and_positions.size()
+    std::cerr << "\t = " << static_cast<double>(elias_sequence_size_bits) / sizes_and_positions.size()
               << " bits/offset\n\n";
-    std::cout << "Fallback MPHF : " << kmer_mphf_size_bits << " ("
+    std::cerr << "Fallback MPHF : " << kmer_mphf_size_bits << " ("
               << static_cast<double>(kmer_mphf_size_bits) / total_bit_size * 100 << "%)\n";
-    std::cout << "\t = " << static_cast<double>(kmer_mphf_size_bits) / fallback_kmer_order.num_keys()
+    std::cerr << "\t = " << static_cast<double>(kmer_mphf_size_bits) / fallback_kmer_order.num_keys()
               << " bits/kmer\n\n";
-    std::cout << "Total size in bits : " << total_bit_size << "\n";
-    std::cout << "\tequivalent to : " << static_cast<double>(total_bit_size) / nkmers
+    std::cerr << "Total size in bits : " << total_bit_size << "\n";
+    std::cerr << "\tequivalent to : " << static_cast<double>(total_bit_size) / nkmers
               << " bits/k-mer\n";
-    std::cout << "\n";
+    std::cerr << "\n";
+}
+
+std::ostream& operator<< (std::ostream& out, mphf const& hf)
+{
+    out << "k = " << static_cast<uint32_t>(hf.k) << "\n";
+    out << "m = " << static_cast<uint32_t>(hf.m) << "\n";
+    out << "minimizer seed = " << hf.mm_seed << "\n";
+    out << "number of k-mers = " << hf.nkmers << "\n";
+    out << "distinct minimizers = " << hf.distinct_minimizers << "\n";
+    out << "maximal super-k-mers = " << hf.n_maximal << "\n";
+    out << "starting index of right and collision sizes = " << hf.right_coll_sizes_start << "\n";
+    out << "starting index of none sizes = " << hf.none_sizes_start << "\n";
+    out << "starting index of none positions = " << hf.none_pos_start << "\n";
+    return out;
 }
 
 bool check_collisions(mphf const& hf, std::string const& contig, pthash::bit_vector_builder& population)
 {
-    auto hashes = hf(contig);
+    auto hashes = hf.dumb_evaluate(contig);
     assert(hashes.size());
     for (auto hash : hashes) {
         if (hash > hf.get_kmer_count()) {
@@ -293,6 +330,24 @@ bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population)
     } else 
         std::cerr << "[Info] Everything is ok\n";
     return perfect;
+}
+
+bool check_streaming_correctness(mphf const& hf, std::string const& contig)
+{
+    auto dumb_hashes = hf.dumb_evaluate(contig);
+    auto fast_hashes = hf(contig);
+    if (dumb_hashes.size() != fast_hashes.size()) {
+        std::cerr << "[Error] different number of hashes\n";
+        return false;
+    }
+    for (std::size_t i = 0; i < dumb_hashes.size(); ++i) {
+        // std::cerr << dumb_hashes[i] << " -- " << fast_hashes[i] << "\n";
+        if (dumb_hashes[i] != fast_hashes[i]) {
+            std::cerr << "[Error] different hashes\n";
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace lphash

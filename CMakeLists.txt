@@ -39,6 +39,7 @@ endif()
 set(LPHASH_SOURCES
   src/constants.cpp
   src/parser_build.cpp
+  src/parser_query.cpp
   src/quartet_wtree.cpp
   src/mphf.cpp
 )
@@ -51,6 +52,7 @@ set(LPHASH_SOURCES
 
 # build with the lib
 add_executable(build src/build.cpp ${LPHASH_SOURCES})
+add_executable(query src/query.cpp ${LPHASH_SOURCES})
 
 # target_link_libraries(build
 #   lphash_static

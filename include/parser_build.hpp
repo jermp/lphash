@@ -12,6 +12,7 @@ class ParseError : public std::exception {
 };
 
 cmd_line_parser::parser get_build_parser(int argc, char* argv[]);
+cmd_line_parser::parser get_query_parser(int argc, char* argv[]);
 
 }
 
