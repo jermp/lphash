@@ -53,7 +53,7 @@ template <typename KMerType>
 void mphf::build_fallback_mphf(std::vector<KMerType>& colliding_kmers)
 {
     std::sort(colliding_kmers.begin(), colliding_kmers.end());
-    auto it = std::unique(colliding_kmers.begin(), colliding_kmers.end());
+    [[maybe_unused]] auto it = std::unique(colliding_kmers.begin(), colliding_kmers.end());
     assert(it == colliding_kmers.end()); // if false: there are some duplicates in unbucketable_kmers
     fallback_kmer_order.build_in_external_memory(colliding_kmers.begin(), colliding_kmers.size(), mphf_configuration);
 }
