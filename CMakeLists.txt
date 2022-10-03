@@ -52,7 +52,9 @@ set(LPHASH_SOURCES
 
 # build with the lib
 add_executable(build src/build.cpp ${LPHASH_SOURCES})
+target_link_libraries(build z)
 add_executable(query src/query.cpp ${LPHASH_SOURCES})
+target_link_libraries(query z)
 
 # target_link_libraries(build
 #   lphash_static
