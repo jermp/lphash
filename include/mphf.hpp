@@ -16,6 +16,7 @@ class mphf {
         std::vector<uint64_t> build_inverted_index(std::vector<mm_triplet_t>& minimizers);
         uint64_t get_minimizer_L0() const noexcept;
         uint64_t get_kmer_count() const noexcept;
+        uint64_t num_bits() const noexcept;
         template <typename MinimizerHasher = hash64> std::vector<uint64_t> operator() (std::string const& contig, bool canonical = false) const;
         std::vector<uint64_t> dumb_evaluate(std::string const& contig, bool canonical) const;
         void print_statistics() const noexcept;

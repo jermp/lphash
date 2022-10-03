@@ -19,13 +19,13 @@ int main(int argc, char* argv[]) {
     cmd_line_parser::parser parser = get_query_parser(argc, argv);
     mphf hf;
     std::string mphf_filename = parser.get<std::string>("mphf");
-    std::cerr << "Loading mphf: " << mphf_filename << " ...\n";
+    // std::cerr << "Loading mphf: " << mphf_filename << " ...\n";
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());
-    std::cerr << "Loading DONE\n";
-    std::cerr << hf << "\n";
+    // std::cerr << "Loading DONE\n";
+    // std::cerr << hf << "\n";
     std::string input_filename = parser.get<std::string>("input_filename");
 
-    std::cerr << "Input file = " << input_filename << std::endl;
+    // std::cerr << "Input file = " << input_filename << std::endl;
 
     fp = NULL;
     if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
@@ -51,6 +51,5 @@ int main(int argc, char* argv[]) {
         total_dumb_time += t.elapsed();
     }
     if (seq) kseq_destroy(seq);
-    std::cout << (total_time * 1000) / total_kmers << " ns/kmer" << std::endl;
-    std::cout << "non-streaming query : " << (total_dumb_time * 1000) / total_kmers << " ns/kmer" << std::endl;
+    std::cout << input_filename << "," << mphf_filename << "," << static_cast<double>(total_time * 1000) / total_kmers << "," << static_cast<double>(total_dumb_time * 1000) / total_kmers << std::endl;
 }

@@ -139,6 +139,8 @@ int main(int argc, char* argv[]) {
     }
 
     //TODO print csv row to file or stdout
+    std::cout << input_filename << "," << static_cast<double>(locpres_mphf.num_bits()) / locpres_mphf.get_kmer_count();
+    std::cout << "\n";
     
     return 0;
 }

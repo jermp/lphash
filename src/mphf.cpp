@@ -163,6 +163,17 @@ uint64_t mphf::get_kmer_count() const noexcept
     return nkmers;
 }
 
+uint64_t mphf::num_bits() const noexcept
+{
+    auto mm_mphf_size_bits = minimizer_order.num_bits();
+    auto triplet_tree_size_bits = wtree.num_bits();
+    auto elias_sequence_size_bits = (sizeof(n_maximal) + sizeof(right_coll_sizes_start) + sizeof(none_sizes_start) + sizeof(none_pos_start)) * 8 + sizes_and_positions.num_bits();
+    auto kmer_mphf_size_bits = fallback_kmer_order.num_bits();
+    auto total_bit_size = mm_mphf_size_bits + triplet_tree_size_bits + elias_sequence_size_bits + kmer_mphf_size_bits + 
+        (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) + sizeof(nkmers) + sizeof(distinct_minimizers)) * 8;
+    return total_bit_size;
+}
+
 mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const
 {
     mm_context_t res;

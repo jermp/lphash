@@ -33,19 +33,19 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
                "Output file name where the data structure will be serialized.",
                "-o", 
                false);
-    parser.add("results_filename",
-               "CSV file to append to",
-               "-r",
-               false);
+    // parser.add("results_filename",
+    //            "CSV file to append to",
+    //            "-r",
+    //            false);
     parser.add("tmp_dirname",
                "Temporary directory used for construction in external memory. Default is directory '" + constants::default_tmp_dirname + "'.",
                "-d", 
                false);
-    parser.add("canonical_parsing",
-               "Canonical parsing of k-mers. "
-               "This option changes the parsing and results in a trade-off between index space and lookup time.",
-               "--canonical-parsing", 
-               true);
+    // parser.add("canonical_parsing",
+    //            "Canonical parsing of k-mers. "
+    //            "This option changes the parsing and results in a trade-off between index space and lookup time.",
+    //            "--canonical-parsing", 
+    //            true);
     parser.add("check", "Check correctness after construction.", "--check", true);
     // parser.add("bench", "Run benchmark after construction.", "--bench", true);
     parser.add("verbose", "Verbose output during construction.", "--verbose", true);
