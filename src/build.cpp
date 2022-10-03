@@ -16,7 +16,7 @@ KSEQ_INIT(gzFile, gzread)
 int main(int argc, char* argv[]) {
     gzFile fp;
     kseq_t* seq;
-    uint8_t k, m;
+    uint8_t k, m, nthreads;
     uint64_t mm_seed;
     std::string tmp_dirname;
     bool verbose;
@@ -39,6 +39,8 @@ int main(int argc, char* argv[]) {
     else canonical = false;
     if (parser.parsed("verbose")) verbose = parser.get<bool>("verbose");
     else verbose = false;
+    if (parser.parsed("threads")) nthreads = parser.get<uint32_t>("threads");
+    else nthreads = 1;
 
     total_kmers = 0;
     check_total_kmers = 0;
@@ -62,7 +64,7 @@ int main(int argc, char* argv[]) {
     assert(total_kmers == check_total_kmers);
 
     std::cerr << "Part 2: build MPHF\n";
-    mphf locpres_mphf(k, m, mm_seed, total_kmers, 1, tmp_dirname, verbose);
+    mphf locpres_mphf(k, m, mm_seed, total_kmers, nthreads, tmp_dirname, verbose);
     locpres_mphf.build_minimizers_mphf(minimizers);
     auto colliding_minimizers = locpres_mphf.build_inverted_index(minimizers);
     
@@ -90,8 +92,6 @@ int main(int argc, char* argv[]) {
         essentials::save(locpres_mphf, output_filename.c_str());
         std::cerr << "\tDONE\n";
     }
-
-    
 
     if (check) {
         std::cerr << "Checking\n";

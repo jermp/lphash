@@ -29,6 +29,10 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
     //            "(default is 0.94 ).", 
     //            "-a", 
     //            false);
+    parser.add("threads", 
+               "Number of threads for pthash (default is 1).", 
+               "-t", 
+               false);
     parser.add("output_filename", 
                "Output file name where the data structure will be serialized.",
                "-o", 
