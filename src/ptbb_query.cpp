@@ -78,8 +78,8 @@ int main(int argc, char* argv[]) {
     }
     }// kseq_destroy(itr_guts);
     */
-    std::size_t pt_us, bb_us;
-    std::size_t pt_total_kmers, bb_total_kmers;
+    std::size_t pt_us = 0, bb_us = 0;
+    std::size_t pt_total_kmers = 1, bb_total_kmers = 1;
     if (parser.parsed("pthash_filename")) {
         pt_total_kmers = 0;
         other::ptbb_file_itr kmer_itr(input_filename, k);
