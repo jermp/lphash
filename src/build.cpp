@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
     std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
     { // garbage collector for unbucketable_kmers
         std::vector<kmer_t> unbucketable_kmers;
-        unbucketable_kmers.reserve(total_kmers);  // worst case scenario
+        // unbucketable_kmers.reserve(total_kmers);  // worst case scenario
         if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
             std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
             return 2;
