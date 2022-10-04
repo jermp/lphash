@@ -4,6 +4,7 @@ UNITIGS_FOLDER=$LPHASH_DIR/data/unitigs_stitched
 QUERY_FOLDER=$LPHASH_DIR/data/queries
 MPHF_FOLDER=$LPHASH_DIR/mphfs
 RESULTS_FOLDER=$LPHASH_DIR/results
+TMP_FOLDER=$LPHASH_DIR/tmp
 
 LPBUILD=$LPHASH_DIR/build/build
 LPQUERY=$LPHASH_DIR/build/query
@@ -19,6 +20,7 @@ PTQUERY_RESULTS=$LPHASH_DIR/results/pthash_query.csv
 
 mkdir -p $MPHF_FOLDER;
 mkdir -p $RESULTS_FOLDER;
+mkdir -p $TMP_FOLDER;
 
 ## -----------------------------------------------------------------------------
 
