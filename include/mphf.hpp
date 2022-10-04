@@ -20,6 +20,10 @@ public:
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
+    template <typename MinimizerHasher = hash64>
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
+    template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
@@ -74,11 +78,11 @@ void mphf::build_fallback_mphf(std::vector<KMerType>& colliding_kmers) {
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers) const {
+std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     std::vector<uint64_t> res;
-    if (contig.length() < k) return res;
-    res.reserve(contig.length() - k + 1);
+    if (length < k) return res;
+    res.reserve(length - k + 1);
     uint64_t shift = 2 * (m - 1);
     uint64_t mask = (1ULL << (2 * m)) - 1;
     uint64_t mm[2] = {0, 0};
@@ -101,7 +105,7 @@ std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused
     buf_pos = 0;
     min_pos = buffer.size();
     z = 0;
-    for (uint64_t i = 0; i < contig.size(); ++i) {
+    for (uint64_t i = 0; i < length; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         if (c < 4) [[likely]] {
                 mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
@@ -187,10 +191,10 @@ std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
+std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
 {
     std::vector<uint64_t> res;
-    for (std::size_t i = 0; i < contig.length() - k + 1; ++i) {
+    for (std::size_t i = 0; i < length - k + 1; ++i) {
         auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
         debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
@@ -199,6 +203,18 @@ std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused
         res.push_back(ctx.hval);
     }
     return res;
+}
+
+template <typename MinimizerHasher>
+std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers) const
+{
+    return operator()<MinimizerHasher>(contig.c_str(), contig.length(), canonical_m_mers);
+}
+
+template <typename MinimizerHasher>
+std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
+{
+    return operator()<MinimizerHasher>(contig.c_str(), contig.length(), canonical_m_mers, dummy);
 }
 
 template <typename MinimizerHasher>
