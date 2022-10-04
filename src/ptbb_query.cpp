@@ -47,14 +47,14 @@ int main(int argc, char* argv[]) {
         std::ifstream bbh_strm(bbhash_filename, std::ios::binary);
         bphf.load(bbh_strm);
     }
-
+    std::size_t pt_ns = 0, bb_ns = 0;
+    std::size_t total_kmers = 0;
+    {
     other::ptbb_file_itr kmer_itr(input_filename, k);
-    kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
+    // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
     other::ptbb_file_itr kmer_end;
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::nanoseconds> pt_timer;
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::nanoseconds> bb_timer;
-    std::size_t pt_ns = 0, bb_ns = 0;
-    std::size_t total_kmers = 0;
     for (; kmer_itr != kmer_end; ++kmer_itr) {
         kmer_t kmer = *kmer_itr;
         if (parser.parsed("pthash_filename")) {
@@ -75,7 +75,8 @@ int main(int argc, char* argv[]) {
         }
         ++total_kmers;
     }
-    kseq_destroy(itr_guts);
+    }
+    // kseq_destroy(itr_guts);
     
     // std::cerr << "\nTotal k-mers = " << total_kmers << "\n";
     if (parser.parsed("pthash_filename")) {

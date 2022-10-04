@@ -982,7 +982,6 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 				auto in_final_map  = _final_hash.find (elem);
 				if ( in_final_map == _final_hash.end() )
 				{
-					assert(false);
 					//elem was not in orignal set of keys
 					return ULLONG_MAX; //  means elem not in set
 				}

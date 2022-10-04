@@ -38,12 +38,13 @@ int main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
+        essentials::timer<std::chrono::high_resolution_clock, std::chrono::nanoseconds> t;
+        t.reset();
         t.start();
-        auto fast_hashes = hf(contig, canonical);
+        auto n = hf.barebone_streaming_query(contig, canonical);
         t.stop();
         total_time += t.elapsed();
-        total_kmers += fast_hashes.size();
+        total_kmers += n;
         t.reset();
         t.start();
         auto dumb_hashes = hf.dumb_evaluate(contig, false);
@@ -51,5 +52,5 @@ int main(int argc, char* argv[]) {
         total_dumb_time += t.elapsed();
     }
     if (seq) kseq_destroy(seq);
-    std::cout << input_filename << "," << mphf_filename << "," << static_cast<double>(total_time * 1000) / total_kmers << "," << static_cast<double>(total_dumb_time * 1000) / total_kmers << std::endl;
+    std::cout << input_filename << "," << mphf_filename << "," << static_cast<double>(total_time) / total_kmers << "," << static_cast<double>(total_dumb_time) / total_kmers << std::endl;
 }

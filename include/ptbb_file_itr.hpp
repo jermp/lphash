@@ -12,7 +12,7 @@ class ptbb_file_itr : std::forward_iterator_tag
 {
     public:
         typedef kmer_t value_type;
-        // ptbb_file_itr(const ptbb_file_itr&) = delete; // we actually need it
+        ptbb_file_itr(const ptbb_file_itr&); // we actually need it
         ptbb_file_itr();
         ptbb_file_itr(std::string fasta_file, uint64_t kmer_len);
         ~ptbb_file_itr();
@@ -32,6 +32,7 @@ class ptbb_file_itr : std::forward_iterator_tag
         kmer_t km_mask;
         std::array<kmer_t, 2> km;
         bool hn;
+        uint64_t* ref_count;
         friend bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b);
 };
 

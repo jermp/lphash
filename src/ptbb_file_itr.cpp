@@ -10,7 +10,7 @@ namespace lphash {
 
 namespace other {
 
-ptbb_file_itr::ptbb_file_itr() : z(0), k(0), fp(nullptr), sequence_file(nullptr), nbases_since_last_break(0), base_index(0), hn(false) {};
+ptbb_file_itr::ptbb_file_itr() : z(0), k(0), fp(nullptr), sequence_file(nullptr), nbases_since_last_break(0), base_index(0), hn(false), ref_count(nullptr) {};
 
 ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len) : z(0), k(kmer_len), fp(nullptr), nbases_since_last_break(0), base_index(0)
 {
@@ -27,6 +27,24 @@ ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len) : z(0), 
         hn = true;
         operator++();
     }
+    ref_count = (uint64_t*) malloc(sizeof(uint64_t));
+    *ref_count = 1;
+}
+
+ptbb_file_itr::ptbb_file_itr(const ptbb_file_itr & other)
+{
+    z = other.z;
+    k = other.k;
+    fp = other.fp;
+    sequence_file = other.sequence_file;
+    nbases_since_last_break = other.nbases_since_last_break;
+    base_index = other.base_index;
+    km_shift = other.km_shift;
+    km_mask = other.km_mask;
+    km = other.km;
+    hn = other.hn;
+    ref_count = other.ref_count;
+    if (ref_count) ++(*ref_count);
 }
 
 void ptbb_file_itr::operator++() 
@@ -55,7 +73,15 @@ void ptbb_file_itr::operator++()
 
 ptbb_file_itr::~ptbb_file_itr() 
 {
-    if (false && sequence_file) kseq_destroy(reinterpret_cast<kseq_t*>(sequence_file));
+    if (ref_count) {
+        if ((*ref_count) == 1) {
+            if (sequence_file) kseq_destroy(reinterpret_cast<kseq_t*>(sequence_file));
+            if (fp) gzclose(fp);
+            free(ref_count);
+        } else if (*ref_count > 1) {
+            --(*ref_count);
+        }
+    }
 }
 
 bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b)

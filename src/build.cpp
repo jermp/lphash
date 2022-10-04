@@ -60,6 +60,7 @@ int main(int argc, char* argv[]) {
         check_total_kmers += contig.length() - k + 1;
     }
     if (seq) kseq_destroy(seq);
+    gzclose(fp);
 
     assert(total_kmers == check_total_kmers);
 
@@ -83,6 +84,7 @@ int main(int argc, char* argv[]) {
             minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, canonical, colliding_minimizers, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
+        gzclose(fp);
         locpres_mphf.build_fallback_mphf(unbucketable_kmers);
     }
 
@@ -113,6 +115,7 @@ int main(int argc, char* argv[]) {
                 // std::cerr << std::endl;
             }
             if (seq) kseq_destroy(seq);
+            gzclose(fp);
             check = check && check_perfection(loaded, population);
         } else {
             pthash::bit_vector_builder population(locpres_mphf.get_kmer_count());  // bitvector for checking perfection and minimality
@@ -129,6 +132,7 @@ int main(int argc, char* argv[]) {
                 // std::cerr << std::endl;
             }
             if (seq) kseq_destroy(seq);
+            gzclose(fp);
             check = check && check_perfection(locpres_mphf, population);
         }
     }
