@@ -52,5 +52,5 @@ int main(int argc, char* argv[]) {
         total_dumb_time += t.elapsed();
     }
     if (seq) kseq_destroy(seq);
-    std::cout << input_filename << "," << mphf_filename << "," << static_cast<double>(total_time) / total_kmers << "," << static_cast<double>(total_dumb_time) / total_kmers << std::endl;
+    std::cout << input_filename << "," << mphf_filename << "," << total_kmers << "," << static_cast<double>(total_time) / total_kmers << "," << static_cast<double>(total_dumb_time) / total_kmers << std::endl;
 }

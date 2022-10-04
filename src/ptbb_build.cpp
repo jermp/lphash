@@ -92,13 +92,13 @@ int main(int argc, char* argv[]) {
         ++check_total_kmers;
     }
     // kseq_destroy(itr_guts);
-    std::cerr << "\n" << total_kmers << " == " << check_total_kmers << std::endl;
+    // std::cerr << "\n" << total_kmers << " == " << check_total_kmers << std::endl;
     assert(total_kmers == check_total_kmers);
 
     pthash::build_configuration pt_config;
     if (parser.parsed("threads")) pt_config.num_threads = parser.get<uint32_t>("threads");
     else pt_config.num_threads = 1;
-    if (parser.parsed("check")) check = true;
+    if (parser.parsed("check")) check = parser.get<bool>("check");
     else check = false;
     if (parser.parsed("pthash_filename")) {
         std::string pthash_filename = parser.get<std::string>("pthash_filename");
@@ -204,5 +204,5 @@ int main(int argc, char* argv[]) {
             bphf.save(bbh_strm);
         }//
     }
-   std::cout << "\n";
+   std::cout << std::endl;
 }
