@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
         std::string pthash_filename = parser.get<std::string>("pthash_filename");
         pt_config.minimal_output = true;
         pt_config.seed = constants::seed;
-        pt_config.c = constants::c;
+        pt_config.c = (parser.parsed("c")) ? parser.get<double>("c") : constants::c;
         pt_config.alpha = 0.94;
         if (parser.parsed("verbose"))
             pt_config.verbose_output = parser.get<bool>("verbose");
