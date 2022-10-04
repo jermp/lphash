@@ -13,6 +13,7 @@ int main(int argc, char* argv[]) {
     gzFile fp;
     kseq_t* seq;
     std::size_t total_kmers = 0;
+    std::size_t total_dumb_kmers = 0;
     std::size_t total_time = 0;
     std::size_t total_dumb_time = 0;
     bool canonical = false;
@@ -27,14 +28,46 @@ int main(int argc, char* argv[]) {
 
     // std::cerr << "Input file = " << input_filename << std::endl;
 
+    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
+    essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
+
     fp = NULL;
     if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
         std::cerr << "Unable to open the input file " << input_filename << "\n";
         return 2;
     }
-    
-    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
+    seq = kseq_init(fp);
+    t.start();
+    while(kseq_read(seq) >= 0) {
+        auto n = hf.barebone_streaming_query(seq->seq.s, seq->seq.l, canonical);
+        total_kmers += n;
+    }
+    t.stop();
+    if (seq) kseq_destroy(seq);
+    gzclose(fp);
+    total_time = t.elapsed();
 
+    t.reset();
+
+    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << input_filename << "\n";
+        return 2;
+    }
+    seq = kseq_init(fp);
+    t.start();
+    while(kseq_read(seq) >= 0) {
+        auto n = hf.barebone_dumb_query(seq->seq.s, seq->seq.l, canonical);
+        total_dumb_kmers += n;
+    }
+    t.stop();
+    if (seq) kseq_destroy(seq);
+    gzclose(fp);
+    total_dumb_time = t.elapsed();
+    
+    std::cout << input_filename << "," << mphf_filename << "," << total_kmers << "," << static_cast<double>(total_time * 1000) / total_kmers << "," << static_cast<double>(total_dumb_time * 1000) / total_dumb_kmers << std::endl;
+}
+
+/*
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
@@ -52,5 +85,5 @@ int main(int argc, char* argv[]) {
         total_dumb_time += t.elapsed();
     }
     if (seq) kseq_destroy(seq);
-    std::cout << input_filename << "," << mphf_filename << "," << total_kmers << "," << static_cast<double>(total_time) / total_kmers << "," << static_cast<double>(total_dumb_time) / total_kmers << std::endl;
-}
+    gzclose(fp);
+    */

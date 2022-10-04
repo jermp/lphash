@@ -47,8 +47,9 @@ int main(int argc, char* argv[]) {
         std::ifstream bbh_strm(bbhash_filename, std::ios::binary);
         bphf.load(bbh_strm);
     }
-    std::size_t pt_ns = 0, bb_ns = 0;
+    /*
     std::size_t total_kmers = 0;
+    std::size_t pt_ns = 0, bb_ns = 0;
     {
     other::ptbb_file_itr kmer_itr(input_filename, k);
     // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
@@ -75,15 +76,46 @@ int main(int argc, char* argv[]) {
         }
         ++total_kmers;
     }
+    }// kseq_destroy(itr_guts);
+    */
+    std::size_t pt_us, bb_us;
+    std::size_t pt_total_kmers, bb_total_kmers;
+    if (parser.parsed("pthash_filename")) {
+        pt_total_kmers = 0;
+        other::ptbb_file_itr kmer_itr(input_filename, k);
+        other::ptbb_file_itr kmer_end;
+        essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> pt_timer;
+        pt_timer.start();
+        for (; kmer_itr != kmer_end; ++kmer_itr) {
+            [[maybe_unused]] auto hval = kmer_order(*kmer_itr);
+            essentials::do_not_optimize_away(hval);
+            ++pt_total_kmers;
+        }
+        pt_timer.stop();
+        pt_us = pt_timer.elapsed();
     }
-    // kseq_destroy(itr_guts);
+    if (parser.parsed("bbhash_filename")) {
+        bb_total_kmers = 0;
+        other::ptbb_file_itr kmer_itr(input_filename, k);
+        other::ptbb_file_itr kmer_end;
+        essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> bb_timer;
+        bb_timer.start();
+        for (; kmer_itr != kmer_end; ++kmer_itr) {
+            [[maybe_unused]] auto hval = bphf.lookup(*kmer_itr);
+            essentials::do_not_optimize_away(hval);
+            ++bb_total_kmers;
+        }
+        bb_timer.stop();
+        bb_us = bb_timer.elapsed();
+    }
     
     // std::cerr << "\nTotal k-mers = " << total_kmers << "\n";
     if (parser.parsed("pthash_filename")) {
-        std::cout << "," << parser.get<std::string>("pthash_filename") << "," << static_cast<double>(pt_ns) / total_kmers;
+        std::cout << "," << parser.get<std::string>("pthash_filename") << "," << static_cast<double>(pt_us * 1000) / pt_total_kmers;
     }
     if (parser.parsed("bbhash_filename")) {
-        std::cout << "," << parser.get<std::string>("bbhash_filename") << "," << static_cast<double>(bb_ns) / total_kmers;
+        std::cout << "," << parser.get<std::string>("bbhash_filename") << "," << static_cast<double>(bb_us * 1000) / bb_total_kmers;
     }
+    if (parser.parsed("pthash_filename") && parser.parsed("bbhash_filename")) assert(pt_total_kmers == bb_total_kmers);
     std::cout << "\n";
 }

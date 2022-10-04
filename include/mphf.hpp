@@ -18,14 +18,22 @@ public:
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
+
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(std::string const& contig, bool canonical = false) const;
-    std::vector<uint64_t> dumb_evaluate(std::string const& contig, bool canonical) const;
+    std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
+
+    template <typename MinimizerHasher = hash64>
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
+    template <typename MinimizerHasher = hash64>
+    uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
+
     void print_statistics() const noexcept;
+
     template <typename Visitor>
     void visit(Visitor& visitor);
+
     pthash_mphf_t minimizer_order;
     pthash_mphf_t fallback_kmer_order;
     struct mm_context_t;
@@ -66,7 +74,7 @@ void mphf::build_fallback_mphf(std::vector<KMerType>& colliding_kmers) {
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(std::string const& contig, bool canonical_m_mers) const {
+std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     std::vector<uint64_t> res;
     if (contig.length() < k) return res;
@@ -179,10 +187,25 @@ std::vector<uint64_t> mphf::operator()(std::string const& contig, bool canonical
 }
 
 template <typename MinimizerHasher>
-uint64_t mphf::barebone_streaming_query(std::string const& contig, bool canonical_m_mers) const {
+std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
+{
+    std::vector<uint64_t> res;
+    for (std::size_t i = 0; i < contig.length() - k + 1; ++i) {
+        auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
+        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        uint64_t mm = triplet.first;
+        uint64_t p = triplet.third;
+        auto ctx = query(kmer, mm, p);
+        res.push_back(ctx.hval);
+    }
+    return res;
+}
+
+template <typename MinimizerHasher>
+uint64_t mphf::barebone_streaming_query(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     uint64_t res = 0;
-    if (contig.length() < k) return res;
+    if (length < k) return res;
     uint64_t shift = 2 * (m - 1);
     uint64_t mask = (1ULL << (2 * m)) - 1;
     uint64_t mm[2] = {0, 0};
@@ -205,7 +228,7 @@ uint64_t mphf::barebone_streaming_query(std::string const& contig, bool canonica
     buf_pos = 0;
     min_pos = buffer.size();
     z = 0;
-    for (uint64_t i = 0; i < contig.size(); ++i) {
+    for (uint64_t i = 0; i < length; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         if (c < 4) [[likely]] {
                 mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
@@ -286,6 +309,22 @@ uint64_t mphf::barebone_streaming_query(std::string const& contig, bool canonica
             nbases_since_last_break = 0;
             buf_pos = 0;
         }
+    }
+    return res;
+}
+
+template <typename MinimizerHasher>
+uint64_t mphf::barebone_dumb_query(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const
+{
+    uint64_t res = 0;
+    for (std::size_t i = 0; i < length - k + 1; ++i) {
+        auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
+        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        uint64_t mm = triplet.first;
+        uint64_t p = triplet.third;
+        [[maybe_unused]] auto ctx = query(kmer, mm, p);
+        // essentials::do_not_optimize_away(ctx);
+        ++res;
     }
     return res;
 }
