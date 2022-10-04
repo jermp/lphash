@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     uint64_t k;
     std::string input_filename;
     bool check;
-    
+
     cmd_line_parser::parser parser(argc, argv);
     parser.add("input_filename",
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n"
@@ -29,30 +29,27 @@ int main(int argc, char* argv[]) {
                "\t- one DNA sequence per line.\n"
                "\tFor example, it could be the de Bruijn graph topology output by BCALM.");
     parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").");
-    parser.add("pthash_filename", 
-               "Output file name where the pthash mphf will be serialized.",
-               "-p",
-               false);
-    parser.add("bbhash_filename", 
-               "Output file name where the BBHash mphf will be serialized.",
-               "-b",
-               false);
+    parser.add("pthash_filename", "Output file name where the pthash mphf will be serialized.",
+               "-p", false);
+    parser.add("bbhash_filename", "Output file name where the BBHash mphf will be serialized.",
+               "-b", false);
     parser.add("alpha",
-               "The table load factor. It must be a quantity > 0 and <= 1. (default is " + std::to_string(0.94) + ").",
-               "-a",
-               false);
-    parser.add("gamma",
-               "Load factor for BBHash (default is 1)",
-               "-g",
-               false);
-    parser.add("tmp_dirname",
-               "Temporary directory used for construction in external memory. Default is directory '" + constants::default_tmp_dirname + "'.",
-               "-d", 
-               false);
-    parser.add("threads", 
-               "Number of threads for pthash (default is 1).", 
-               "-t", 
-               false);
+               "The table load factor. It must be a quantity > 0 and <= 1. (default is " +
+                   std::to_string(0.94) + ").",
+               "-a", false);
+    parser.add("c",
+               "A (floating point) constant that trades construction speed for space effectiveness "
+               "of minimal perfect hashing. "
+               "A reasonable value lies between 3.0 and 10.0 (default is " +
+                   std::to_string(constants::c) + ").",
+               "-c", false);
+    parser.add("gamma", "Load factor for BBHash (default is 1)", "-g", false);
+    parser.add(
+        "tmp_dirname",
+        "Temporary directory used for construction in external memory. Default is directory '" +
+            constants::default_tmp_dirname + "'.",
+        "-d", false);
+    parser.add("threads", "Number of threads for pthash (default is 1).", "-t", false);
     parser.add("verbose", "Verbose output during construction.", "--verbose", true);
     parser.add("check", "Check output", "--check", true);
     if (!parser.parse()) return 1;
@@ -88,26 +85,30 @@ int main(int argc, char* argv[]) {
     // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
     other::ptbb_file_itr kmer_end;
     std::size_t check_total_kmers = 0;
-    for (; kmer_itr != kmer_end; ++kmer_itr) {
-        ++check_total_kmers;
-    }
+    for (; kmer_itr != kmer_end; ++kmer_itr) { ++check_total_kmers; }
     // kseq_destroy(itr_guts);
     // std::cerr << "\n" << total_kmers << " == " << check_total_kmers << std::endl;
     assert(total_kmers == check_total_kmers);
 
     pthash::build_configuration pt_config;
-    if (parser.parsed("threads")) pt_config.num_threads = parser.get<uint32_t>("threads");
-    else pt_config.num_threads = 1;
-    if (parser.parsed("check")) check = parser.get<bool>("check");
-    else check = false;
+    if (parser.parsed("threads"))
+        pt_config.num_threads = parser.get<uint32_t>("threads");
+    else
+        pt_config.num_threads = 1;
+    if (parser.parsed("check"))
+        check = parser.get<bool>("check");
+    else
+        check = false;
     if (parser.parsed("pthash_filename")) {
         std::string pthash_filename = parser.get<std::string>("pthash_filename");
         pt_config.minimal_output = true;
         pt_config.seed = constants::seed;
         pt_config.c = constants::c;
         pt_config.alpha = 0.94;
-        if (parser.parsed("verbose")) pt_config.verbose_output = parser.get<bool>("verbose");
-        else pt_config.verbose_output = false;
+        if (parser.parsed("verbose"))
+            pt_config.verbose_output = parser.get<bool>("verbose");
+        else
+            pt_config.verbose_output = false;
         if (parser.parsed("tmp_dirname")) {
             pt_config.tmp_dir = parser.get<std::string>("tmp_dirname");
             essentials::create_directory(pt_config.tmp_dir);
@@ -120,9 +121,10 @@ int main(int argc, char* argv[]) {
         }
         // kseq_destroy(itr_guts);
         essentials::save(kmer_order, pthash_filename.c_str());
-        
+
         assert(total_kmers == kmer_order.num_keys());
-        std::cout << "," << kmer_order.num_bits() << "," << static_cast<double>(kmer_order.num_bits()) / kmer_order.num_keys();
+        std::cout << "," << kmer_order.num_bits() << ","
+                  << static_cast<double>(kmer_order.num_bits()) / kmer_order.num_keys();
 
         if (check) {
             std::cerr << "Checking PTHash" << std::endl;
@@ -140,10 +142,11 @@ int main(int argc, char* argv[]) {
                     } else if (population.get(idx)) {
                         std::cerr << "[Error] collision" << std::endl;
                         return 2;
-                    } else population.set(idx);
+                    } else
+                        population.set(idx);
                     ++check_total_kmers;
                 }
-            } // kseq_destroy(itr_guts);
+            }  // kseq_destroy(itr_guts);
             assert(total_kmers == check_total_kmers);
             for (std::size_t i = 0; i < total_kmers; ++i) {
                 if (!population.get(i)) {
@@ -155,20 +158,25 @@ int main(int argc, char* argv[]) {
     }
     if (parser.parsed("bbhash_filename")) {
         std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
-        double gammaFactor; // lowest bit/elem is achieved with gamma=1, higher values lead to larger mphf but faster construction/query
-        if (parser.parsed("gamma")) gammaFactor = parser.get<double>("gamma");
-        else gammaFactor = 1.0;
+        double gammaFactor;  // lowest bit/elem is achieved with gamma=1, higher values lead to
+                             // larger mphf but faster construction/query
+        if (parser.parsed("gamma"))
+            gammaFactor = parser.get<double>("gamma");
+        else
+            gammaFactor = 1.0;
         if (gammaFactor < 1.0) throw std::runtime_error("BBHash gamma factor < 1");
         other::ptbb_file_itr boo_itr_begin(input_filename, k);
         other::ptbb_file_itr boo_itr_end;
         auto data_iterator = boomphf::range(boo_itr_begin, boo_itr_end);
-        boomphf::mphf<kmer_t, other::BBHasher<kmer_t>> bphf(total_kmers, data_iterator, pt_config.num_threads, gammaFactor);
-        
-        std::cout << "," << bphf.totalBitSize() << "," << static_cast<double>(bphf.totalBitSize()) / total_kmers;
+        boomphf::mphf<kmer_t, other::BBHasher<kmer_t>> bphf(total_kmers, data_iterator,
+                                                            pt_config.num_threads, gammaFactor);
+
+        std::cout << "," << bphf.totalBitSize() << ","
+                  << static_cast<double>(bphf.totalBitSize()) / total_kmers;
 
         if (check) {
             std::cerr << "Checking BBHash" << std::endl;
-            
+
             pthash::bit_vector_builder population(total_kmers);
             std::size_t check_total_kmers = 0;
             // other::BBHasher<kmer_t> bbhasher;
@@ -185,7 +193,8 @@ int main(int argc, char* argv[]) {
                     } else if (population.get(idx)) {
                         std::cerr << "[Error] collision" << std::endl;
                         return 2;
-                    } else population.set(idx);
+                    } else
+                        population.set(idx);
                     ++check_total_kmers;
                 }
             }
@@ -199,10 +208,10 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        {//
+        {  //
             std::ofstream bbh_strm(bbhash_filename, std::ios::binary);
             bphf.save(bbh_strm);
-        }//
+        }  //
     }
-   std::cout << std::endl;
+    std::cout << std::endl;
 }
