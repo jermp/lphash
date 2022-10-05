@@ -1,4 +1,39 @@
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/jermp/sshash.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jermp/sshash/context:cpp)
+LPHash
+======
+
+Unitigs extracted using bcalm2:
+
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 31 -abundance-min 1 -nb-cores 8 -out sal.k31
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 35 -abundance-min 1 -nb-cores 8 -out sal.k35
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 39 -abundance-min 1 -nb-cores 8 -out sal.k39
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 43 -abundance-min 1 -nb-cores 8 -out sal.k43
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 47 -abundance-min 1 -nb-cores 8 -out sal.k47
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 51 -abundance-min 1 -nb-cores 8 -out sal.k51
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 55 -abundance-min 1 -nb-cores 8 -out sal.k55
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 59 -abundance-min 1 -nb-cores 8 -out sal.k59
+    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 63 -abundance-min 1 -nb-cores 8 -out sal.k63
+
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 31 -abundance-min 1 -nb-cores 8 -out yeast.k31
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 35 -abundance-min 1 -nb-cores 8 -out yeast.k35
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 39 -abundance-min 1 -nb-cores 8 -out yeast.k39
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 43 -abundance-min 1 -nb-cores 8 -out yeast.k43
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 47 -abundance-min 1 -nb-cores 8 -out yeast.k47
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 51 -abundance-min 1 -nb-cores 8 -out yeast.k51
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 55 -abundance-min 1 -nb-cores 8 -out yeast.k55
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 59 -abundance-min 1 -nb-cores 8 -out yeast.k59
+    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 63 -abundance-min 1 -nb-cores 8 -out yeast.k63
+
+    ./bcalm -in ./celegans.fa.gz -kmer-size 31 -abundance-min 1 -nb-cores 16 -out celegans.k31
+    ./bcalm -in ./celegans.fa.gz -kmer-size 35 -abundance-min 1 -nb-cores 16 -out celegans.k35
+    ./bcalm -in ./celegans.fa.gz -kmer-size 39 -abundance-min 1 -nb-cores 16 -out celegans.k39
+    ./bcalm -in ./celegans.fa.gz -kmer-size 43 -abundance-min 1 -nb-cores 16 -out celegans.k43
+    ./bcalm -in ./celegans.fa.gz -kmer-size 47 -abundance-min 1 -nb-cores 16 -out celegans.k47
+    ./bcalm -in ./celegans.fa.gz -kmer-size 51 -abundance-min 1 -nb-cores 16 -out celegans.k51
+    ./bcalm -in ./celegans.fa.gz -kmer-size 55 -abundance-min 1 -nb-cores 16 -out celegans.k55
+    ./bcalm -in ./celegans.fa.gz -kmer-size 59 -abundance-min 1 -nb-cores 16 -out celegans.k59
+    ./bcalm -in ./celegans.fa.gz -kmer-size 63 -abundance-min 1 -nb-cores 16 -out celegans.k63
+
+<!-- [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/jermp/sshash.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jermp/sshash/context:cpp)
 
 
 SSHash
@@ -367,4 +402,4 @@ Author
 References
 -----
 * [1] Giulio Ermanno Pibiri. [Sparse and Skew Hashing of K-Mers](https://doi.org/10.1093/bioinformatics/btac245). Bioinformatics. 2022.
-* [2] Giulio Ermanno Pibiri. [On Weighted K-Mers Dictionaries](https://drops.dagstuhl.de/opus/volltexte/2022/17043/). International Workshop on Algorithms in Bioinformatics (WABI). 2022.
+* [2] Giulio Ermanno Pibiri. [On Weighted K-Mers Dictionaries](https://drops.dagstuhl.de/opus/volltexte/2022/17043/). International Workshop on Algorithms in Bioinformatics (WABI). 2022. -->
