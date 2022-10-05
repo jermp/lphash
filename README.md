@@ -33,6 +33,65 @@ Unitigs extracted using bcalm2:
     ./bcalm -in ./celegans.fa.gz -kmer-size 59 -abundance-min 1 -nb-cores 16 -out celegans.k59
     ./bcalm -in ./celegans.fa.gz -kmer-size 63 -abundance-min 1 -nb-cores 16 -out celegans.k63
 
+USTigs computed as follows:
+
+    ./ust -k 31 -i ~/bcalm/build/sal.k31.unitigs.fa
+    ./ust -k 35 -i ~/bcalm/build/sal.k35.unitigs.fa
+    ./ust -k 39 -i ~/bcalm/build/sal.k39.unitigs.fa
+    ./ust -k 43 -i ~/bcalm/build/sal.k43.unitigs.fa
+    ./ust -k 47 -i ~/bcalm/build/sal.k47.unitigs.fa
+    ./ust -k 51 -i ~/bcalm/build/sal.k51.unitigs.fa
+    ./ust -k 55 -i ~/bcalm/build/sal.k55.unitigs.fa
+    ./ust -k 59 -i ~/bcalm/build/sal.k59.unitigs.fa
+    ./ust -k 63 -i ~/bcalm/build/sal.k63.unitigs.fa
+    gzip sal.k31.unitigs.fa.ust.fa
+    gzip sal.k35.unitigs.fa.ust.fa
+    gzip sal.k39.unitigs.fa.ust.fa
+    gzip sal.k43.unitigs.fa.ust.fa
+    gzip sal.k47.unitigs.fa.ust.fa
+    gzip sal.k51.unitigs.fa.ust.fa
+    gzip sal.k55.unitigs.fa.ust.fa
+    gzip sal.k59.unitigs.fa.ust.fa
+    gzip sal.k63.unitigs.fa.ust.fa
+
+    ./ust -k 31 -i ~/bcalm/build/yeast.k31.unitigs.fa
+    ./ust -k 35 -i ~/bcalm/build/yeast.k35.unitigs.fa
+    ./ust -k 39 -i ~/bcalm/build/yeast.k39.unitigs.fa
+    ./ust -k 43 -i ~/bcalm/build/yeast.k43.unitigs.fa
+    ./ust -k 47 -i ~/bcalm/build/yeast.k47.unitigs.fa
+    ./ust -k 51 -i ~/bcalm/build/yeast.k51.unitigs.fa
+    ./ust -k 55 -i ~/bcalm/build/yeast.k55.unitigs.fa
+    ./ust -k 59 -i ~/bcalm/build/yeast.k59.unitigs.fa
+    ./ust -k 63 -i ~/bcalm/build/yeast.k63.unitigs.fa
+    gzip yeast.k31.unitigs.fa.ust.fa
+    gzip yeast.k35.unitigs.fa.ust.fa
+    gzip yeast.k39.unitigs.fa.ust.fa
+    gzip yeast.k43.unitigs.fa.ust.fa
+    gzip yeast.k47.unitigs.fa.ust.fa
+    gzip yeast.k51.unitigs.fa.ust.fa
+    gzip yeast.k55.unitigs.fa.ust.fa
+    gzip yeast.k59.unitigs.fa.ust.fa
+    gzip yeast.k63.unitigs.fa.ust.fa
+
+    ./ust -k 31 -i ~/bcalm/build/celegans.k31.unitigs.fa
+    ./ust -k 35 -i ~/bcalm/build/celegans.k35.unitigs.fa
+    ./ust -k 39 -i ~/bcalm/build/celegans.k39.unitigs.fa
+    ./ust -k 43 -i ~/bcalm/build/celegans.k43.unitigs.fa
+    ./ust -k 47 -i ~/bcalm/build/celegans.k47.unitigs.fa
+    ./ust -k 51 -i ~/bcalm/build/celegans.k51.unitigs.fa
+    ./ust -k 55 -i ~/bcalm/build/celegans.k55.unitigs.fa
+    ./ust -k 59 -i ~/bcalm/build/celegans.k59.unitigs.fa
+    ./ust -k 63 -i ~/bcalm/build/celegans.k63.unitigs.fa
+    gzip celegans.k31.unitigs.fa.ust.fa
+    gzip celegans.k35.unitigs.fa.ust.fa
+    gzip celegans.k39.unitigs.fa.ust.fa
+    gzip celegans.k43.unitigs.fa.ust.fa
+    gzip celegans.k47.unitigs.fa.ust.fa
+    gzip celegans.k51.unitigs.fa.ust.fa
+    gzip celegans.k55.unitigs.fa.ust.fa
+    gzip celegans.k59.unitigs.fa.ust.fa
+    gzip celegans.k63.unitigs.fa.ust.fa
+
 <!-- [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/jermp/sshash.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jermp/sshash/context:cpp)
 
 
