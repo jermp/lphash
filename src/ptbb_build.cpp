@@ -155,6 +155,8 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
+    } else {
+        std::cout << ",,";
     }
     if (parser.parsed("bbhash_filename")) {
         std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
@@ -212,6 +214,8 @@ int main(int argc, char* argv[]) {
             std::ofstream bbh_strm(bbhash_filename, std::ios::binary);
             bphf.save(bbh_strm);
         }  //
+    } else {
+        std::cout << ",,";
     }
     std::cout << std::endl;
 }

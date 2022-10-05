@@ -1,7 +1,7 @@
 #ifndef QUARTET_WTREE
 #define QUARTET_WTREE
 
-#include "../include/rs_bit_vector.hpp"
+#include "rs_bit_vector.hpp"
 
 namespace lphash {
 

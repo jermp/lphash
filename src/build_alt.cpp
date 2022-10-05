@@ -69,9 +69,8 @@ int main(int argc, char* argv[]) {
     assert(total_kmers == check_total_kmers);
 
     std::cerr << "Part 2: build MPHF\n";
-    mphf locpres_mphf(k, m, mm_seed, total_kmers, nthreads, tmp_dirname, verbose);
-    locpres_mphf.build_minimizers_mphf(minimizers);
-    auto colliding_minimizers = locpres_mphf.build_inverted_index(minimizers);
+    mphf_alt locpres_mphf(k, m, mm_seed, total_kmers, nthreads, tmp_dirname, verbose);
+    auto colliding_minimizers = locpres_mphf.build_index(minimizers);
     
     std::cerr << "Part 3: build fallback MPHF\n";
     std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
@@ -102,7 +101,7 @@ int main(int argc, char* argv[]) {
     if (check) {
         std::cerr << "Checking\n";
         if (parser.parsed("output_filename")) {
-            mphf loaded;
+            mphf_alt loaded;
             [[maybe_unused]] uint64_t num_bytes_read = essentials::load(loaded, parser.get<std::string>("output_filename").c_str());
             std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
             pthash::bit_vector_builder population(loaded.get_kmer_count());  // bitvector for checking perfection and minimality

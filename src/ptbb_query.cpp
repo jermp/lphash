@@ -112,9 +112,13 @@ int main(int argc, char* argv[]) {
     // std::cerr << "\nTotal k-mers = " << total_kmers << "\n";
     if (parser.parsed("pthash_filename")) {
         std::cout << "," << parser.get<std::string>("pthash_filename") << "," << static_cast<double>(pt_us * 1000) / pt_total_kmers;
+    } else {
+        std::cout << ",,";
     }
     if (parser.parsed("bbhash_filename")) {
         std::cout << "," << parser.get<std::string>("bbhash_filename") << "," << static_cast<double>(bb_us * 1000) / bb_total_kmers;
+    } else {
+        std::cout << ",,";
     }
     if (parser.parsed("pthash_filename") && parser.parsed("bbhash_filename")) assert(pt_total_kmers == bb_total_kmers);
     std::cout << "\n";

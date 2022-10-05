@@ -44,19 +44,6 @@ mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_o
         mphf_configuration.tmp_dir = temporary_directory;
         essentials::create_directory(temporary_directory);
     }
-
-    // pthash::build_configuration mphf_config;
-    // mphf_config.seed = constants::seed;  // my favourite seed, different from the minimizer's seed.
-    // mphf_config.c = c;
-    // mphf_config.alpha = alpha;
-    // mphf_config.minimal_output = true;
-    // mphf_config.verbose_output = verbose;
-    // mphf_config.num_threads = 1;  // std::thread::hardware_concurrency()
-    // mphf_config.ram = 2 * essentials::GB;
-    // if (tmp_dirname != "") {
-    //     mphf_config.tmp_dir = tmp_dirname;
-    //     essentials::create_directory(mphf_config.tmp_dir);
-    // }
 }
 
 void mphf::build_minimizers_mphf(std::vector<mm_triplet_t> & minimizers)
@@ -75,6 +62,14 @@ void mphf::build_minimizers_mphf(std::vector<mm_triplet_t> & minimizers)
     minimizer_order.build_in_external_memory(begin, distinct_minimizers, mphf_configuration);
 }
 
+void mphf::build_fallback_mphf(std::vector<kmer_t>& colliding_kmers) 
+{
+    std::sort(colliding_kmers.begin(), colliding_kmers.end());
+    [[maybe_unused]] auto it = std::unique(colliding_kmers.begin(), colliding_kmers.end());
+    assert(it == colliding_kmers.end());  // if false: there are some duplicates in unbucketable_kmers
+    fallback_kmer_order.build_in_external_memory(colliding_kmers.begin(), colliding_kmers.size(), mphf_configuration);
+}
+
 std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& minimizers)
 {
     auto mphf_compare = [this](mm_triplet_t const& a, mm_triplet_t const& b) {
@@ -82,15 +77,15 @@ std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& mini
     };
     std::sort(minimizers.begin(), minimizers.end(), mphf_compare);
 
+    bool duplicate = false; // fix corner case of last minimizer without a successor
     n_maximal = 0;
     quartet_wtree_builder wtb(minimizers.size());
     std::vector<uint64_t> colliding_minimizers;
     std::vector<uint64_t> right_or_collision_sizes;
     std::vector<uint64_t> left_positions;
     std::vector<uint64_t> none_positions, none_sizes;
-    for (std::size_t i = 0; i < minimizers.size(); ++i) {
-        if (minimizers[i].itself != minimizers[i + 1].itself) {  // unique minimizer?
-            if (minimizers[i].p1 == k - m) {
+    auto insert_unique_minimizer = [&](std::size_t i) {
+        if (minimizers[i].p1 == k - m) {
                 if (minimizers[i].size == k - m + 1) {
                     wtb.push_back(MAXIMAL);
                     ++n_maximal;
@@ -110,6 +105,12 @@ std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& mini
                     none_sizes.push_back(minimizers[i].size);
                 }
             }
+    };
+    if (minimizers.size() == 0) return colliding_minimizers;
+    for (std::size_t i = 0; i < minimizers.size() - 1; ++i) {
+        if (minimizers[i].itself != minimizers[i + 1].itself) {  // unique minimizer?
+            insert_unique_minimizer(i);
+            duplicate = false;
         } else {  // collision
             wtb.push_back(RIGHT_OR_COLLISION);
             colliding_minimizers.push_back(minimizers[i].itself);
@@ -118,8 +119,10 @@ std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& mini
                  j < minimizers.size() && minimizers[j].itself == minimizers[i].itself; ++j) {
                 ++i;
             }
+            duplicate = true;
         }
     }
+    if (!duplicate) insert_unique_minimizer(minimizers.size()-1);
     assert(none_positions.size() == none_sizes.size());
     if (mphf_configuration.verbose_output) {
         double maximal = static_cast<double>(n_maximal) / minimizers.size() * 100;
@@ -298,53 +301,167 @@ std::ostream& operator<< (std::ostream& out, mphf const& hf)
     return out;
 }
 
-bool check_collisions(mphf const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population)
+mphf_alt::mphf_alt() : k(0), m(0), mm_seed(0), nkmers(0), distinct_minimizers(0)
 {
-    auto hashes = hf(contig, canonical, false);
-    assert(hashes.size());
-    for (auto hash : hashes) {
-        if (hash > hf.get_kmer_count()) {
-            std::cerr << "[Error] overflow : " << hash << " > " << hf.get_kmer_count() << std::endl;
-            return false;
-        } else if (population.get(hash) == 1) {
-            std::cerr << "[Error] collision at position (hash) : " << hash << std::endl;
-            return false;
-        } else
-            population.set(hash);
+    mphf_configuration.minimal_output = true;
+    mphf_configuration.seed = constants::seed;
+    mphf_configuration.c = constants::c;
+    mphf_configuration.alpha = 0.94;
+    mphf_configuration.verbose_output = false;
+    mphf_configuration.num_threads = 0;
+    mphf_configuration.tmp_dir = "";
+};
+
+mphf_alt::mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, uint8_t nthreads, std::string temporary_directory, bool verbose) 
+    : k(klen), m(mm_size), mm_seed(seed), nkmers(total_number_of_kmers), distinct_minimizers(0)
+{
+    mphf_configuration.minimal_output = true;
+    mphf_configuration.seed = constants::seed;
+    mphf_configuration.c = constants::c;
+    mphf_configuration.alpha = 0.94;
+    mphf_configuration.verbose_output = verbose;
+    mphf_configuration.num_threads = nthreads;
+    if (temporary_directory != "") {
+        mphf_configuration.tmp_dir = temporary_directory;
+        essentials::create_directory(temporary_directory);
     }
-    return true;
 }
 
-bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population)
+std::vector<uint64_t> mphf_alt::build_index(std::vector<mm_triplet_t>& minimizers)
 {
-    bool perfect = true;
-    for (std::size_t i = 0; i < hf.get_kmer_count(); ++i) if (!population.get(i)) {
-        perfect = false;
-    }
-    if (!perfect) {
-        std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
-        return false;
-    } else 
-        std::cerr << "[Info] Everything is ok\n";
-    return perfect;
-}
-
-bool check_streaming_correctness(mphf const& hf, std::string const& contig, bool canonical)
-{
-    auto dumb_hashes = hf(contig, canonical, false);
-    auto fast_hashes = hf(contig, canonical);
-    if (dumb_hashes.size() != fast_hashes.size()) {
-        std::cerr << "[Error] different number of hashes\n";
-        return false;
-    }
-    for (std::size_t i = 0; i < dumb_hashes.size(); ++i) {
-        // std::cerr << dumb_hashes[i] << " -- " << fast_hashes[i] << "\n";
-        if (dumb_hashes[i] != fast_hashes[i]) {
-            std::cerr << "[Error] different hashes\n";
-            return false;
+    std::sort(minimizers.begin(), minimizers.end());
+    distinct_minimizers = 0;
+    for (auto it = minimizers.begin(), prev = minimizers.begin(); it != minimizers.end(); ++it) {
+        // FIXME get number of distinct minimizer -> rework pthash interface for this
+        if (prev->itself != it->itself) {
+            ++distinct_minimizers;
+            prev = it;
         }
     }
-    return true;
+    if (minimizers.size()) ++distinct_minimizers;
+    auto begin = vector_mm_triplet_to_pthash_itr_adapter(minimizers.begin(), minimizers.end());
+    minimizer_order.build_in_external_memory(begin, distinct_minimizers, mphf_configuration);
+
+    auto mphf_compare = [this](mm_triplet_t const& a, mm_triplet_t const& b) {
+        return minimizer_order(a.itself) < minimizer_order(b.itself);
+    };
+    std::sort(minimizers.begin(), minimizers.end(), mphf_compare);
+
+    std::vector<uint64_t> colliding_minimizers;
+    std::vector<uint32_t> pos;
+    std::vector<uint32_t> siz;
+    for (std::size_t i = 0; i < minimizers.size();) {
+        std::size_t j;
+        for (j = i; j < minimizers.size() && minimizers[i].itself == minimizers[j].itself; ++j) {}
+        if (j > (i + 1)) {
+            colliding_minimizers.push_back(minimizers[i].itself);
+            pos.push_back(0);
+            siz.push_back(0);
+            
+            // for (std::size_t l = i; l < j; ++l) {
+            //     minimizers[l].p1 = 0;
+            //     minimizers[l].size = 0;
+            // }
+        } else {
+        // for (; i < j; ++i) {
+            pos.push_back(minimizers[i].p1);
+            siz.push_back(minimizers[i].size);
+        }
+        i = j;
+    }
+
+    positions.encode(pos.begin(), pos.size());
+    sizes.encode(siz.begin(), siz.size());
+    return colliding_minimizers;
+}
+
+void mphf_alt::build_fallback_mphf(std::vector<kmer_t>& colliding_kmers) 
+{
+    std::sort(colliding_kmers.begin(), colliding_kmers.end());
+    [[maybe_unused]] auto it = std::unique(colliding_kmers.begin(), colliding_kmers.end());
+    assert(it == colliding_kmers.end());  // if false: there are some duplicates in unbucketable_kmers
+    fallback_kmer_order.build_in_external_memory(colliding_kmers.begin(), colliding_kmers.size(), mphf_configuration);
+}
+
+uint64_t mphf_alt::get_minimizer_L0() const noexcept 
+{
+    return distinct_minimizers;
+}
+
+uint64_t mphf_alt::get_kmer_count() const noexcept
+{
+    return nkmers;
+}
+
+uint64_t mphf_alt::num_bits() const noexcept
+{
+    auto mm_mphf_size_bits = minimizer_order.num_bits();
+    auto positions_size_bits = positions.num_bits();
+    auto sizes_size_bits = sizes.num_bits();
+    auto kmer_mphf_size_bits = fallback_kmer_order.num_bits();
+    auto total_bit_size = mm_mphf_size_bits + positions_size_bits + sizes_size_bits + kmer_mphf_size_bits + 
+        (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) + sizeof(nkmers) + sizeof(distinct_minimizers)) * 8;
+    return total_bit_size;
+}
+
+mphf_alt::mm_context_t mphf_alt::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const
+{
+    mm_context_t res;
+    auto index = minimizer_order(minimizer);
+    auto size = sizes.diff(index);
+    if (size == 0) {
+        auto a = sizes.access(sizes.size()-1);
+        auto b = fallback_kmer_order(kmer);
+        res.hval = a + b;
+        res.collision = true;
+        // std::cerr << "[fallback] sizes[-1] = " << a << ", fallback = " << b << " ";
+    } else {
+        auto a = sizes.access(index);
+        auto p1 = positions.diff(index);
+        res.hval = a + p1 - position;
+        res.collision = false;
+        // std::cerr << "[ok] prefix sum = " << a << ", p1 = " << p1 << ", current position = " << position << " ";
+    }
+    return res;
+}
+
+void mphf_alt::print_statistics() const noexcept
+{
+    auto mm_mphf_size_bits = minimizer_order.num_bits();
+    auto positions_size_bits = positions.num_bits();
+    auto sizes_size_bits = sizes.num_bits();
+    auto kmer_mphf_size_bits = fallback_kmer_order.num_bits();
+    auto total_bit_size = mm_mphf_size_bits + positions_size_bits + sizes_size_bits + kmer_mphf_size_bits + 
+        (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) + sizeof(nkmers) + sizeof(distinct_minimizers)) * 8;
+    std::cerr << "Total number of k-mers: " << nkmers << "\n";
+    std::cerr << "Minimizer MPHF size in bits : " << mm_mphf_size_bits << " ("
+              << static_cast<double>(mm_mphf_size_bits) / total_bit_size * 100 << "%)\n";
+    std::cerr << "\t = " << static_cast<double>(mm_mphf_size_bits) / minimizer_order.num_keys()
+              << " bits/minimizer\n\n";
+    std::cerr << "positions EF sequence size in bits : " << positions_size_bits << " ("
+              << static_cast<double>(positions_size_bits) / total_bit_size * 100 << "%)\n";
+    std::cerr << "\t = " << static_cast<double>(positions_size_bits) / minimizer_order.num_keys()
+              << " bits/minimizer\n\n";
+    std::cerr << "sizes EF sequence size in bits : " << sizes_size_bits << " ("
+              << static_cast<double>(sizes_size_bits) / total_bit_size * 100 << "%)\n";
+    std::cerr << "Fallback MPHF : " << kmer_mphf_size_bits << " ("
+              << static_cast<double>(kmer_mphf_size_bits) / total_bit_size * 100 << "%)\n";
+    std::cerr << "\t = " << static_cast<double>(kmer_mphf_size_bits) / fallback_kmer_order.num_keys()
+              << " bits/kmer\n\n";
+    std::cerr << "Total size in bits : " << total_bit_size << "\n";
+    std::cerr << "\tequivalent to : " << static_cast<double>(total_bit_size) / nkmers
+              << " bits/k-mer\n";
+    std::cerr << "\n";
+}
+
+std::ostream& operator<< (std::ostream& out, mphf_alt const& hf)
+{
+    out << "k = " << static_cast<uint32_t>(hf.k) << "\n";
+    out << "m = " << static_cast<uint32_t>(hf.m) << "\n";
+    out << "minimizer seed = " << hf.mm_seed << "\n";
+    out << "number of k-mers = " << hf.nkmers << "\n";
+    out << "distinct minimizers = " << hf.distinct_minimizers << "\n";
+    return out;
 }
 
 } // namespace lphash
