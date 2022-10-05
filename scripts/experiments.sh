@@ -34,9 +34,9 @@ C=5.0
 ## -----------------------------------------------------------------------------
 
 echo "// typedef kmer128_t kmer_t;\ntypedef uint64_t kmer_t;" > $COMPILE_OPTIONS
-cd BUILD_DIR
+cd $BUILD_DIR
 make -j
-cd THIS_PATH
+cd $THIS_PATH
 
 ## -----------------------------------------------------------------------------
 
@@ -91,9 +91,9 @@ done
 ## -----------------------------------------------------------------------------
 
 echo "typedef kmer128_t kmer_t;\n// typedef uint64_t kmer_t;" > $COMPILE_OPTIONS
-cd BUILD_DIR
+cd $BUILD_DIR
 make -j
-cd THIS_PATH
+cd $THIS_PATH
 
 ## -----------------------------------------------------------------------------
 
