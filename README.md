@@ -1,6 +1,10 @@
 LPHash
 ======
 
+### Datasets
+
+All datasets can be found in `/data2/DNA/lphash_datasets/` on the machine `zipottero.isti.cnr.it`.
+
 Unitigs extracted using bcalm2:
 
     ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 31 -abundance-min 1 -nb-cores 8 -out sal.k31
@@ -91,6 +95,8 @@ USTigs computed as follows:
     gzip celegans.k55.unitigs.fa.ust.fa
     gzip celegans.k59.unitigs.fa.ust.fa
     gzip celegans.k63.unitigs.fa.ust.fa
+
+
 
 <!-- [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/jermp/sshash.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/jermp/sshash/context:cpp)
 
