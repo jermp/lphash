@@ -14,11 +14,15 @@ TMP_FOLDER=$LPHASH_DIR/tmp
 
 LPBUILD=$LPHASH_DIR/build/build
 LPQUERY=$LPHASH_DIR/build/query
+LPBUILD_ALT=$LPHASH_DIR/build/build_alt
+LPQUERY_ALT=$LPHASH_DIR/build/query_alt
 PTBUILD=$LPHASH_DIR/build/ptbb_build
 PTQUERY=$LPHASH_DIR/build/ptbb_query
 
 LPBUILD_RESULTS=$LPHASH_DIR/results/lphash_build.csv
 LPQUERY_RESULTS=$LPHASH_DIR/results/lphash_query.csv
+LPBUILD_RESULTS_ALT=$LPHASH_DIR/results/lphash_build_alt.csv
+LPQUERY_RESULTS_ALT=$LPHASH_DIR/results/lphash_query_alt.csv
 PTBUILD_RESULTS=$LPHASH_DIR/results/pthash_build.csv
 PTQUERY_RESULTS=$LPHASH_DIR/results/pthash_query.csv
 
@@ -27,6 +31,40 @@ PTQUERY_RESULTS=$LPHASH_DIR/results/pthash_query.csv
 mkdir -p $MPHF_FOLDER;
 mkdir -p $RESULTS_FOLDER;
 mkdir -p $TMP_FOLDER;
+
+## -----------------------------------------------------------------------------
+
+if [ ! -f $LPBUILD_RESULTS ]
+then
+    echo "unitigs file,k,m,estimated epsilon,true epsilon,alpha,space\n" > $LPBUILD_RESULTS
+fi
+
+if [ ! -f $LPQUERY_RESULTS ]
+then
+    echo "input file,lphash file,barebone streaming time,barebone random time,full streaming time,full random time\n" > $LPQUERY_RESULTS
+fi
+
+if [ ! -f $LPBUILD_RESULTS_ALT ]
+then
+    echo "unitigs file,k,m,estimated epsilon,true epsilon,alpha,space\n" > $LPBUILD_RESULTS_ALT
+fi
+
+if [ ! -f $LPQUERY_RESULTS_ALT ]
+then
+    echo "input file,lphash (alt) file,barebone streaming time,barebone random time,full streaming time,full random time\n" > $LPQUERY_RESULTS_ALT
+fi
+
+if [ ! -f $PTBUILD_RESULTS ]
+then
+    echo "unitigs file,k,total k-mers,pthash size,pthash space,bbhash size,bbhash space\n" > $PTBUILD_RESULTS
+fi
+
+if [ ! -f $PTQUERY_RESULTS ]
+then
+    echo "input file,k,pthash file,pt time,bbhash file,bb time\n" > $PTQUERY_RESULTS
+fi
+
+## -----------------------------------------------------------------------------
 
 THREADS=4
 C=5.0
@@ -48,6 +86,8 @@ for K in 31 ; do
     PTMPHF="$MPHF_FOLDER/sal.k$K.pthash.bin"
     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 done
@@ -60,6 +100,8 @@ for K in 31 ; do
     PTMPHF="$MPHF_FOLDER/yeast.k$K.pthash.bin"
     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 done
@@ -72,6 +114,8 @@ for K in 31 ; do
     PTMPHF="$MPHF_FOLDER/celegans.k$K.pthash.bin"
     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 done
@@ -84,6 +128,8 @@ done
 #     PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+#     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+#     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 #     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
 #     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 # done
@@ -105,6 +151,8 @@ for K in 35 39 43 47 51 55 59 63 ; do
     PTMPHF="$MPHF_FOLDER/sal.k$K.pthash.bin"
     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 done
@@ -117,6 +165,8 @@ for K in 35 39 43 47 51 55 59 63 ; do
     PTMPHF="$MPHF_FOLDER/yeast.k$K.pthash.bin"
     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 done
@@ -129,6 +179,8 @@ for K in 35 39 43 47 51 55 59 63 ; do
     PTMPHF="$MPHF_FOLDER/celegans.k$K.pthash.bin"
     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 done
@@ -141,6 +193,8 @@ done
 #     PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+#     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+#     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 #     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
 #     $PTQUERY $QUERY $K -p $PTMPHF >> $PTQUERY_RESULTS
 # done
