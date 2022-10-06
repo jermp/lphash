@@ -209,6 +209,7 @@ cd $THIS_PATH
 
 # M=20
 # QUERY="$QUERY_FOLDER/cod.fasta.gz"
+QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 for K in 43 47 51 55 59 63 ; do
     for M in 24 26 28 30 ; do
         UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
