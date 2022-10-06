@@ -12,7 +12,7 @@ class ptbb_file_itr : std::forward_iterator_tag
 {
     public:
         typedef kmer_t value_type;
-        ptbb_file_itr(const ptbb_file_itr&); // we actually need it
+        ptbb_file_itr(const ptbb_file_itr&);
         ptbb_file_itr();
         ptbb_file_itr(std::string fasta_file, uint64_t kmer_len);
         ~ptbb_file_itr();
@@ -33,6 +33,7 @@ class ptbb_file_itr : std::forward_iterator_tag
         std::array<kmer_t, 2> km;
         bool hn;
         uint64_t* ref_count;
+        //std::string filename;
         friend bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b);
 };
 
@@ -41,7 +42,11 @@ bool operator!=(ptbb_file_itr const& a, ptbb_file_itr const& b);
 
 template <typename KeyType>
 struct BBHasher {
-    uint64_t operator() (const KeyType val, uint64_t seed = 1234567890) const { return hash64::hash(val, seed).first(); };
+    uint64_t operator() (const KeyType val, uint64_t seed = 1234567890) const {
+        uint64_t hval = hash64::hash(val, seed).first();
+        // std::cerr << "hval = " << hval << "\n";
+        return hval;
+    };
 };
 
 }

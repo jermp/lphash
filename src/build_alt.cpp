@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     bool canonical;
     bool check;
 
-    std::size_t total_kmers, check_total_kmers, total_minimizers, total_contigs;
+    std::size_t total_kmers, check_total_kmers, total_minimizers, total_contigs, total_colliding_minimizers, total_distinct_minimizers;
 
     cmd_line_parser::parser parser = get_build_parser(argc, argv);
     std::string input_filename = parser.get<std::string>("input_filename");
@@ -71,6 +71,8 @@ int main(int argc, char* argv[]) {
     std::cerr << "Part 2: build MPHF\n";
     mphf_alt locpres_mphf(k, m, mm_seed, total_kmers, nthreads, tmp_dirname, verbose);
     auto colliding_minimizers = locpres_mphf.build_index(minimizers);
+    total_distinct_minimizers = locpres_mphf.get_minimizer_L0();
+    total_colliding_minimizers = colliding_minimizers.size();
     
     std::cerr << "Part 3: build fallback MPHF\n";
     std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
@@ -149,6 +151,7 @@ int main(int argc, char* argv[]) {
     std::cout << input_filename << "," 
               << static_cast<uint32_t>(k) << "," 
               << static_cast<uint32_t>(m) << ","
+              << static_cast<double>(total_colliding_minimizers) / total_distinct_minimizers << ","
               << 2.0/((k-m+1) + 1) << ","
               << static_cast<double>(total_minimizers) / total_kmers << ","
               << static_cast<double>(total_contigs) / total_kmers << ","

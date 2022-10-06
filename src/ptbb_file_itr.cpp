@@ -24,6 +24,7 @@ ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len) : z(0), 
     sequence_file = seq;
     if (kseq_read(seq) < 0) hn = false;
     else {
+        if (seq->seq.l < k) base_index = seq->seq.l;
         hn = true;
         operator++();
     }
@@ -31,6 +32,7 @@ ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len) : z(0), 
     *ref_count = 1;
 }
 
+// the copy constructor just creates a new object pointing at the beginning of the input
 ptbb_file_itr::ptbb_file_itr(const ptbb_file_itr & other)
 {
     z = other.z;
@@ -50,11 +52,14 @@ ptbb_file_itr::ptbb_file_itr(const ptbb_file_itr & other)
 void ptbb_file_itr::operator++() 
 {
     kseq_t* seq = reinterpret_cast<kseq_t*>(sequence_file);
-    if (base_index >= seq->seq.l) { // load next sequence, if any
-        base_index = 0;
-        nbases_since_last_break = 0;
-        auto r = kseq_read(seq);
-        if (r < 0) hn = false;
+    while(hn && base_index >= seq->seq.l) {
+        if (base_index >= seq->seq.l) { // load next sequence, if any
+            base_index = 0;
+            nbases_since_last_break = 0;
+            auto r = kseq_read(seq);
+            if (r < 0) hn = false;
+            else if (seq->seq.l < k) base_index = seq->seq.l;
+        }
     }
     while(hn && nbases_since_last_break < k && base_index < seq->seq.l) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(seq->seq.s[base_index])];
@@ -82,6 +87,7 @@ ptbb_file_itr::~ptbb_file_itr()
             --(*ref_count);
         }
     }
+    // if (sequence_file) kseq_destroy(reinterpret_cast<kseq_t*>(sequence_file));
 }
 
 bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b)

@@ -91,24 +91,19 @@ int main(int argc, char* argv[]) {
     assert(total_kmers == check_total_kmers);
 
     pthash::build_configuration pt_config;
-    if (parser.parsed("threads"))
-        pt_config.num_threads = parser.get<uint32_t>("threads");
-    else
-        pt_config.num_threads = 1;
-    if (parser.parsed("check"))
-        check = parser.get<bool>("check");
-    else
-        check = false;
+    if (parser.parsed("threads")) pt_config.num_threads = parser.get<uint32_t>("threads");
+    else pt_config.num_threads = 1;
+    if (parser.parsed("check")) check = parser.get<bool>("check");
+    else check = false;
+    if (parser.parsed("verbose")) pt_config.verbose_output = parser.get<bool>("verbose");
+    else pt_config.verbose_output = false;
+
     if (parser.parsed("pthash_filename")) {
         std::string pthash_filename = parser.get<std::string>("pthash_filename");
         pt_config.minimal_output = true;
         pt_config.seed = constants::seed;
         pt_config.c = (parser.parsed("c")) ? parser.get<double>("c") : constants::c;
         pt_config.alpha = 0.94;
-        if (parser.parsed("verbose"))
-            pt_config.verbose_output = parser.get<bool>("verbose");
-        else
-            pt_config.verbose_output = false;
         if (parser.parsed("tmp_dirname")) {
             pt_config.tmp_dir = parser.get<std::string>("tmp_dirname");
             essentials::create_directory(pt_config.tmp_dir);
@@ -121,7 +116,6 @@ int main(int argc, char* argv[]) {
         }
         // kseq_destroy(itr_guts);
         essentials::save(kmer_order, pthash_filename.c_str());
-
         assert(total_kmers == kmer_order.num_keys());
         std::cout << "," << kmer_order.num_bits() << ","
                   << static_cast<double>(kmer_order.num_bits()) / kmer_order.num_keys();
@@ -162,17 +156,18 @@ int main(int argc, char* argv[]) {
         std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
         double gammaFactor;  // lowest bit/elem is achieved with gamma=1, higher values lead to
                              // larger mphf but faster construction/query
-        if (parser.parsed("gamma"))
-            gammaFactor = parser.get<double>("gamma");
-        else
-            gammaFactor = 1.0;
+        if (parser.parsed("gamma")) gammaFactor = parser.get<double>("gamma");
+        else gammaFactor = 1.0;
         if (gammaFactor < 1.0) throw std::runtime_error("BBHash gamma factor < 1");
+
+        std::vector<kmer_t> keys;
         other::ptbb_file_itr boo_itr_begin(input_filename, k);
         other::ptbb_file_itr boo_itr_end;
-        auto data_iterator = boomphf::range(boo_itr_begin, boo_itr_end);
-        boomphf::mphf<kmer_t, other::BBHasher<kmer_t>> bphf(total_kmers, data_iterator,
-                                                            pt_config.num_threads, gammaFactor);
-
+        for(; boo_itr_begin != boo_itr_end; ++boo_itr_begin) keys.push_back(*boo_itr_begin);
+        auto data_iterator = boomphf::range(keys.begin(), keys.end());
+        boomphf::mphf<kmer_t, other::BBHasher<kmer_t>> bphf(total_kmers, data_iterator, pt_config.num_threads, gammaFactor, true, pt_config.verbose_output, 0);
+        assert(keys.size() == total_kmers);
+        keys.reserve(0);
         std::cout << "," << bphf.totalBitSize() << ","
                   << static_cast<double>(bphf.totalBitSize()) / total_kmers;
 

@@ -280,7 +280,7 @@ namespace boomphf {
 					int min_r  = (int)(rem / 60) ;
 					rem -= min_r*60;
 
-				 fprintf(stderr, "%c[%s]  %-5.3g%%   elapsed: %3i min %-2.0f sec   remaining: %3i min %-2.0f sec",13,
+				 	fprintf(stderr, "%c[%s]  %-5.3g%%   elapsed: %3i min %-2.0f sec   remaining: %3i min %-2.0f sec",13,
 				 		message.c_str(),
 				 		100*(double)done/todo,
 				 		min_e,elapsed,min_r,rem);
@@ -1013,7 +1013,6 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 
 		uint64_t totalBitSize()
 		{
-
 			uint64_t totalsizeBitset = 0;
 			for(int ii=0; ii<_nb_levels; ii++)
 			{
@@ -1023,10 +1022,14 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 			uint64_t totalsize =  totalsizeBitset +  _final_hash.size()*42*8 ;  // unordered map takes approx 42B per elem [personal test] (42B with uint64_t key, would be larger for other type of elem)
 
 			fprintf(stderr, "Bitarray    %12llu  bits (%.2f %%)   (array + ranks )\n",
-				   totalsizeBitset, 100*(float)totalsizeBitset/totalsize);
+				   totalsizeBitset, 
+				   100*(float)totalsizeBitset/totalsize
+				   );
 			fprintf(stderr, "Last level hash  %12lu  bits (%.2f %%) (nb in last level hash %lu)\n",
-				   _final_hash.size()*42*8, 100*(float)(_final_hash.size()*42*8)/totalsize,
-				   _final_hash.size() );
+				   _final_hash.size()*42*8, 
+				   100*(float)(_final_hash.size()*42*8)/totalsize,
+				   _final_hash.size()
+				   );
 			return totalsize;
 		}
 
@@ -1148,7 +1151,10 @@ we need this 2-functors scheme because HashFunctors won't work with unordered_ma
 					}
 
 					nb_done++;
-					if((nb_done&1023) ==0  && _withprogress) {_progressBar.inc(nb_done,tid);nb_done=0; }
+					if((nb_done&1023) ==0  && _withprogress) {
+						_progressBar.inc(nb_done,tid); 
+						nb_done=0;
+					}
 
 				}
 
