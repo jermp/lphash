@@ -197,30 +197,29 @@ uint64_t mphf::num_bits() const noexcept {
 mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const {
     mm_context_t res;
     uint64_t mp_hash = minimizer_order(minimizer);
-    std::pair<MinimizerType, std::size_t> dummy = wtree.rank_of(mp_hash);
-    MinimizerType mm_type = dummy.first;
-    uint64_t mm_type_rank = dummy.second;
-    uint64_t sk_size;
-    // std::cerr << "mm hash = " << mp_hash << "\n";
+    auto [mm_type, mm_type_rank] = wtree.rank_of(mp_hash);
+
     switch (mm_type) {
         case LEFT:
             // locpres_hash = 0;  // because in the elias-fano global vector left positions are the
             // left-most block starting at the beginning locpres_hash +=
             // sizes_and_positions.access(mm_type_rank);  // number of left-KMERS before our bucket
             // locpres_hash += position;  // add local rank
-            res.global_rank =
-                sizes_and_positions.access(mm_type_rank);  // number of left-KMERS before our bucket
+            res.global_rank = sizes_and_positions.access(mm_type_rank) +
+                              (k - m + 1) * n_maximal;  // number of left-KMERS before our bucket
             res.local_rank = position;
             res.type = LEFT;
             // std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
             // std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
             // res.local_rank;
             break;
-        case RIGHT_OR_COLLISION:
-            sk_size = sizes_and_positions.diff(right_coll_sizes_start + mm_type_rank);
+        case RIGHT_OR_COLLISION: {
+            auto [val1, val2] = sizes_and_positions.pair(right_coll_sizes_start + mm_type_rank);
+            uint64_t sk_size = val2 - val1;
             if (sk_size == 0) {
-                res.global_rank = sizes_and_positions.access(
-                    none_pos_start);  // prefix sum of all sizes (sizes of collisions are 0)
+                res.global_rank =
+                    sizes_and_positions.access(none_pos_start) +
+                    (k - m + 1) * n_maximal;  // prefix sum of all sizes (sizes of collisions are 0)
                 res.local_rank = fallback_kmer_order(kmer);
                 res.type = NONE + 1;
                 // std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " <<
@@ -228,15 +227,14 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
             } else {
                 // locpres_hash = sizes_and_positions.access(right_coll_sizes_start + mm_type_rank);
                 // // global shift locpres_hash += k - m - p;  // local shift
-                res.global_rank = sizes_and_positions.access(right_coll_sizes_start +
-                                                             mm_type_rank);  // global shift
-                res.local_rank = k - m - position;                           // local shift
-                res.type = RIGHT_OR_COLLISION;  // in this case it is only RIGHT
+                res.global_rank = val1 + (k - m + 1) * n_maximal;  // global shift
+                res.local_rank = k - m - position;                 // local shift
+                res.type = RIGHT_OR_COLLISION;                     // in this case it is only RIGHT
                 // std::cerr << "[RIGHT] rank = " << right_coll_sizes_start + mm_type_rank << ", ";
                 // std::cerr << "global shift = " << res.global_rank << ", ";
                 // std::cerr << "local shift = " << res.local_rank;
             }
-            break;
+        } break;
         case MAXIMAL:  // easy case
             // locpres_hash = (k - m + 1) * mm_type_rank + position;  // all maximal k-mer hashes
             // are < than those of all the other types
@@ -247,37 +245,27 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
             // std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
             // res.local_rank;
             break;
-        case NONE:
+        case NONE: {
             // locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  //
             // prefix sum of sizes locpres_hash += sk_size - position;  // position in the first
             // k-mer - actual position = local shift
-            res.global_rank =
-                sizes_and_positions.access(none_sizes_start + mm_type_rank);  // prefix sum of sizes
-            sk_size = sizes_and_positions.diff(none_pos_start + mm_type_rank);  // p1 actually
+            res.global_rank = sizes_and_positions.access(none_sizes_start + mm_type_rank) +
+                              (k - m + 1) * n_maximal;
+            uint64_t sk_size =
+                sizes_and_positions.diff(none_pos_start + mm_type_rank);  // p1 actually
             res.local_rank = sk_size - position;
             res.type = NONE;
             // std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " <<
             // none_sizes_start << " + " << mm_type_rank << ", "; std::cerr << "global rank = " <<
             // res.global_rank << ", "; std::cerr << "local shift = " << res.local_rank << ", p1 = "
             // << sk_size << ", p = " << position;
-            break;
+        } break;
         default:
             throw std::runtime_error("Unrecognized minimizer type");
     }
-    if (mm_type != MAXIMAL) {
-        // locpres_hash += (k - m + 1) * n_maximal;  // shift of the maximal k-mers
-        res.global_rank += (k - m + 1) * n_maximal;  // shift of the maximal k-mers
-    }
+
     res.hval = res.global_rank + res.local_rank;
-    // if (false) {
-    //     std::cerr << ", ";
-    //     std::string explicit_kmer(contig, i, k);
-    //     std::cerr << explicit_kmer << ", ";
-    //     std::cerr << kmer << ", ";
-    //     std::cerr << "minimizer = " << mm << ", ";
-    //     std::cerr << "mm pos = " << p << ", ";
-    //     std::cerr << "hash = " << locpres_hash << "\n";
-    // }
+
     return res;
 }
 
