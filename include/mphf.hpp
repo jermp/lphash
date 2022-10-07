@@ -1,14 +1,17 @@
 #pragma once
 
 #include "../include/constants.hpp"
+#include "ef_sequence.hpp"
 #include "quartet_wtree.hpp"
 #include "mm_context.hpp"
 
 namespace lphash {
 
 template <typename MPHFType>
-bool check_collisions(MPHFType const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population)
-{   // Note fast and dumb hashes are compared in check_streaming_correctenss
+bool check_collisions(
+    MPHFType const& hf, std::string const& contig, bool canonical,
+    pthash::bit_vector_builder&
+        population) {  // Note fast and dumb hashes are compared in check_streaming_correctenss
     auto hashes = hf(contig, canonical, false);
     for (auto hash : hashes) {
         if (hash > hf.get_kmer_count()) {
@@ -24,33 +27,32 @@ bool check_collisions(MPHFType const& hf, std::string const& contig, bool canoni
 }
 
 template <typename MPHFType>
-bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population)
-{
+bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population) {
     bool perfect = true;
-    for (std::size_t i = 0; i < hf.get_kmer_count(); ++i) if (!population.get(i)) {
-        perfect = false;
-    }
+    for (std::size_t i = 0; i < hf.get_kmer_count(); ++i)
+        if (!population.get(i)) { perfect = false; }
     if (!perfect) {
         std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
         return false;
-    } else 
+    } else
         std::cerr << "[Info] Everything is ok\n";
     return perfect;
 }
 
 template <typename MPHFType>
-bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, bool canonical)
-{
+bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, bool canonical) {
     auto dumb_hashes = hf(contig, canonical, false);
     auto fast_hashes = hf(contig, canonical);
     if (dumb_hashes.size() != fast_hashes.size()) {
-        std::cerr << "[Error] different number of hashes, maybe there were some Ns in the input (not supported as of now)\n";
+        std::cerr << "[Error] different number of hashes, maybe there were some Ns in the input "
+                     "(not supported as of now)\n";
         return false;
     }
     for (std::size_t i = 0; i < dumb_hashes.size(); ++i) {
         // std::cerr << dumb_hashes[i] << " -- " << fast_hashes[i] << "\n";
         if (dumb_hashes[i] != fast_hashes[i]) {
-            std::cerr << "[Error] different hashes, maybe there were some Ns in the input (not supported as of now)\n";
+            std::cerr << "[Error] different hashes, maybe there were some Ns in the input (not "
+                         "supported as of now)\n";
             return false;
         }
     }
@@ -70,16 +72,19 @@ public:
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
+                                     bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
+                                     bool dummy) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length,
+                                      bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
 
@@ -89,18 +94,19 @@ public:
     void visit(Visitor& visitor);
 
     friend std::ostream& operator<<(std::ostream& os, const mphf& obj);
-    
+
 private:
     pthash::build_configuration mphf_configuration;
     uint8_t k, m;
     uint64_t mm_seed;
     uint64_t nkmers;
     uint64_t distinct_minimizers;
-    uint64_t n_maximal, right_coll_sizes_start, none_sizes_start, none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
+    uint64_t n_maximal, right_coll_sizes_start, none_sizes_start,
+        none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
     pthash_mphf_t minimizer_order;
     pthash_mphf_t fallback_kmer_order;
     quartet_wtree wtree;
-    pthash::ef_sequence<true> sizes_and_positions;
+    ef_sequence<true> sizes_and_positions;
 
     struct mm_context_t {
         uint64_t hval;
@@ -112,7 +118,8 @@ private:
 };
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const {
+std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length,
+                                       [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     std::vector<uint64_t> res;
     if (length < k) return res;
@@ -225,12 +232,14 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
-{
+std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length,
+                                       [[maybe_unused]] bool canonical_m_mers,
+                                       [[maybe_unused]] bool dummy) const {
     std::vector<uint64_t> res;
     for (std::size_t i = 0; i < length - k + 1; ++i) {
         auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
-        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        debug::triplet_t triplet =
+            debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
         uint64_t p = triplet.third;
         auto ctx = query(kmer, mm, p);
@@ -240,19 +249,21 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers) const
-{
+std::vector<uint64_t> mphf::operator()(std::string const& contig,
+                                       [[maybe_unused]] bool canonical_m_mers) const {
     return operator()<MinimizerHasher>(contig.c_str(), contig.length(), canonical_m_mers);
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
-{
+std::vector<uint64_t> mphf::operator()(std::string const& contig,
+                                       [[maybe_unused]] bool canonical_m_mers,
+                                       [[maybe_unused]] bool dummy) const {
     return operator()<MinimizerHasher>(contig.c_str(), contig.length(), canonical_m_mers, dummy);
 }
 
 template <typename MinimizerHasher>
-uint64_t mphf::barebone_streaming_query(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const {
+uint64_t mphf::barebone_streaming_query(const char* contig, std::size_t length,
+                                        [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     uint64_t res = 0;
     if (length < k) return res;
@@ -364,12 +375,13 @@ uint64_t mphf::barebone_streaming_query(const char* contig, std::size_t length, 
 }
 
 template <typename MinimizerHasher>
-uint64_t mphf::barebone_dumb_query(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const
-{
+uint64_t mphf::barebone_dumb_query(const char* contig, std::size_t length,
+                                   [[maybe_unused]] bool canonical_m_mers) const {
     uint64_t res = 0;
     for (std::size_t i = 0; i < length - k + 1; ++i) {
         auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
-        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        debug::triplet_t triplet =
+            debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
         uint64_t p = triplet.third;
         [[maybe_unused]] auto ctx = query(kmer, mm, p);
@@ -397,14 +409,16 @@ void mphf::visit(Visitor& visitor) {
     visitor.visit(fallback_kmer_order);
 }
 
-// bool check_collisions(mphf const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population);
-// bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population);
-// bool check_streaming_correctness(mphf const& hf, std::string const& contig, bool canonical);
+// bool check_collisions(mphf const& hf, std::string const& contig, bool canonical,
+// pthash::bit_vector_builder& population); bool check_perfection(mphf const& hf,
+// pthash::bit_vector_builder& population); bool check_streaming_correctness(mphf const& hf,
+// std::string const& contig, bool canonical);
 
 class mphf_alt {
 public:
     mphf_alt();
-    mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, uint8_t nthreads, std::string temporary_directory = "", bool verbose = false);
+    mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers,
+             uint8_t nthreads, std::string temporary_directory = "", bool verbose = false);
     std::vector<uint64_t> build_index(std::vector<mm_triplet_t>& minimizers);
     void build_fallback_mphf(std::vector<kmer_t>& colliding_kmers);
     uint64_t get_minimizer_L0() const noexcept;
@@ -412,16 +426,19 @@ public:
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
+                                     bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
+                                     bool dummy) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length,
+                                      bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
 
@@ -438,9 +455,10 @@ private:
     uint64_t mm_seed;
     uint64_t nkmers;
     uint64_t distinct_minimizers;
+    uint64_t num_kmers_in_main_index;
     pthash_mphf_t minimizer_order;
-    pthash::ef_sequence<true> positions;
-    pthash::ef_sequence<true> sizes;
+    ef_sequence<true> positions;
+    ef_sequence<true> sizes;
     pthash_mphf_t fallback_kmer_order;
 
     struct mm_context_t {
@@ -451,8 +469,8 @@ private:
 };
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const
-{
+std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t length,
+                                           [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     std::vector<uint64_t> res;
     if (length < k) return res;
@@ -485,9 +503,11 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
                 mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
                 mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; /* reverse m-mer */
                 km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
-                km[1] = (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
+                km[1] =
+                    (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
                 if (canonical_m_mers && mm[0] != mm[1])
-                    z = mm[0] < mm[1] ? 0 : 1;  // strand, if symmetric k-mer then use previous strand
+                    z = mm[0] < mm[1] ? 0
+                                      : 1;  // strand, if symmetric k-mer then use previous strand
                 ++nbases_since_last_break;
                 if (nbases_since_last_break >= m) {
                     current.itself = mm[z];
@@ -508,8 +528,11 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
                     switch (find_brand_new_min) {
                         case 0: {
                             if (nbases_since_last_break >= k) {
-                                if (mm_ctx.collision) mm_ctx.hval = fallback_kmer_order(km[z]) + sizes.access(sizes.size()-1); // collision
-                                else ++mm_ctx.hval;
+                                if (mm_ctx.collision)
+                                    mm_ctx.hval = fallback_kmer_order(km[z]) +
+                                                  sizes.access(sizes.size() - 1);  // collision
+                                else
+                                    ++mm_ctx.hval;
                                 res.push_back(mm_ctx.hval);
                             }
                         } break;
@@ -556,12 +579,14 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
-{
+std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t length,
+                                           [[maybe_unused]] bool canonical_m_mers,
+                                           [[maybe_unused]] bool dummy) const {
     std::vector<uint64_t> res;
     for (std::size_t i = 0; i < length - k + 1; ++i) {
         auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
-        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        debug::triplet_t triplet =
+            debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
         uint64_t p = triplet.third;
         auto ctx = query(kmer, mm, p);
@@ -572,20 +597,21 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf_alt::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers) const
-{
+std::vector<uint64_t> mphf_alt::operator()(std::string const& contig,
+                                           [[maybe_unused]] bool canonical_m_mers) const {
     return operator()<MinimizerHasher>(contig.c_str(), contig.length(), canonical_m_mers);
 }
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf_alt::operator()(std::string const& contig, [[maybe_unused]] bool canonical_m_mers, [[maybe_unused]] bool dummy) const
-{
+std::vector<uint64_t> mphf_alt::operator()(std::string const& contig,
+                                           [[maybe_unused]] bool canonical_m_mers,
+                                           [[maybe_unused]] bool dummy) const {
     return operator()<MinimizerHasher>(contig.c_str(), contig.length(), canonical_m_mers, dummy);
 }
 
 template <typename MinimizerHasher>
-uint64_t mphf_alt::barebone_streaming_query(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const
-{
+uint64_t mphf_alt::barebone_streaming_query(const char* contig, std::size_t length,
+                                            [[maybe_unused]] bool canonical_m_mers) const {
     using namespace minimizer;
     uint64_t res = 0;
     if (length < k) return res;
@@ -617,9 +643,11 @@ uint64_t mphf_alt::barebone_streaming_query(const char* contig, std::size_t leng
                 mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
                 mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; /* reverse m-mer */
                 km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
-                km[1] = (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
+                km[1] =
+                    (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
                 if (canonical_m_mers && mm[0] != mm[1])
-                    z = mm[0] < mm[1] ? 0 : 1;  // strand, if symmetric k-mer then use previous strand
+                    z = mm[0] < mm[1] ? 0
+                                      : 1;  // strand, if symmetric k-mer then use previous strand
                 ++nbases_since_last_break;
                 if (nbases_since_last_break >= m) {
                     current.itself = mm[z];
@@ -640,8 +668,11 @@ uint64_t mphf_alt::barebone_streaming_query(const char* contig, std::size_t leng
                     switch (find_brand_new_min) {
                         case 0: {
                             if (nbases_since_last_break >= k) {
-                                if (mm_ctx.collision) mm_ctx.hval = fallback_kmer_order(km[z]) + sizes.access(sizes.size()-1); // collision
-                                else ++mm_ctx.hval;
+                                if (mm_ctx.collision)
+                                    mm_ctx.hval = fallback_kmer_order(km[z]) +
+                                                  sizes.access(sizes.size() - 1);  // collision
+                                else
+                                    ++mm_ctx.hval;
                                 ++res;
                             }
                         } break;
@@ -688,12 +719,13 @@ uint64_t mphf_alt::barebone_streaming_query(const char* contig, std::size_t leng
 }
 
 template <typename MinimizerHasher>
-uint64_t mphf_alt::barebone_dumb_query(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const
-{
+uint64_t mphf_alt::barebone_dumb_query(const char* contig, std::size_t length,
+                                       [[maybe_unused]] bool canonical_m_mers) const {
     uint64_t res = 0;
     for (std::size_t i = 0; i < length - k + 1; ++i) {
         auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
-        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        debug::triplet_t triplet =
+            debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
         uint64_t p = triplet.third;
         [[maybe_unused]] auto ctx = query(kmer, mm, p);
@@ -709,6 +741,7 @@ void mphf_alt::visit(Visitor& visitor) {
     visitor.visit(mm_seed);
     visitor.visit(nkmers);
     visitor.visit(distinct_minimizers);
+    visitor.visit(num_kmers_in_main_index);
     visitor.visit(minimizer_order);
     visitor.visit(positions);
     visitor.visit(sizes);
