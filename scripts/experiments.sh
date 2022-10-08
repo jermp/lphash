@@ -207,11 +207,29 @@ cd $THIS_PATH
 #     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
 
+M=24
+# QUERY="$QUERY_FOLDER/kestrel.fasta.gz"
+QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
+for K in 43 47 51 55 59 63 ; do
+    UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
+    LPMPHF="$MPHF_FOLDER/kestrel.k$K.m$M.lphash.bin"
+    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
+    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+done
+
+K=63
+PTMPHF="$MPHF_FOLDER/kestrel.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/kestrel.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+
 # M=20
 # QUERY="$QUERY_FOLDER/cod.fasta.gz"
 QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 for K in 43 47 51 55 59 63 ; do
-    for M in 24 26 28 30 ; do
+    for M in 20 21 22 23 25 ; do
         UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
         $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
@@ -221,11 +239,11 @@ for K in 43 47 51 55 59 63 ; do
     done
 done
 
-K=63
-PTMPHF="$MPHF_FOLDER/cod.k$K.pthash.bin"
-BBMPHF="$MPHF_FOLDER/cod.k$K.bbhash.bin"
-$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
-$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+# K=63
+# PTMPHF="$MPHF_FOLDER/cod.k$K.pthash.bin"
+# BBMPHF="$MPHF_FOLDER/cod.k$K.bbhash.bin"
+# $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c 4.0 >> $PTBUILD_RESULTS
+# $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=27
 # # QUERY="$QUERY_FOLDER/human.fasta.gz"
