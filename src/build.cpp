@@ -7,7 +7,7 @@ extern "C" {
 #include "minimizer.hpp"
 #include "../include/mphf.hpp"
 
-#include "../include/prettyprint.hpp"
+// #include "../include/prettyprint.hpp"
 
 using namespace lphash;
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, canonical, minimizers);  // not canonical minimizers for now
+        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, canonical, minimizers);  // non-canonical minimizers for now
         total_kmers += n;
         ++total_contigs;
         check_total_kmers += contig.length() - k + 1;
@@ -79,14 +79,13 @@ int main(int argc, char* argv[]) {
     std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
     { // garbage collector for unbucketable_kmers
         std::vector<kmer_t> unbucketable_kmers;
-        // unbucketable_kmers.reserve(total_kmers);  // worst case scenario
-        if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input file in order to find ambiguous minimizers and their k-mers
+        if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
             std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
             return 2;
         }
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
-            std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
+            std::string contig = std::string(seq->seq.s);
             minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, canonical, colliding_minimizers, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
@@ -108,34 +107,32 @@ int main(int argc, char* argv[]) {
             [[maybe_unused]] uint64_t num_bytes_read = essentials::load(loaded, parser.get<std::string>("output_filename").c_str());
             std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
             pthash::bit_vector_builder population(loaded.get_kmer_count());  // bitvector for checking perfection and minimality
-            if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
+            if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
                 std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
                 return 2;
             }
             seq = kseq_init(fp);
             while (check && kseq_read(seq) >= 0) 
             {
-                std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
+                std::string contig = std::string(seq->seq.s);
                 check = check_collisions(loaded, contig, canonical, population);
                 if (check) check = check_streaming_correctness(loaded, contig, canonical);
-                // std::cerr << std::endl;
             }
             if (seq) kseq_destroy(seq);
             gzclose(fp);
             check = check && check_perfection(loaded, population);
         } else {
-            pthash::bit_vector_builder population(locpres_mphf.get_kmer_count());  // bitvector for checking perfection and minimality
-            if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {  // reopen input stream once again
+            pthash::bit_vector_builder population(locpres_mphf.get_kmer_count());
+            if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
                 std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
                 return 2;
             }
             seq = kseq_init(fp);
             while (check && kseq_read(seq) >= 0) 
             {
-                std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
+                std::string contig = std::string(seq->seq.s);
                 check = check_collisions(locpres_mphf, contig, canonical, population);
                 if (check) check = check_streaming_correctness(locpres_mphf, contig, canonical);
-                // std::cerr << std::endl;
             }
             if (seq) kseq_destroy(seq);
             gzclose(fp);

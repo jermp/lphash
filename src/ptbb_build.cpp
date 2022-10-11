@@ -34,21 +34,17 @@ int main(int argc, char* argv[]) {
     parser.add("bbhash_filename", "Output file name where the BBHash mphf will be serialized.",
                "-b", false);
     parser.add("alpha",
-               "The table load factor. It must be a quantity > 0 and <= 1. (default is " +
-                   std::to_string(0.94) + ").",
+               "The table load factor. It must be a quantity > 0 and <= 1. (default is " + std::to_string(0.94) + ").",
                "-a", false);
     parser.add("c",
                "A (floating point) constant that trades construction speed for space effectiveness "
                "of minimal perfect hashing. "
-               "A reasonable value lies between 3.0 and 10.0 (default is " +
-                   std::to_string(constants::c) + ").",
+               "A reasonable value lies between 3.0 and 10.0 (default is " + std::to_string(constants::c) + ").",
                "-c", false);
     parser.add("gamma", "Load factor for BBHash (default is 1)", "-g", false);
-    parser.add(
-        "tmp_dirname",
-        "Temporary directory used for construction in external memory. Default is directory '" +
-            constants::default_tmp_dirname + "'.",
-        "-d", false);
+    parser.add("tmp_dirname",
+               "Temporary directory used for construction in external memory. Default is directory '" + constants::default_tmp_dirname + "'.",
+               "-d", false);
     parser.add("threads", "Number of threads for pthash (default is 1).", "-t", false);
     parser.add("verbose", "Verbose output during construction.", "--verbose", true);
     parser.add("check", "Check output", "--check", true);
@@ -65,7 +61,7 @@ int main(int argc, char* argv[]) {
     total_kmers = 0;
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
-        std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
+        std::string contig = std::string(seq->seq.s);
         std::size_t nbases_since_last_break = 0;
         for (std::size_t i = 0; i < contig.size(); ++i) {
             c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
@@ -82,12 +78,9 @@ int main(int argc, char* argv[]) {
     std::cout << input_filename << "," << k << "," << total_kmers;
 
     other::ptbb_file_itr kmer_itr(input_filename, k);
-    // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
     other::ptbb_file_itr kmer_end;
     std::size_t check_total_kmers = 0;
     for (; kmer_itr != kmer_end; ++kmer_itr) { ++check_total_kmers; }
-    // kseq_destroy(itr_guts);
-    // std::cerr << "\n" << total_kmers << " == " << check_total_kmers << std::endl;
     assert(total_kmers == check_total_kmers);
 
     pthash::build_configuration pt_config;
@@ -111,10 +104,8 @@ int main(int argc, char* argv[]) {
         pthash_mphf_t kmer_order;
         {
             other::ptbb_file_itr kmer_itr(input_filename, k);
-            // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
             kmer_order.build_in_external_memory(kmer_itr, total_kmers, pt_config);
         }
-        // kseq_destroy(itr_guts);
         essentials::save(kmer_order, pthash_filename.c_str());
         assert(total_kmers == kmer_order.num_keys());
         std::cout << "," << kmer_order.num_bits() << ","
@@ -126,7 +117,6 @@ int main(int argc, char* argv[]) {
             std::size_t check_total_kmers = 0;
             {
                 other::ptbb_file_itr kmer_itr(input_filename, k);
-                // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
                 other::ptbb_file_itr kmer_end;
                 for (; kmer_itr != kmer_end; ++kmer_itr) {
                     auto idx = kmer_order(*kmer_itr);
@@ -140,7 +130,7 @@ int main(int argc, char* argv[]) {
                         population.set(idx);
                     ++check_total_kmers;
                 }
-            }  // kseq_destroy(itr_guts);
+            }
             assert(total_kmers == check_total_kmers);
             for (std::size_t i = 0; i < total_kmers; ++i) {
                 if (!population.get(i)) {
@@ -154,8 +144,7 @@ int main(int argc, char* argv[]) {
     }
     if (parser.parsed("bbhash_filename")) {
         std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
-        double gammaFactor;  // lowest bit/elem is achieved with gamma=1, higher values lead to
-                             // larger mphf but faster construction/query
+        double gammaFactor;
         if (parser.parsed("gamma")) gammaFactor = parser.get<double>("gamma");
         else gammaFactor = 1.0;
         if (gammaFactor < 1.0) throw std::runtime_error("BBHash gamma factor < 1");
@@ -176,13 +165,10 @@ int main(int argc, char* argv[]) {
 
             pthash::bit_vector_builder population(total_kmers);
             std::size_t check_total_kmers = 0;
-            // other::BBHasher<kmer_t> bbhasher;
             {
                 other::ptbb_file_itr kmer_itr(input_filename, k);
-                // kseq_t* itr_guts = reinterpret_cast<kseq_t*>(kmer_itr.memory_management());
                 other::ptbb_file_itr kmer_end;
                 for (; kmer_itr != kmer_end; ++kmer_itr) {
-                    // std::cerr << "Hash = " << bbhasher(*kmer_itr) << std::endl;
                     auto idx = bphf.lookup(*kmer_itr);
                     if (idx >= total_kmers) {
                         std::cerr << "[Error] out of bounds: " << idx << std::endl;
@@ -195,7 +181,6 @@ int main(int argc, char* argv[]) {
                     ++check_total_kmers;
                 }
             }
-            // kseq_destroy(itr_guts);
             assert(total_kmers == check_total_kmers);
             for (std::size_t i = 0; i < total_kmers; ++i) {
                 if (!population.get(i)) {

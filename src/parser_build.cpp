@@ -20,15 +20,6 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
                "Seed for minimizer computation (default is 42).", 
                "-s",
                false);
-    // parser.add("c",
-    //            "A (floating point) constant that trades construction speed for space effectiveness of minimal perfect hashing. "
-    //            "A reasonable value lies between 3.0 and 10.0 (default is " + std::to_string(constants::c) + ").",
-    //            "-c", 
-    //            false);
-    // parser.add("a", 
-    //            "(default is 0.94 ).", 
-    //            "-a", 
-    //            false);
     parser.add("threads", 
                "Number of threads for pthash (default is 1).", 
                "-t", 
@@ -51,7 +42,6 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
     //            "--canonical-parsing", 
     //            true);
     parser.add("check", "Check correctness after construction.", "--check", true);
-    // parser.add("bench", "Run benchmark after construction.", "--bench", true);
     parser.add("verbose", "Verbose output during construction.", "--verbose", true);
 
     if (!parser.parse()) throw ParseError();

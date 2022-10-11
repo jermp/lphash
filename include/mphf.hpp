@@ -8,10 +8,8 @@
 namespace lphash {
 
 template <typename MPHFType>
-bool check_collisions(
-    MPHFType const& hf, std::string const& contig, bool canonical,
-    pthash::bit_vector_builder&
-        population) {  // Note fast and dumb hashes are compared in check_streaming_correctenss
+bool check_collisions(MPHFType const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population) 
+{  // Note fast and dumb hashes are compared in check_streaming_correctness
     auto hashes = hf(contig, canonical, false);
     for (auto hash : hashes) {
         if (hash > hf.get_kmer_count()) {
@@ -27,7 +25,8 @@ bool check_collisions(
 }
 
 template <typename MPHFType>
-bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population) {
+bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population) 
+{
     bool perfect = true;
     for (std::size_t i = 0; i < hf.get_kmer_count(); ++i)
         if (!population.get(i)) { perfect = false; }
@@ -40,7 +39,8 @@ bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population
 }
 
 template <typename MPHFType>
-bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, bool canonical) {
+bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, bool canonical) 
+{
     auto dumb_hashes = hf(contig, canonical, false);
     auto fast_hashes = hf(contig, canonical);
     if (dumb_hashes.size() != fast_hashes.size()) {
@@ -49,7 +49,6 @@ bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, 
         return false;
     }
     for (std::size_t i = 0; i < dumb_hashes.size(); ++i) {
-        // std::cerr << dumb_hashes[i] << " -- " << fast_hashes[i] << "\n";
         if (dumb_hashes[i] != fast_hashes[i]) {
             std::cerr << "[Error] different hashes, maybe there were some Ns in the input (not "
                          "supported as of now)\n";
@@ -59,7 +58,8 @@ bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, 
     return true;
 }
 
-class mphf {
+class mphf 
+{
 public:
     mphf();
     mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers,
@@ -101,8 +101,7 @@ private:
     uint64_t mm_seed;
     uint64_t nkmers;
     uint64_t distinct_minimizers;
-    uint64_t n_maximal, right_coll_sizes_start, none_sizes_start,
-        none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
+    uint64_t n_maximal, right_coll_sizes_start, none_sizes_start, none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
     pthash_mphf_t minimizer_order;
     pthash_mphf_t fallback_kmer_order;
     quartet_wtree wtree;
@@ -118,8 +117,8 @@ private:
 };
 
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length,
-                                       [[maybe_unused]] bool canonical_m_mers) const {
+std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, [[maybe_unused]] bool canonical_m_mers) const 
+{
     using namespace minimizer;
     std::vector<uint64_t> res;
     if (length < k) return res;
@@ -155,8 +154,7 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length,
                 km[1] =
                     (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
                 if (canonical_m_mers && mm[0] != mm[1])
-                    z = mm[0] < mm[1] ? 0
-                                      : 1;  // strand, if symmetric k-mer then use previous strand
+                    z = mm[0] < mm[1] ? 0 : 1;  // strand, if symmetric k-mer then use previous strand
                 ++nbases_since_last_break;
                 if (nbases_since_last_break >= m) {
                     current.itself = mm[z];
@@ -366,7 +364,6 @@ uint64_t mphf::barebone_streaming_query(const char* contig, std::size_t length,
                 }
             }
         else {
-            // std::cerr << "reset\n";
             nbases_since_last_break = 0;
             buf_pos = 0;
         }
@@ -393,7 +390,6 @@ uint64_t mphf::barebone_dumb_query(const char* contig, std::size_t length,
 
 template <typename Visitor>
 void mphf::visit(Visitor& visitor) {
-    // visitor.visit(mphf_configuration);
     visitor.visit(k);
     visitor.visit(m);
     visitor.visit(mm_seed);
@@ -409,10 +405,9 @@ void mphf::visit(Visitor& visitor) {
     visitor.visit(fallback_kmer_order);
 }
 
-// bool check_collisions(mphf const& hf, std::string const& contig, bool canonical,
-// pthash::bit_vector_builder& population); bool check_perfection(mphf const& hf,
-// pthash::bit_vector_builder& population); bool check_streaming_correctness(mphf const& hf,
-// std::string const& contig, bool canonical);
+// bool check_collisions(mphf const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population); 
+// bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population); 
+// bool check_streaming_correctness(mphf const& hf, std::string const& contig, bool canonical);
 
 class mphf_alt {
 public:

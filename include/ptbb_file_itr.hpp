@@ -44,7 +44,6 @@ template <typename KeyType>
 struct BBHasher {
     uint64_t operator() (const KeyType val, uint64_t seed = 1234567890) const {
         uint64_t hval = hash64::hash(val, seed).first();
-        // std::cerr << "hval = " << hval << "\n";
         return hval;
     };
 };

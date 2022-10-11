@@ -1,6 +1,6 @@
 #include "../include/mphf.hpp"
 
-#include "../include/prettyprint.hpp"
+// #include "../include/prettyprint.hpp"
 
 namespace lphash {
 
@@ -10,7 +10,10 @@ public:
     vector_mm_triplet_to_pthash_itr_adapter(std::vector<mm_triplet_t>::iterator begin,
                                             std::vector<mm_triplet_t>::iterator end)
         : begin(begin), end(end), current(begin){};
-    inline uint64_t operator*() const { return current->itself; };
+    
+    inline uint64_t operator*() const { 
+        return current->itself; 
+    };
     inline void operator++() {
         uint64_t prev_mm = current->itself;
         while (current != end && current->itself == prev_mm) { ++current; }
@@ -66,7 +69,6 @@ void mphf::build_minimizers_mphf(std::vector<mm_triplet_t>& minimizers) {
     std::sort(minimizers.begin(), minimizers.end());
     distinct_minimizers = 0;
     for (auto it = minimizers.begin(), prev = minimizers.begin(); it != minimizers.end(); ++it) {
-        // FIXME get number of distinct minimizer -> rework pthash interface for this
         if (prev->itself != it->itself) {
             ++distinct_minimizers;
             prev = it;
@@ -78,12 +80,12 @@ void mphf::build_minimizers_mphf(std::vector<mm_triplet_t>& minimizers) {
 }
 
 void mphf::build_fallback_mphf(std::vector<kmer_t>& colliding_kmers) {
+#ifndef NDEBUG
     std::sort(colliding_kmers.begin(), colliding_kmers.end());
     [[maybe_unused]] auto it = std::unique(colliding_kmers.begin(), colliding_kmers.end());
-    assert(it ==
-           colliding_kmers.end());  // if false: there are some duplicates in unbucketable_kmers
-    fallback_kmer_order.build_in_external_memory(colliding_kmers.begin(), colliding_kmers.size(),
-                                                 mphf_configuration);
+    assert(it == colliding_kmers.end());  // if false: there are some duplicates in unbucketable_kmers
+#endif
+    fallback_kmer_order.build_in_external_memory(colliding_kmers.begin(), colliding_kmers.size(), mphf_configuration);
 }
 
 std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& minimizers) {
@@ -92,7 +94,7 @@ std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& mini
     };
     std::sort(minimizers.begin(), minimizers.end(), mphf_compare);
 
-    bool duplicate = false;  // fix corner case of last minimizer without a successor
+    bool duplicate = false;  // this takes care of the last minimizer in the array
     n_maximal = 0;
     quartet_wtree_builder wtb(minimizers.size());
     std::vector<uint64_t> colliding_minimizers;
@@ -140,13 +142,16 @@ std::vector<uint64_t> mphf::build_inverted_index(std::vector<mm_triplet_t>& mini
     if (!duplicate) insert_unique_minimizer(minimizers.size() - 1);
     assert(none_positions.size() == none_sizes.size());
     if (mphf_configuration.verbose_output) {
-        double maximal = static_cast<double>(n_maximal) / minimizers.size() * 100;
-        double left = static_cast<double>(left_positions.size()) / minimizers.size() * 100;
+        double maximal = 
+            static_cast<double>(n_maximal) / minimizers.size() * 100;
+        double left = 
+            static_cast<double>(left_positions.size()) / minimizers.size() * 100;
         double right =
-            static_cast<double>(right_or_collision_sizes.size() - colliding_minimizers.size()) /
-            minimizers.size() * 100;
-        double none = static_cast<double>(none_positions.size()) / minimizers.size() * 100;
-        double ambiguous =
+            static_cast<double>(right_or_collision_sizes.size() - colliding_minimizers.size()) 
+            / minimizers.size() * 100;
+        double none = 
+            static_cast<double>(none_positions.size()) / minimizers.size() * 100;
+        double ambiguous = 
             static_cast<double>(colliding_minimizers.size()) / minimizers.size() * 100;
         std::cerr << "Percentage of maximal super-k-mers: " << maximal << "%\n";
         std::cerr << "Percentage of left-maximal super-k-mers: " << left << "%\n";
@@ -181,16 +186,17 @@ uint64_t mphf::get_kmer_count() const noexcept { return nkmers; }
 uint64_t mphf::num_bits() const noexcept {
     auto mm_mphf_size_bits = minimizer_order.num_bits();
     auto triplet_tree_size_bits = wtree.num_bits();
-    auto elias_sequence_size_bits = (sizeof(n_maximal) + sizeof(right_coll_sizes_start) +
-                                     sizeof(none_sizes_start) + sizeof(none_pos_start)) *
-                                        8 +
-                                    sizes_and_positions.num_bits();
+    auto elias_sequence_size_bits = (sizeof(n_maximal) 
+        + sizeof(right_coll_sizes_start) 
+        + sizeof(none_sizes_start) 
+        + sizeof(none_pos_start)) * 8 
+        + sizes_and_positions.num_bits();
     auto kmer_mphf_size_bits = fallback_kmer_order.num_bits();
-    auto total_bit_size = mm_mphf_size_bits + triplet_tree_size_bits + elias_sequence_size_bits +
-                          kmer_mphf_size_bits +
-                          (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) +
-                           sizeof(nkmers) + sizeof(distinct_minimizers)) *
-                              8;
+    auto total_bit_size = mm_mphf_size_bits 
+        + triplet_tree_size_bits 
+        + elias_sequence_size_bits 
+        + kmer_mphf_size_bits 
+        + (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) + sizeof(nkmers) + sizeof(distinct_minimizers)) * 8;
     return total_bit_size;
 }
 
@@ -272,16 +278,15 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 void mphf::print_statistics() const noexcept {
     auto mm_mphf_size_bits = minimizer_order.num_bits();
     auto triplet_tree_size_bits = wtree.num_bits();
-    auto elias_sequence_size_bits = (sizeof(n_maximal) + sizeof(right_coll_sizes_start) +
-                                     sizeof(none_sizes_start) + sizeof(none_pos_start)) *
-                                        8 +
-                                    sizes_and_positions.num_bits();
+    auto elias_sequence_size_bits = 
+        (sizeof(n_maximal) + sizeof(right_coll_sizes_start) + sizeof(none_sizes_start) + sizeof(none_pos_start)) * 8 
+        + sizes_and_positions.num_bits();
     auto kmer_mphf_size_bits = fallback_kmer_order.num_bits();
-    auto total_bit_size = mm_mphf_size_bits + triplet_tree_size_bits + elias_sequence_size_bits +
-                          kmer_mphf_size_bits +
-                          (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) +
-                           sizeof(nkmers) + sizeof(distinct_minimizers)) *
-                              8;
+    auto total_bit_size = mm_mphf_size_bits 
+        + triplet_tree_size_bits 
+        + elias_sequence_size_bits 
+        + kmer_mphf_size_bits 
+        + (sizeof(mphf_configuration) + sizeof(k) + sizeof(m) + sizeof(mm_seed) + sizeof(nkmers) + sizeof(distinct_minimizers)) * 8;
     std::cerr << "Total number of k-mers: " << nkmers << "\n";
     std::cerr << "Minimizer MPHF size in bits : " << mm_mphf_size_bits << " ("
               << static_cast<double>(mm_mphf_size_bits) / total_bit_size * 100 << "%)\n";
@@ -349,7 +354,6 @@ std::vector<uint64_t> mphf_alt::build_index(std::vector<mm_triplet_t>& minimizer
     std::sort(minimizers.begin(), minimizers.end());
     distinct_minimizers = 0;
     for (auto it = minimizers.begin(), prev = minimizers.begin(); it != minimizers.end(); ++it) {
-        // FIXME get number of distinct minimizer -> rework pthash interface for this
         if (prev->itself != it->itself) {
             ++distinct_minimizers;
             prev = it;
@@ -374,13 +378,7 @@ std::vector<uint64_t> mphf_alt::build_index(std::vector<mm_triplet_t>& minimizer
             colliding_minimizers.push_back(minimizers[i].itself);
             pos.push_back(0);
             siz.push_back(0);
-
-            // for (std::size_t l = i; l < j; ++l) {
-            //     minimizers[l].p1 = 0;
-            //     minimizers[l].size = 0;
-            // }
         } else {
-            // for (; i < j; ++i) {
             pos.push_back(minimizers[i].p1);
             siz.push_back(minimizers[i].size);
         }

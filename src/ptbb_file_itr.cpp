@@ -32,7 +32,6 @@ ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len) : z(0), 
     *ref_count = 1;
 }
 
-// the copy constructor just creates a new object pointing at the beginning of the input
 ptbb_file_itr::ptbb_file_itr(const ptbb_file_itr & other)
 {
     z = other.z;
@@ -87,7 +86,6 @@ ptbb_file_itr::~ptbb_file_itr()
             --(*ref_count);
         }
     }
-    // if (sequence_file) kseq_destroy(reinterpret_cast<kseq_t*>(sequence_file));
 }
 
 bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b)

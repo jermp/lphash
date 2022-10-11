@@ -112,9 +112,9 @@ int main(int argc, char* argv[]) {
                      total_aggregated_dumb_kmers
               << std::endl;
 
-    std::cerr << "number of k-mers:"
-              << " " << total_kmers << " " << total_dumb_kmers << " " << total_aggregated_kmers
-              << " " << total_aggregated_dumb_kmers << std::endl;
+    // std::cerr << "number of k-mers:"
+    //           << " " << total_kmers << " " << total_dumb_kmers << " " << total_aggregated_kmers
+    //           << " " << total_aggregated_dumb_kmers << std::endl;
 }
 
 /*

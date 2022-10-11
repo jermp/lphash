@@ -25,10 +25,6 @@ int main(int argc, char* argv[]) {
                "Output file name where the BBHash mphf will be serialized.",
                "-b",
                false);
-    // parser.add("threads", 
-    //            "Number of threads for pthash (default is 1).", 
-    //            "-t", 
-    //            false);
     if (!parser.parse()) return 1;
 
     std::string input_filename = parser.get<std::string>("input_filename");
@@ -109,7 +105,6 @@ int main(int argc, char* argv[]) {
         bb_us = bb_timer.elapsed();
     }
     
-    // std::cerr << "\nTotal k-mers = " << total_kmers << "\n";
     if (parser.parsed("pthash_filename")) {
         std::cout << "," << parser.get<std::string>("pthash_filename") << "," << static_cast<double>(pt_us * 1000) / pt_total_kmers;
     } else {

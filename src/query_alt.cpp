@@ -24,13 +24,8 @@ int main(int argc, char* argv[]) {
     cmd_line_parser::parser parser = get_query_parser(argc, argv);
     mphf_alt hf;
     std::string mphf_filename = parser.get<std::string>("mphf");
-    // std::cerr << "Loading mphf: " << mphf_filename << " ...\n";
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());
-    // std::cerr << "Loading DONE\n";
-    // std::cerr << hf << "\n";
     std::string input_filename = parser.get<std::string>("input_filename");
-
-    // std::cerr << "Input file = " << input_filename << std::endl;
 
     if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
@@ -112,7 +107,7 @@ int main(int argc, char* argv[]) {
                      total_aggregated_dumb_kmers
               << std::endl;
 
-    std::cerr << "number of k-mers:"
-              << " " << total_kmers << " " << total_dumb_kmers << " " << total_aggregated_kmers
-              << " " << total_aggregated_dumb_kmers << std::endl;
+    // std::cerr << "number of k-mers:"
+    //           << " " << total_kmers << " " << total_dumb_kmers << " " << total_aggregated_kmers
+    //           << " " << total_aggregated_dumb_kmers << std::endl;
 }
