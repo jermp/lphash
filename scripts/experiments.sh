@@ -74,10 +74,10 @@ C=5.0
 
 ## -----------------------------------------------------------------------------
 
-# echo "// typedef kmer128_t kmer_t;\ntypedef uint64_t kmer_t;" > $COMPILE_OPTIONS
-# cd $BUILD_DIR
-# make -j
-# cd $THIS_PATH
+echo "// typedef kmer128_t kmer_t;\ntypedef uint64_t kmer_t;" > $COMPILE_OPTIONS
+cd $BUILD_DIR
+make -j
+cd $THIS_PATH
 
 ## -----------------------------------------------------------------------------
 
@@ -86,75 +86,85 @@ C=5.0
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"sal.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/sal.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/sal.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/sal.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=31
+PTMPHF="$MPHF_FOLDER/sal.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/sal.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=16
 # # QUERY="$QUERY_FOLDER/saccaromyces_cerevisae.fasta.gz"
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"yeast.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/yeast.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/yeast.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/yeast.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=31
+PTMPHF="$MPHF_FOLDER/yeast.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/yeast.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=20
 # # QUERY="$QUERY_FOLDER/celegans.fasta.gz"
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"celegans.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/celegans.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/celegans.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/celegans.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=31
+PTMPHF="$MPHF_FOLDER/celegans.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/celegans.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=20
 # # QUERY="$QUERY_FOLDER/cod.fasta.gz"
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/cod.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/cod.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=31
+PTMPHF="$MPHF_FOLDER/cod.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/cod.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=27
 # # QUERY="$QUERY_FOLDER/human.fasta.gz"
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=31
+PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 ## -----------------------------------------------------------------------------
 
@@ -170,45 +180,51 @@ cd $THIS_PATH
 # for K in 35 39 43 47 51 55 59 63 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"sal.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/sal.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/sal.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/sal.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=63
+PTMPHF="$MPHF_FOLDER/sal.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/sal.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=16
 # # QUERY="$QUERY_FOLDER/saccaromyces_cerevisae.fasta.gz"
 # for K in 35 39 43 47 51 55 59 63 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"yeast.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/yeast.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/yeast.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/yeast.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=63
+PTMPHF="$MPHF_FOLDER/yeast.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/yeast.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=20
 # # QUERY="$QUERY_FOLDER/celegans.fasta.gz"
 # for K in 35 39 43 47 51 55 59 63 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"celegans.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/celegans.k$K.m$M.lphash.bin"
-#     PTMPHF="$MPHF_FOLDER/celegans.k$K.pthash.bin"
-#     BBMPHF="$MPHF_FOLDER/celegans.k$K.bbhash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-#     $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-#     $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 # done
+
+K=63
+PTMPHF="$MPHF_FOLDER/celegans.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/celegans.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=24
 # QUERY="$QUERY_FOLDER/kestrel.fasta.gz"
@@ -222,11 +238,11 @@ cd $THIS_PATH
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 # done
 
-# K=63
-# PTMPHF="$MPHF_FOLDER/kestrel.k$K.pthash.bin"
-# BBMPHF="$MPHF_FOLDER/kestrel.k$K.bbhash.bin"
-# $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-# $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+K=63
+PTMPHF="$MPHF_FOLDER/kestrel.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/kestrel.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 # M=20
 # QUERY="$QUERY_FOLDER/cod.fasta.gz"
@@ -242,28 +258,34 @@ cd $THIS_PATH
 #     done
 # done
 
-# K=63
-# PTMPHF="$MPHF_FOLDER/cod.k$K.pthash.bin"
-# BBMPHF="$MPHF_FOLDER/cod.k$K.bbhash.bin"
-# $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
-# $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+K=63
+PTMPHF="$MPHF_FOLDER/cod.k$K.pthash.bin"
+BBMPHF="$MPHF_FOLDER/cod.k$K.bbhash.bin"
+$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
+$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=27
-QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
-for K in 43 47 51 55 59 63 ; do
-    UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
-    LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
-    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
-    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-done
+## -------------------------------- Human -----------------------------------
 
 K=63
 PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
 BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
 $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
 $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+
+# M=27
+QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
+for K in 43 47 51 55 59 63 ; do
+    for M in 32 30 28 26 24 22 20 ; do
+        UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+        LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
+        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS
+        $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d "tmp/" >> $LPBUILD_RESULTS_ALT
+        $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+    done
+done
+
+
 
 ## -----------------------------------------------------------------------------
 
