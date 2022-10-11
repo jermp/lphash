@@ -82,7 +82,7 @@ cd $THIS_PATH
 ## -----------------------------------------------------------------------------
 
 # M=15
-# QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
+QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"sal.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/sal.k$K.m$M.lphash.bin"
@@ -181,7 +181,7 @@ cd $THIS_PATH
 ## -----------------------------------------------------------------------------
 
 # M=15
-# QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
+QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # for K in 35 39 43 47 51 55 59 63 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"sal.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/sal.k$K.m$M.lphash.bin"
@@ -278,6 +278,7 @@ $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 K=63
 UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
 PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
 BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
 $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d "tmp/" -c $C >> $PTBUILD_RESULTS
