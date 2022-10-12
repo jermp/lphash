@@ -1,6 +1,13 @@
 LPHash
 ======
 
+LPHash is a MPHF designed for k-mer sets where overlaps of k-1 bases of successive k-mers are used to:
+1. reduce the overall bit complexity of the data structure (on some datasets and with the right combination of parameters LPHash is able to achive < 1 bit/k-mer whereas the known theoretical lower-bound of a classic MPHF is ~1.44 bits/k-mer),
+2. boost evaluation speed of queries performed on successive minimizers (similarly to what [5] does).
+
+The data structure and its construction/query algorithms are described in
+- Locality-Preserving Minimal Perfect Hashing of k-mers [1].
+
 #### Table of contents
 * [Compiling the Code](#compiling-the-code)
 * [Dependencies](#dependencies)
@@ -45,7 +52,7 @@ For a testing environment, use the following instead:
 Dependencies
 ------------
 
-The repository has minimal dependencies: it only uses the [PTHash](https://github.com/jermp/pthash) library (for minimal perfect hashing), and `zlib` to read gzip-compressed streams.
+The repository has minimal dependencies: it only uses the [PTHash](https://github.com/jermp/pthash) library (for minimal perfect hashing [2] [3]), and `zlib` to read gzip-compressed streams.
 
 To automatically pull the PTHash dependency, just clone the repo with
 `--recursive` as explained in [Compiling the Code](#compiling-the-code).
@@ -202,7 +209,7 @@ Input Files
 LPHash is meant to index k-mers from collections that do not contain duplicates.
 These collections can be obtained, for example, by extracting the maximal unitigs of a de Bruijn graph.
 
-To do so, we can use the tool [BCALM2](https://github.com/GATB/bcalm).
+To do so, we can use the tool [BCALM2](https://github.com/GATB/bcalm)[4].
 This tool builds a compacted de Bruijn graph and outputs its maximal unitigs.
 From the output of BCALM2, we can then *stitch* (i.e., glue) some unitigs to reduce the number of nucleotides. 
 The stitiching process is carried out using the [UST](https://github.com/jermp/UST) tool.
@@ -306,7 +313,11 @@ Authors
 
 References
 -----
-* [1] Giulio Ermanno Pibiri and Yoshihiro Shibuya and Antoine Limasset. [Locality-Preserving Minimal Perfect Hashing of k-mers](Submitted).
+* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers (Submitted).
+* [2] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
+* [3] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
+* [4] Rayan Chikhi, Antoine Limasset, and Paul Medvedev. [Compacting de Bruijn graphs from sequencing data quickly and in low memory](https://academic.oup.com/bioinformatics/article/32/12/i201/2289008?login=false). Bioinformatics, 32(12):i201–i208, 2016.
+* [5] Lucas Robidou and Pierre Peterlongo. [findere: Fast and precise approximate membership query](https://link.springer.com/chapter/10.1007/978-3-030-86692-1_13). In String Processing and Information Retrieval pages 151–163, Cham, 2021. Springer International Publishing.
 
 <!-- ### Datasets
 
