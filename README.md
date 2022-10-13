@@ -5,7 +5,7 @@ LPHash is a minimal perfect hash function (or MPHF) designed for k-mer sets wher
 
 1. Reduce the space of the data structure; for example, with the right combination of parameters, LPHash is able to achive < 0.9 bits/k-mer **in practice** whereas the known theoretical lower-bound of a classic MPHF is 1.44 bits/k-mer and practical constructions take 2-3 bits/k-mer.
 
-2. Boost evaluation speed of queries performed on successive k-mers (similarly to what [5] does).
+2. Boost the evaluation speed of queries performed for consecutive k-mers.
 
 The data structure and its construction/query algorithms are described in the paper *Locality-Preserving Minimal Perfect Hashing of k-mers* [1].
 
@@ -199,7 +199,6 @@ References
 * [2] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
 * [3] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
 * [4] Rayan Chikhi, Antoine Limasset, and Paul Medvedev. [Compacting de Bruijn graphs from sequencing data quickly and in low memory](https://academic.oup.com/bioinformatics/article/32/12/i201/2289008?login=false). Bioinformatics, 32(12):i201–i208, 2016.
-* [5] Lucas Robidou and Pierre Peterlongo. [findere: Fast and precise approximate membership query](https://link.springer.com/chapter/10.1007/978-3-030-86692-1_13). In String Processing and Information Retrieval pages 151–163, Cham, 2021. Springer International Publishing.
 
 <!-- ### Datasets
 
