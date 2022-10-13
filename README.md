@@ -1,21 +1,21 @@
 LPHash
 ======
 
-LPHash is a MPHF designed for k-mer sets where overlaps of k-1 bases of successive k-mers are used to:
-1. reduce the overall bit complexity of the data structure (on some datasets and with the right combination of parameters LPHash is able to achive < 1 bit/k-mer whereas the known theoretical lower-bound of a classic MPHF is ~1.44 bits/k-mer),
-2. boost evaluation speed of queries performed on successive minimizers (similarly to what [5] does).
+LPHash is a minimal perfect hash function (or MPHF) designed for k-mer sets where overlaps of k-1 bases between consecutive k-mers are exploited to:
 
-The data structure and its construction/query algorithms are described in
-- Locality-Preserving Minimal Perfect Hashing of k-mers [1].
+1. Reduce the space of the data structure; for example, with the right combination of parameters, LPHash is able to achive < 0.9 bits/k-mer **in practice** whereas the known theoretical lower-bound of a classic MPHF is 1.44 bits/k-mer and practical constructions take 2-3 bits/k-mer.
+
+2. Boost evaluation speed of queries performed on successive k-mers (similarly to what [5] does).
+
+The data structure and its construction/query algorithms are described in the paper *Locality-Preserving Minimal Perfect Hashing of k-mers* [1].
 
 #### Table of contents
 * [Compiling the Code](#compiling-the-code)
 * [Dependencies](#dependencies)
-* [Build a Dictionary](#build-a-dictionary)
-* [Examples](#Examples)
+* [Build a Function](#build-a-function)
+* [Example](#Example)
 * [Input Files](#input-files)
-* [Large-Scale Benchmark](#large-scale-benchmark)
-* [Author](#author)
+* [Authors](#authors)
 * [References](#references)
 
 Compiling the Code
@@ -67,8 +67,8 @@ if you are on Linux/Ubuntu, or
 
 if you have a Mac (and Homebrew installed: https://brew.sh/).
 
-Build a Locality-Preserving MPHF
-------------------
+Build a Function
+----------------
 
 The driver program called `build` and `build_alt` can be used to build Locality-Preserving MPHFs.
 `build` uses the partitioning strategy while `build_alt` does not (check out the paper for more details).
@@ -129,27 +129,24 @@ to show the usage of the driver program (reported below for convenience).
 8. the space of the MPHF in bits/k-mer.
 
 Example
---------
+-------
 
 For the examples, we are going to use some collections of *stitched unitigs* from the directory `data/unitigs_stitched`.
 These collections were built for k = 31, 47 and 63, so MPHFs should be built with the right k to ensure correctness.
 
 In the section [Input Files](#input-files), we explain how such collections of stitched unitigs can be obtained from raw FASTA files.
 
-### Example
+This example 
 
     ./build ../data/unitigs_stitched/se.ust.k31.fa.gz 31 15 --check -o -o se_k31_m15.lph
 
-This example builds a dictionary for the k-mers read from the file `data/unitigs_stitched/se.ust.k31.fa.gz`, with k = 31 and m = 15. 
+builds a dictionary for the k-mers read from the file `data/unitigs_stitched/se.ust.k31.fa.gz`, with k = 31 and m = 15. 
 It also check the correctness of the MPHF (`--check` option, for both minimality and collisions), and serializes it on disk to the file `se_k31_m15.lph`.
 
 To run a performance benchmark after construction of the index,
 use:
 
     ./bench salmonella_enterica.index
-
-Query a MPHF
---------
 
 Similarly to `build`, the `query` command (or `query_alt` if the MPHF was built by `build_alt`) outputs single CSV lines on stdout.
 Queries can be performed by recomputing each hash value from scratch (random query) of by re-using the fact that successive k-mers overlap by k-1 bases (streaming).
@@ -166,42 +163,6 @@ input file,lphash file,total k-mers,barebone streaming time,barebone random time
 ### Example
 
     ./query se_k31_m15.lph ../data/queries/salmonella_enterica.fasta.gz
-
-
-<!-- ### Example 3
-
-    ./build ../data/unitigs_stitched/salmonella_100_k31_ust.fa.gz 31 13 -l 4 -s 347692 --canonical-parsing -o salmonella_100.canon.index
-
-This example builds a dictionary from the input file `../data/unitigs_stitched/salmonella_100_k31_ust.fa.gz` (same used in Example 2), with k = 31, m = 13, l = 4, using a seed 347692 for construction (`-s 347692`), and with the canonical parsing modality (option `--canonical-parsing`). The dictionary is serialized on disk to the file `salmonella_100.canon.index`.
-
-The  "canonical" version of the dictionary offers more speed for only a little space increase (for a suitable choice of parameters m and l), especially under low-hit workloads -- when the majority of k-mers are not found in the dictionary. (For all details, refer to the paper.)
-
-Below a comparison between the dictionary built in Example 2 (not canonical)
-and the one just built (Example 3, canonical).
-
-    ./query salmonella_100.index ../data/queries/SRR5833294.10K.fastq.gz
-    index size: 10.3981 [MB] (6.36232 [bits/kmer])
-    ==== query report:
-    num_kmers = 460000
-    num_valid_kmers = 459143 (99.8137% of kmers)
-    num_positive_kmers = 46 (0.0100187% of valid kmers)
-    num_searches = 42/46 (91.3043%)
-    num_extensions = 4/46 (8.69565%)
-    elapsed = 229.159 millisec / 0.229159 sec / 0.00381932 min / 498.172 ns/kmer
-
-    ./query salmonella_100.canon.index ../data/queries/SRR5833294.10K.fastq.gz
-    index size: 11.0657 [MB] (6.77083 [bits/kmer])
-    ==== query report:
-    num_kmers = 460000
-    num_valid_kmers = 459143 (99.8137% of kmers)
-    num_positive_kmers = 46 (0.0100187% of valid kmers)
-    num_searches = 42/46 (91.3043%)
-    num_extensions = 4/46 (8.69565%)
-    elapsed = 107.911 millisec / 0.107911 sec / 0.00179852 min / 234.589 ns/kmer
-
-We see that the canonical dictionary is twice as fast as the regular dictionary
-for low-hit workloads,
-even on this tiny example, for only +0.4 bits/k-mer. -->
 
 Input Files
 -----------
@@ -223,97 +184,18 @@ Below we provide a complete example (assuming both BCALM2 and UST are installed 
     gzip Homo_sapiens.GRCh38.dna.chromosome.13.fa.unitigs.fa.ust.fa
     rm ~/Homo_sapiens.GRCh38.dna.chromosome.13.fa.unitigs.fa
 
-<!-- #### Datasets
-The script `scripts/download_and_preprocess_datasets.sh`
-contains all the needed steps to download and pre-process
-the datasets that we used in [1]. -->
-
-<!-- Large-Scale Benchmark
----------------------
-
-*Pinus Taeda* ("pine", [GCA_000404065.3](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/404/065/GCA_000404065.3_Ptaeda2.0/GCA_000404065.3_Ptaeda2.0_genomic.fna.gz)) and *Ambystoma Mexicanum* ("axolotl", [GCA_002915635.2](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/002/915/635/GCA_002915635.3_AmbMex60DD/GCA_002915635.3_AmbMex60DD_genomic.fna.gz))
-are some of the largest genome assemblies, respectively counting
-10,508,232,575 and 17,987,935,180 distinct k-mers for k = 31.
-
-After running BCALM2 and UST, we build the indexes as follows.
-
-    ./build ~/DNA_datasets.larger/GCA_000404065.3_Ptaeda2.0_genomic.ust_k31.fa.gz 31 20 -l 6 -c 7 -o pinus.m20.index
-    ./build ~/DNA_datasets.larger/GCA_000404065.3_Ptaeda2.0_genomic.ust_k31.fa.gz 31 19 -l 6 -c 7 --canonical-parsing -o pinus.m19.canon.index
-    ./build ~/DNA_datasets.larger/GCA_002915635.3_AmbMex60DD_genomic.ust_k31.fa.gz 31 21 -l 6 -c 7 -o axolotl.m21.index
-    ./build ~/DNA_datasets.larger/GCA_002915635.3_AmbMex60DD_genomic.ust_k31.fa.gz 31 20 -l 6 -c 7 --canonical-parsing -o axolotl.m20.canon.index
-
-The following table summarizes the space of the dictionaries.
-
-| Dictionary        |Pine       || Axolotl  ||
-|:------------------|:---:|:----:|:---:|:---:|
-|                   | GB     | bits/k-mer  | GB    | bits/k-mer |
-| SSHash, regular   | 13.21  | 10.06       | 22.28 | 9.91       |
-| SSHash, canonical | 14.94  | 11.37       | 25.03 | 11.13      |
-
-
-
-To query the dictionaries, we use [SRR17023415](https://www.ebi.ac.uk/ena/browser/view/SRR17023415) fastq reads
-(23,891,117 reads, each of 150 bases) for the pine,
-and [GSM5747680](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSM5747680) multi-line fasta (15,548,160 lines) for the axolotl.
-
-Timings have been collected on an Intel Xeon Platinum 8276L CPU @ 2.20GHz,
-using a single thread.
-
-| Dictionary        |Pine       || Axolotl  ||
-|:------------------|:---:|:----:|:---:|:---:|
-|                   |(>75% hits)||(>86% hits)|
-|                   | tot (min) | avg (ns/k-mer) | tot (min) | avg (ns/k-mer) |
-| SSHash, regular   | 19.2      | 400            | 4.2       | 269            |
-| SSHash, canonical | 14.8      | 310            | 3.2       | 208            |
-
-Below the complete query reports.
-
-    ./query pinus.m20.index ~/DNA_datasets.larger/queries/SRR17023415_1.fastq.gz
-    ==== query report:
-    num_kmers = 2866934040
-    num_valid_kmers = 2866783488 (99.9947% of kmers)
-    num_positive_kmers = 2151937575 (75.0645% of valid kmers)
-    num_searches = 418897117/2151937575 (19.466%)
-    num_extensions = 1733040458/2151937575 (80.534%)
-    elapsed = 1146.58 sec / 19.1097 min / 399.933 ns/kmer
-
-    ./query pinus.m19.canon.index ~/DNA_datasets.larger/queries/SRR17023415_1.fastq.gz
-    ==== query report:
-    num_kmers = 2866934040
-    num_valid_kmers = 2866783488 (99.9947% of kmers)
-    num_positive_kmers = 2151937575 (75.0645% of valid kmers)
-    num_searches = 359426304/2151937575 (16.7025%)
-    num_extensions = 1792511271/2151937575 (83.2975%)
-    elapsed = 889.779 sec / 14.8297 min / 310.359 ns/kmer
-
-    ./query axolotl.m21.index ~/DNA_datasets.larger/queries/Axolotl.Trinity.CellReports2017.fasta.gz --multiline
-    ==== query report:
-    num_kmers = 931366757
-    num_valid_kmers = 748445346 (80.3599% of kmers)
-    num_positive_kmers = 650467884 (86.9092% of valid kmers)
-    num_searches = 124008258/650467884 (19.0645%)
-    num_extensions = 526459626/650467884 (80.9355%)
-    elapsed = 250.173 sec / 4.16955 min / 268.608 ns/kmer
-
-    ./query axolotl.m20.canon.index ~/DNA_datasets.larger/queries/Axolotl.Trinity.CellReports2017.fasta.gz --multiline
-    ==== query report:
-    num_kmers = 931366757
-    num_valid_kmers = 748445346 (80.3599% of kmers)
-    num_positive_kmers = 650467884 (86.9092% of valid kmers)
-    num_searches = 106220473/650467884 (16.3299%)
-    num_extensions = 544247411/650467884 (83.6701%)
-    elapsed = 193.871 sec / 3.23119 min / 208.158 ns/kmer -->
-
 Authors
-------
+-------
 
-[Yoshihiro Shibuya](https://github.com/yhhshb) - <yoshihiro.shibuya@esiee.fr>
-[Giulio Ermanno Pibiri](https://jermp.github.io) - <giulioermanno.pibiri@unive.it>
-[Antoine Limasset](https://github.com/Malfoy) - <antoine.limasset@univ-lille.fr>
+- [Yoshihiro Shibuya](https://github.com/yhhshb) - <yoshihiro.shibuya@esiee.fr>
+
+- [Giulio Ermanno Pibiri](https://jermp.github.io) - <giulioermanno.pibiri@unive.it>
+
+- [Antoine Limasset](https://github.com/Malfoy) - <antoine.limasset@univ-lille.fr>
 
 References
 -----
-* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers (Submitted).
+* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya, and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers (Submitted).
 * [2] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
 * [3] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
 * [4] Rayan Chikhi, Antoine Limasset, and Paul Medvedev. [Compacting de Bruijn graphs from sequencing data quickly and in low memory](https://academic.oup.com/bioinformatics/article/32/12/i201/2289008?login=false). Bioinformatics, 32(12):i201–i208, 2016.
