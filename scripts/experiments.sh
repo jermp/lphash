@@ -278,22 +278,22 @@ QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 
 M=28
 QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
-for K in 43 47 51 55 59 63 ; do
-        UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
-        LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-        $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-        $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+for K in 31 35 39 ; do
+    UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+    LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
+    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 done
 
-K=63
-UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
-QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
-PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
-BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
-$PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
-$PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+# K=63
+# UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+# QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
+# PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
+# BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
+# $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
+# $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
 ## -----------------------------------------------------------------------------
 
