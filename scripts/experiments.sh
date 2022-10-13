@@ -135,7 +135,7 @@ QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 # $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=20
+M=24
 # QUERY="$QUERY_FOLDER/cod.fasta.gz"
 for K in 31 ; do
     UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
@@ -164,8 +164,8 @@ for K in 31 ; do
     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 done
 
-# M=27
-# # QUERY="$QUERY_FOLDER/human.fasta.gz"
+# M=28
+# QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
 # for K in 31 ; do
 #     UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
 #     LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
@@ -176,6 +176,7 @@ done
 # done
 
 # K=31
+# QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
 # UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
 # PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
 # BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
@@ -245,19 +246,17 @@ QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 # $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=20
+M=24
 # QUERY="$QUERY_FOLDER/cod.fasta.gz"
 QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # for K in 43 47 51 55 59 63 ; do
 for K in 35 39 ; do
-    for M in 20 21 22 23 24 25 ; do
-        UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
-        LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-        $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-        $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-    done
+    UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
+    LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
+    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 done
 
 # K=63
