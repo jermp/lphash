@@ -135,16 +135,16 @@ QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 # $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=24
-# QUERY="$QUERY_FOLDER/cod.fasta.gz"
-for K in 31 ; do
-    UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
-    LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
-    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-done
+# M=24
+# # QUERY="$QUERY_FOLDER/cod.fasta.gz"
+# for K in 31 ; do
+#     UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
+#     LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
+#     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+#     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+#     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+#     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+# done
 
 # K=31
 # UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
@@ -153,27 +153,27 @@ done
 # $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 # $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=24
-# QUERY="$QUERY_FOLDER/kestrel.fasta.gz"
-for K in 31 ; do
-    UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
-    LPMPHF="$MPHF_FOLDER/kestrel.k$K.m$M.lphash.bin"
-    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-done
-
-# M=28
-# QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
+# M=24
+# # QUERY="$QUERY_FOLDER/kestrel.fasta.gz"
 # for K in 31 ; do
-#     UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
-#     LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
+#     UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
+#     LPMPHF="$MPHF_FOLDER/kestrel.k$K.m$M.lphash.bin"
 #     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
 #     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
 #     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
 #     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
 # done
+
+M=28
+QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
+for K in 31 ; do
+    UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+    LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
+    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+done
 
 # K=31
 # QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
@@ -246,18 +246,18 @@ QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
 # $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 # $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=24
-# QUERY="$QUERY_FOLDER/cod.fasta.gz"
-QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
-# for K in 43 47 51 55 59 63 ; do
-for K in 35 39 ; do
-    UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
-    LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
-    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-done
+# M=24
+# # QUERY="$QUERY_FOLDER/cod.fasta.gz"
+# QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
+# # for K in 43 47 51 55 59 63 ; do
+# for K in 35 39 ; do
+#     UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
+#     LPMPHF="$MPHF_FOLDER/cod.k$K.m$M.lphash.bin"
+#     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+#     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+#     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+#     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+# done
 
 # K=63
 # UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
@@ -266,18 +266,18 @@ done
 # $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 # $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
 
-M=24
-# QUERY="$QUERY_FOLDER/kestrel.fasta.gz"
-QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
-# for K in 43 47 51 55 59 63 ; do
-for K in 35 39 ; do
-    UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
-    LPMPHF="$MPHF_FOLDER/kestrel.k$K.m$M.lphash.bin"
-    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-done
+# M=24
+# # QUERY="$QUERY_FOLDER/kestrel.fasta.gz"
+# QUERY="$QUERY_FOLDER/salmonella_enterica.fasta.gz"
+# # for K in 43 47 51 55 59 63 ; do
+# for K in 35 39 ; do
+#     UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
+#     LPMPHF="$MPHF_FOLDER/kestrel.k$K.m$M.lphash.bin"
+#     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+#     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+#     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+#     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+# done
 
 # K=63
 # UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
@@ -288,16 +288,16 @@ done
 
 ## -------------------------------- Human -----------------------------------
 
-# M=28
-# QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
-# for K in 35 39 ; do
-#     UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
-#     LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-#     $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
-#     $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-#     $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
-#     $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
-# done
+M=28
+QUERY="/data2/DNA/Homo_sapiens.GRCh38.dna.chromosome.13.fa.gz"
+for K in 35 39 43 47 51 55 59 63 ; do
+    UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+    LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
+    $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+    $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
+    $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+    $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
+done
 
 # K=63
 # UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
