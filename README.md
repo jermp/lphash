@@ -33,7 +33,7 @@ If you have cloned the repository **without** `--recursive`, be sure you pull th
 
     git submodule update --init --recursive
 
-K-mers can have maximal lengths of both 32 or 64, depending on their definition found in the file `include/compile_constants.tpd` (either uint64_t or kmer128_t). While larger 128 bit k-mers also work for k <= 32 without problems, we recommend to use the right type whenever possible, for maximum optimization.
+K-mers can have maximal lengths of both 32 or 64, depending on their definition found in the file `include/compile_constants.tpd` (either uint64_t or kmer128_t). Although larger 128-bit k-mers also work for k <= 32, we recommend to use the right type whenever possible, for maximum optimization.
 
 To compile the code for a release environment (see file `CMakeLists.txt` for the used compilation flags), it is sufficient to do the following:
 
@@ -46,13 +46,13 @@ For a testing environment, use the following instead:
 
     mkdir debug_build
     cd debug_build
-    cmake .. -D CMAKE_BUILD_TYPE=Debug -D SSHASH_USE_SANITIZERS=On
+    cmake .. -D CMAKE_BUILD_TYPE=Debug -D LPHASH_USE_SANITIZERS=On
     make -j
 
 Dependencies
 ------------
 
-The repository has minimal dependencies: it only uses the [PTHash](https://github.com/jermp/pthash) library (for minimal perfect hashing [2] [3]), and `zlib` to read gzip-compressed streams.
+The repository has minimal dependencies: it only uses the [PTHash](https://github.com/jermp/pthash) library (for minimal perfect hashing [2,3]), and `zlib` to read gzip-compressed streams.
 
 To automatically pull the PTHash dependency, just clone the repo with
 `--recursive` as explained in [Compiling the Code](#compiling-the-code).
@@ -80,40 +80,47 @@ From within the directory where the code was compiled (see the section [Compilin
 
 to show the usage of the driver program (reported below for convenience).
 
-    Usage: ./build [-h,--help] input_filename k m [-s seed] [-t threads] [-o output_filename] [-d tmp_dirname] [--check] [--verbose]
-
-    input_filename
-        Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:
-        - without duplicate nor invalid kmers
-        - one DNA sequence per line.
-        For example, it could be the de Bruijn graph topology output by BCALM.
-
-    k
-        K-mer length (must be <= <K-max>).
-
-    m
-        Minimizer length (must be < k).
-
-    [-s seed]
-        Seed for minimizer computation (default is 42).
-
-    [-t threads]
-        Number of threads for pthash (default is 1).
-
-    [-o output_filename]
-        Output file name where the data structure will be serialized.
-
-    [-d tmp_dirname]
-        Temporary directory used for construction in external memory. Default is directory '.'.
-
-    [--check]
-        Check correctness after construction.
-
-    [--verbose]
-        Verbose output during construction.
-
-    [-h,--help]
-        Print this help text and silently exits.
+	Usage: ./build [-h,--help] input_filename k m [-s seed] [-t threads] [-o output_filename] [-d tmp_dirname] [-c c] [--in-memory] [--check] [--verbose]
+	
+	 input_filename
+		Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:
+		- without duplicate nor invalid kmers
+		- one DNA sequence per line.
+		For example, it could be the de Bruijn graph topology output by BCALM.
+	
+	 k
+		K-mer length (must be <= 63).
+	
+	 m
+		Minimizer length (must be < k and <= 32).
+	
+	 [-s seed]
+		Seed for minimizer computation (default is 42).
+	
+	 [-t threads]
+		Number of threads for pthash (default is 1).
+	
+	 [-o output_filename]
+		Output file name where the data structure will be serialized.
+	
+	 [-d tmp_dirname]
+		Temporary directory used for construction in external memory. Default is directory '.'.
+	
+	 [-c c]
+		A (floating point) constant that trades construction speed for space effectiveness of minimal perfect hashing. 
+		A reasonable value lies between 3.0 and 10.0 (default is 3.00).
+	
+	 [--in-memory]
+		Do not use external memory for the internal MPHFs.
+	
+	 [--check]
+		Check correctness after construction.
+	
+	 [--verbose]
+		Verbose output during construction.
+	
+	 [-h,--help]
+		Print this help text and silently exits.
 
 ### Output format
 
@@ -196,8 +203,8 @@ Authors
 References
 -----
 * [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya, and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers (Submitted).
-* [2] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
-* [3] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
+* [2] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
+* [3] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
 * [4] Rayan Chikhi, Antoine Limasset, and Paul Medvedev. [Compacting de Bruijn graphs from sequencing data quickly and in low memory](https://academic.oup.com/bioinformatics/article/32/12/i201/2289008?login=false). Bioinformatics, 32(12):i201–i208, 2016.
 
 <!-- ### Datasets
