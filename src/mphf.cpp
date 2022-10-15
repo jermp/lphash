@@ -207,16 +207,11 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 
 	switch (mm_type) {
 		case LEFT:
-			// locpres_hash = 0;  // because in the elias-fano global vector left positions are the
-			// left-most block starting at the beginning locpres_hash +=
-			// sizes_and_positions.access(mm_type_rank);  // number of left-KMERS before our bucket
-			// locpres_hash += position;  // add local rank
 			res.global_rank = sizes_and_positions.access(mm_type_rank) + (k - m + 1) * n_maximal; // number of left-KMERS before our bucket
 			res.local_rank = position;
 			res.type = LEFT;
 			// std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
-			// std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
-			// res.local_rank;
+			// std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
 			break;
 		case RIGHT_OR_COLLISION: {
 			auto [val1, val2] = sizes_and_positions.pair(right_coll_sizes_start + mm_type_rank);
@@ -228,44 +223,36 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 				// std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " <<
 				// res.global_rank << ", "; std::cerr << "local shift = " << sk_size;
 			} else {
-				// locpres_hash = sizes_and_positions.access(right_coll_sizes_start + mm_type_rank);
-				// // global shift locpres_hash += k - m - p;  // local shift
 				res.global_rank = val1 + (k - m + 1) * n_maximal; // global shift
 				res.local_rank = k - m - position;				  // local shift
 				res.type = RIGHT_OR_COLLISION;					  // in this case it is only RIGHT
-																  // std::cerr << "[RIGHT] rank = " << right_coll_sizes_start + mm_type_rank << ", ";
-																  // std::cerr << "global shift = " << res.global_rank << ", ";
-																  // std::cerr << "local shift = " << res.local_rank;
+				// std::cerr << "[RIGHT] rank = " << right_coll_sizes_start + mm_type_rank << ", ";
+				// std::cerr << "global shift = " << res.global_rank << ", ";
+				// std::cerr << "local shift = " << res.local_rank;
 			}
 		} break;
 		case MAXIMAL: // easy case
-			// locpres_hash = (k - m + 1) * mm_type_rank + position;  // all maximal k-mer hashes
-			// are < than those of all the other types
+			// maximal k-mer hashes are smaller than those of all the other types
 			res.global_rank = (k - m + 1) * mm_type_rank;
 			res.local_rank = position;
 			res.type = MAXIMAL;
 			// std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
-			// std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
-			// res.local_rank;
+			// std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
 			break;
 		case NONE: {
-			// locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  //
-			// prefix sum of sizes locpres_hash += sk_size - position;  // position in the first
-			// k-mer - actual position = local shift
+			// locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  // prefix sum of sizes 
+            // locpres_hash += sk_size - position;  // position in the first k-mer - actual position = local shift
 			res.global_rank = sizes_and_positions.access(none_sizes_start + mm_type_rank) + (k - m + 1) * n_maximal;
 			uint64_t sk_size = sizes_and_positions.diff(none_pos_start + mm_type_rank); // p1 actually
 			res.local_rank = sk_size - position;
 			res.type = NONE;
-			// std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " <<
-			// none_sizes_start << " + " << mm_type_rank << ", "; std::cerr << "global rank = " <<
-			// res.global_rank << ", "; std::cerr << "local shift = " << res.local_rank << ", p1 = "
-			// << sk_size << ", p = " << position;
+			// std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " << none_sizes_start << " + " << mm_type_rank << ", "; 
+            // std::cerr << "global rank = " << res.global_rank << ", "; 
+            // std::cerr << "local shift = " << res.local_rank << ", p1 = " << sk_size << ", p = " << position;
 		} break;
 		default: throw std::runtime_error("Unrecognized minimizer type");
 	}
-
 	res.hval = res.global_rank + res.local_rank;
-
 	return res;
 }
 
@@ -342,16 +329,17 @@ std::unordered_set<uint64_t> mphf_alt::build_index(std::vector<mm_triplet_t>& mi
     // }
     // if (minimizers.size()) ++distinct_minimizers;
     // auto begin = vector_mm_triplet_to_pthash_itr_adapter(minimizers.begin(), minimizers.end());
-    std::vector<uint64_t> random_access_buffer;
     {
-        std::unordered_set<uint64_t> unique_minimizers;
-        for (auto const& triplet : minimizers) unique_minimizers.insert(triplet.itself);
-        distinct_minimizers = unique_minimizers.size();
-        for (auto const& mm : unique_minimizers) random_access_buffer.push_back(mm);
+        std::vector<uint64_t> random_access_buffer;
+        {
+            std::unordered_set<uint64_t> unique_minimizers;
+            for (auto const& triplet : minimizers) unique_minimizers.insert(triplet.itself);
+            distinct_minimizers = unique_minimizers.size();
+            for (auto const& mm : unique_minimizers) random_access_buffer.push_back(mm);
+        }
+        if (ram_only) minimizer_order.build_in_internal_memory(random_access_buffer.begin(), distinct_minimizers, mphf_configuration);
+        else minimizer_order.build_in_external_memory(random_access_buffer.begin(), distinct_minimizers, mphf_configuration);
     }
-    if (ram_only) minimizer_order.build_in_internal_memory(random_access_buffer.begin(), distinct_minimizers, mphf_configuration);
-    else minimizer_order.build_in_external_memory(random_access_buffer.begin(), distinct_minimizers, mphf_configuration);
-
 	auto mphf_compare = [this](mm_triplet_t const& a, mm_triplet_t const& b) { return minimizer_order(a.itself) < minimizer_order(b.itself); };
 	std::sort(minimizers.begin(), minimizers.end(), mphf_compare);
 

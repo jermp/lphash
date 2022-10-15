@@ -95,13 +95,15 @@ int main(int argc, char* argv[]) {
     std::cerr << "Part 2: build MPHF\n";
     mphf locpres_mphf(k, m, mm_seed, total_kmers, c, nthreads, in_memory, tmp_dirname, verbose);
     locpres_mphf.build_minimizers_mphf(minimizers);
-    auto colliding_minimizers = locpres_mphf.build_inverted_index(minimizers);
-    total_distinct_minimizers = locpres_mphf.get_minimizer_L0();
-    total_colliding_minimizers = colliding_minimizers.size();
     
     std::cerr << "Part 3: build fallback MPHF\n";
     // std::sort(colliding_minimizers.begin(), colliding_minimizers.end());
     { // garbage collector for unbucketable_kmers
+        auto colliding_minimizers = locpres_mphf.build_inverted_index(minimizers);
+        auto collect = []([[maybe_unused]] decltype(minimizers) to_collect) {};
+        collect(std::move(minimizers));
+        total_distinct_minimizers = locpres_mphf.get_minimizer_L0();
+        total_colliding_minimizers = colliding_minimizers.size();
         std::vector<kmer_t> unbucketable_kmers;
         if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
             std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
