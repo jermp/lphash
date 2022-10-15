@@ -4,8 +4,8 @@ extern "C" {
 #include <zlib.h>
 #include "../include/constants.hpp"
 #include "../include/parser_build.hpp"
-#include "minimizer.hpp"
 #include "../include/mphf.hpp"
+#include "minimizer.hpp"
 
 // #include "../include/prettyprint.hpp"
 
@@ -19,28 +19,52 @@ int main(int argc, char* argv[]) {
     uint8_t k, m, nthreads;
     uint64_t mm_seed;
     std::string tmp_dirname;
-    bool verbose;
+    double c;
     bool canonical;
+    bool in_memory;
     bool check;
-
+    bool verbose;
+    cmd_line_parser::parser parser(argc, argv);
     std::size_t total_kmers, check_total_kmers, total_minimizers, total_contigs, total_colliding_minimizers, total_distinct_minimizers;
 
-    cmd_line_parser::parser parser = get_build_parser(argc, argv);
+    try {
+        parser = get_build_parser(argc, argv);
+    } catch (const ParseError& e) {
+        return 1;
+    }
     std::string input_filename = parser.get<std::string>("input_filename");
     k = static_cast<uint8_t>(parser.get<uint32_t>("k"));
     m = static_cast<uint8_t>(parser.get<uint32_t>("m"));
     if (parser.parsed("seed")) mm_seed = parser.get<uint64_t>("seed");
     else mm_seed = 42;
-    if (parser.parsed("tmp_dirname")) tmp_dirname = parser.get<std::string>("tmp_dirname");
-    else tmp_dirname = "";
-    if (parser.parsed("check")) check = parser.get<bool>("check");
-    else check = false;
-    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
-    else canonical = false;
-    if (parser.parsed("verbose")) verbose = parser.get<bool>("verbose");
-    else verbose = false;
     if (parser.parsed("threads")) nthreads = parser.get<uint32_t>("threads");
     else nthreads = 1;
+    if (parser.parsed("tmp_dirname")) tmp_dirname = parser.get<std::string>("tmp_dirname");
+    else tmp_dirname = "";
+    if (parser.parsed("c")) c = parser.get<double>("c");
+    else c = constants::c;
+    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
+    else canonical = false;
+    if (parser.parsed("in-memory")) in_memory = parser.get<bool>("in-memory");
+    else in_memory = false;
+    if (parser.parsed("check")) check = parser.get<bool>("check");
+    else check = false;
+    if (parser.parsed("verbose")) verbose = parser.get<bool>("verbose");
+    else verbose = false;
+    
+
+    if (k > 64) {
+        std::cerr << "k cannot be larger than " + std::to_string(k) + "\n";
+        return 1;
+    }
+    if (m > k) {
+        std::cerr << "m cannot be larger than k\n";
+        return 1;
+    }
+    if (c > 10 || c < 3) {
+        std::cerr << "3 <= c <= 10\n";
+        return 1;
+    }
 
     total_kmers = 0;
     total_contigs = 0;
@@ -69,14 +93,14 @@ int main(int argc, char* argv[]) {
     assert(total_kmers == check_total_kmers);
 
     std::cerr << "Part 2: build MPHF\n";
-    mphf locpres_mphf(k, m, mm_seed, total_kmers, nthreads, tmp_dirname, verbose);
+    mphf locpres_mphf(k, m, mm_seed, total_kmers, c, nthreads, in_memory, tmp_dirname, verbose);
     locpres_mphf.build_minimizers_mphf(minimizers);
     auto colliding_minimizers = locpres_mphf.build_inverted_index(minimizers);
     total_distinct_minimizers = locpres_mphf.get_minimizer_L0();
     total_colliding_minimizers = colliding_minimizers.size();
     
     std::cerr << "Part 3: build fallback MPHF\n";
-    std::sort(colliding_minimizers.begin(), colliding_minimizers.end());  // FIXME sort minimizers for fast search -> find better alternative (hash table)
+    // std::sort(colliding_minimizers.begin(), colliding_minimizers.end());
     { // garbage collector for unbucketable_kmers
         std::vector<kmer_t> unbucketable_kmers;
         if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {

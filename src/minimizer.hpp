@@ -142,7 +142,8 @@ template <typename MinimizerHasher>
 }
 
 template <typename MinimizerHasher>
-void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<uint64_t> const& colliding_minimizers, std::vector<kmer_t>& accumulator) {
+void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::unordered_set<uint64_t> const& colliding_minimizers, std::vector<kmer_t>& accumulator) {
+// void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<uint64_t> const& colliding_minimizers, std::vector<kmer_t>& accumulator) {
     typedef std::pair<uint64_t, uint64_t> mm_pair_t;
     std::vector<mm_pair_t> mm_buffer(k - m + 1);
     std::vector<kmer_t> km_buffer;
@@ -190,7 +191,8 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
                         assert(sks != 0);
                         assert(sks <= k - m + 1);
                         if (((mm_buf_pos) % mm_buffer.size()) == min_pos || current.second < mm_buffer[min_pos].second) {  // update min
-                            if (std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)) {
+                            // if (std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)) {
+                            if (colliding_minimizers.find(mm_buffer[min_pos].first) != colliding_minimizers.end()) {
                                 assert(sks == km_buffer.size());
                                 update_output(km_buffer, accumulator);  // we save all k-mers in the super-k-mer
                             }
@@ -217,7 +219,11 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
             }
         else [[unlikely]] {
             nbases_since_last_break = 0;
-            if (min_pos < mm_buffer.size() && std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)) {
+            if (min_pos < mm_buffer.size() && 
+                // std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)
+                colliding_minimizers.find(mm_buffer[min_pos].first) != colliding_minimizers.end()
+               ) 
+            {
                 assert(sks == km_buffer.size());
                 update_output(km_buffer, accumulator);  // we save all k-mers in the super-k-mer
             }
@@ -234,7 +240,11 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
             if (mm_buffer[j].second < mm_buffer[min_pos].second) { min_pos = j; }
         }
     }
-    if (min_pos < mm_buffer.size() && std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)) {
+    if (min_pos < mm_buffer.size() && 
+        // std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)
+        colliding_minimizers.find(mm_buffer[min_pos].first) != colliding_minimizers.end()
+       ) 
+    {
         assert(sks == km_buffer.size());
         update_output(km_buffer, accumulator);  // we save all k-mers in the super-k-mer
     }

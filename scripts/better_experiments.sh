@@ -116,7 +116,7 @@ for K in 31 ; do
 done
 
 for K in 31 ; do
-    for M in 21 ; do
+    for M in 20 ; do
         UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/kestrel.k$K.m$M.lphash.bin"
         $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS

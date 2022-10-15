@@ -36,11 +36,17 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
                "Temporary directory used for construction in external memory. Default is directory '" + constants::default_tmp_dirname + "'.",
                "-d", 
                false);
+    parser.add("c",
+               "A (floating point) constant that trades construction speed for space effectiveness of minimal perfect hashing. \n"
+               "\tA reasonable value lies between 3.0 and 10.0 (default is " + std::to_string(constants::c).substr(0, std::to_string(constants::c).find(".") + 2 + 1) + ").",
+               "-c", 
+               false);
     // parser.add("canonical_parsing",
     //            "Canonical parsing of k-mers. "
     //            "This option changes the parsing and results in a trade-off between index space and lookup time.",
     //            "--canonical-parsing", 
     //            true);
+    parser.add("in-memory", "Do not use external memory for the internal MPHFs.", "--in-memory", true);
     parser.add("check", "Check correctness after construction.", "--check", true);
     parser.add("verbose", "Verbose output during construction.", "--verbose", true);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include "../include/constants.hpp"
 #include "ef_sequence.hpp"
 #include "quartet_wtree.hpp"
@@ -62,11 +63,12 @@ class mphf
 {
 public:
     mphf();
-    mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers,
-         uint8_t nthreads, std::string temporary_directory = "", bool verbose = false);
+    mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c,
+         uint8_t nthreads, bool in_memory, std::string temporary_directory = "", bool verbose = false);
     void build_minimizers_mphf(std::vector<mm_triplet_t>& minimizers);
     void build_fallback_mphf(std::vector<kmer_t>& colliding_kmers);
-    std::vector<uint64_t> build_inverted_index(std::vector<mm_triplet_t>& minimizers);
+    // std::vector<uint64_t> 
+    std::unordered_set<uint64_t> build_inverted_index(std::vector<mm_triplet_t>& minimizers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
@@ -106,6 +108,7 @@ private:
     pthash_mphf_t fallback_kmer_order;
     quartet_wtree wtree;
     ef_sequence<true> sizes_and_positions;
+    bool ram_only;
 
     struct mm_context_t {
         uint64_t hval;
@@ -412,9 +415,10 @@ void mphf::visit(Visitor& visitor) {
 class mphf_alt {
 public:
     mphf_alt();
-    mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers,
-             uint8_t nthreads, std::string temporary_directory = "", bool verbose = false);
-    std::vector<uint64_t> build_index(std::vector<mm_triplet_t>& minimizers);
+    mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c, 
+             uint8_t nthreads, bool in_memory, std::string temporary_directory = "", bool verbose = false);
+    // std::vector<uint64_t> 
+    std::unordered_set<uint64_t> build_index(std::vector<mm_triplet_t>& minimizers);
     void build_fallback_mphf(std::vector<kmer_t>& colliding_kmers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
@@ -455,6 +459,7 @@ private:
     ef_sequence<true> positions;
     ef_sequence<true> sizes;
     pthash_mphf_t fallback_kmer_order;
+    bool ram_only;
 
     struct mm_context_t {
         uint64_t hval;
