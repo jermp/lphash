@@ -40,6 +40,7 @@ mphf::mphf()
     mphf_configuration.verbose_output = false;
     mphf_configuration.num_threads = 0;
     mphf_configuration.tmp_dir = "";
+    mphf_configuration.ram = 8 * essentials::GB;
 };
 
 mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c, 
@@ -61,6 +62,7 @@ mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_o
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = verbose;
     mphf_configuration.num_threads = nthreads;
+    mphf_configuration.ram = 8 * essentials::GB;
     if (temporary_directory != "") {
         mphf_configuration.tmp_dir = temporary_directory;
         essentials::create_directory(temporary_directory);
@@ -309,6 +311,7 @@ mphf_alt::mphf_alt() : k(0), m(0), mm_seed(0), nkmers(0), distinct_minimizers(0)
     mphf_configuration.verbose_output = false;
     mphf_configuration.num_threads = 0;
     mphf_configuration.tmp_dir = "";
+    mphf_configuration.ram = 8 * essentials::GB;
 };
 
 mphf_alt::mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c, 
@@ -320,6 +323,7 @@ mphf_alt::mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = verbose;
     mphf_configuration.num_threads = nthreads;
+    mphf_configuration.ram = 8 * essentials::GB;
     if (temporary_directory != "") {
         mphf_configuration.tmp_dir = temporary_directory;
         essentials::create_directory(temporary_directory);
