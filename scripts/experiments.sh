@@ -128,9 +128,9 @@ for K in 31 ; do
     for M in 21 ; do
         UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS
         $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS_ALT
         $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     done
 done
@@ -277,9 +277,9 @@ for K in 35 ; do
     for M in 21 ; do
         UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS
         $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS_ALT
         $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     done
 done
@@ -288,9 +288,9 @@ for K in 39 43 ; do
     for M in 23 ; do
         UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS
         $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS_ALT
         $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     done
 done
@@ -299,9 +299,9 @@ for K in 47 51 ; do
     for M in 26 ; do
         UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS
         $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS_ALT
         $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     done
 done
@@ -310,9 +310,9 @@ for K in 55 59 63 ; do
     for M in 28 ; do
         UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
         LPMPHF="$MPHF_FOLDER/human.k$K.m$M.lphash.bin"
-        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS
+        $LPBUILD $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS
         $LPQUERY $LPMPHF $QUERY >> $LPQUERY_RESULTS
-        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER >> $LPBUILD_RESULTS_ALT
+        $LPBUILD_ALT $UNITIGS $K $M -t $THREADS -o $LPMPHF -d $TMP_FOLDER -c $C >> $LPBUILD_RESULTS_ALT
         $LPQUERY_ALT $LPMPHF $QUERY >> $LPQUERY_RESULTS_ALT
     done
 done
