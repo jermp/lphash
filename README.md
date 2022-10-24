@@ -191,6 +191,8 @@ Below we provide a complete example (assuming both BCALM2 and UST are installed 
     gzip Homo_sapiens.GRCh38.dna.chromosome.13.fa.unitigs.fa.ust.fa
     rm ~/Homo_sapiens.GRCh38.dna.chromosome.13.fa.unitigs.fa
 
+We uploaded a copy of all the datasets used in the experiments of the paper, **processed** as we described above, on Zenodo: [https://zenodo.org/record/7239205](https://zenodo.org/record/7239205).
+
 Authors
 -------
 
