@@ -7,7 +7,7 @@ LPHash is a minimal perfect hash function (or MPHF) designed for k-mer sets wher
 
 2. Boost the evaluation speed of queries performed for consecutive k-mers.
 
-The data structure and its construction/query algorithms are described in the paper *Locality-Preserving Minimal Perfect Hashing of k-mers* [1].
+The data structure and its construction/query algorithms are described in the paper *Locality-Preserving Minimal Perfect Hashing of k-mers* [1]. A pre-print is available here: [https://arxiv.org/abs/2210.13097](https://arxiv.org/abs/2210.13097).
 
 #### Table of contents
 * [Compiling the Code](#compiling-the-code)
@@ -204,102 +204,7 @@ Authors
 
 References
 -----
-* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya, and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers (Submitted).
+* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya, and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers. ArXiv. [https://arxiv.org/abs/2210.13097](https://arxiv.org/abs/2210.13097).
 * [2] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
 * [3] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
 * [4] Rayan Chikhi, Antoine Limasset, and Paul Medvedev. [Compacting de Bruijn graphs from sequencing data quickly and in low memory](https://academic.oup.com/bioinformatics/article/32/12/i201/2289008?login=false). Bioinformatics, 32(12):i201–i208, 2016.
-
-<!-- ### Datasets
-
-All datasets can be found in `/data2/DNA/lphash_datasets/` on the machine `zipottero.isti.cnr.it`.
-
-Unitigs extracted using bcalm2:
-
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 31 -abundance-min 1 -nb-cores 8 -out sal.k31
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 35 -abundance-min 1 -nb-cores 8 -out sal.k35
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 39 -abundance-min 1 -nb-cores 8 -out sal.k39
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 43 -abundance-min 1 -nb-cores 8 -out sal.k43
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 47 -abundance-min 1 -nb-cores 8 -out sal.k47
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 51 -abundance-min 1 -nb-cores 8 -out sal.k51
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 55 -abundance-min 1 -nb-cores 8 -out sal.k55
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 59 -abundance-min 1 -nb-cores 8 -out sal.k59
-    ./bcalm -in ~/Salmonella_enterica/Genomes/SAL_CA7616AA.fasta -kmer-size 63 -abundance-min 1 -nb-cores 8 -out sal.k63
-
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 31 -abundance-min 1 -nb-cores 8 -out yeast.k31
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 35 -abundance-min 1 -nb-cores 8 -out yeast.k35
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 39 -abundance-min 1 -nb-cores 8 -out yeast.k39
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 43 -abundance-min 1 -nb-cores 8 -out yeast.k43
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 47 -abundance-min 1 -nb-cores 8 -out yeast.k47
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 51 -abundance-min 1 -nb-cores 8 -out yeast.k51
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 55 -abundance-min 1 -nb-cores 8 -out yeast.k55
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 59 -abundance-min 1 -nb-cores 8 -out yeast.k59
-    ./bcalm -in ./GCF_000146045.2_R64_genomic.fna.gz -kmer-size 63 -abundance-min 1 -nb-cores 8 -out yeast.k63
-
-    ./bcalm -in ./celegans.fa.gz -kmer-size 31 -abundance-min 1 -nb-cores 16 -out celegans.k31
-    ./bcalm -in ./celegans.fa.gz -kmer-size 35 -abundance-min 1 -nb-cores 16 -out celegans.k35
-    ./bcalm -in ./celegans.fa.gz -kmer-size 39 -abundance-min 1 -nb-cores 16 -out celegans.k39
-    ./bcalm -in ./celegans.fa.gz -kmer-size 43 -abundance-min 1 -nb-cores 16 -out celegans.k43
-    ./bcalm -in ./celegans.fa.gz -kmer-size 47 -abundance-min 1 -nb-cores 16 -out celegans.k47
-    ./bcalm -in ./celegans.fa.gz -kmer-size 51 -abundance-min 1 -nb-cores 16 -out celegans.k51
-    ./bcalm -in ./celegans.fa.gz -kmer-size 55 -abundance-min 1 -nb-cores 16 -out celegans.k55
-    ./bcalm -in ./celegans.fa.gz -kmer-size 59 -abundance-min 1 -nb-cores 16 -out celegans.k59
-    ./bcalm -in ./celegans.fa.gz -kmer-size 63 -abundance-min 1 -nb-cores 16 -out celegans.k63
-
-USTigs computed as follows:
-
-    ./ust -k 31 -i ~/bcalm/build/sal.k31.unitigs.fa
-    ./ust -k 35 -i ~/bcalm/build/sal.k35.unitigs.fa
-    ./ust -k 39 -i ~/bcalm/build/sal.k39.unitigs.fa
-    ./ust -k 43 -i ~/bcalm/build/sal.k43.unitigs.fa
-    ./ust -k 47 -i ~/bcalm/build/sal.k47.unitigs.fa
-    ./ust -k 51 -i ~/bcalm/build/sal.k51.unitigs.fa
-    ./ust -k 55 -i ~/bcalm/build/sal.k55.unitigs.fa
-    ./ust -k 59 -i ~/bcalm/build/sal.k59.unitigs.fa
-    ./ust -k 63 -i ~/bcalm/build/sal.k63.unitigs.fa
-    gzip sal.k31.unitigs.fa.ust.fa
-    gzip sal.k35.unitigs.fa.ust.fa
-    gzip sal.k39.unitigs.fa.ust.fa
-    gzip sal.k43.unitigs.fa.ust.fa
-    gzip sal.k47.unitigs.fa.ust.fa
-    gzip sal.k51.unitigs.fa.ust.fa
-    gzip sal.k55.unitigs.fa.ust.fa
-    gzip sal.k59.unitigs.fa.ust.fa
-    gzip sal.k63.unitigs.fa.ust.fa
-
-    ./ust -k 31 -i ~/bcalm/build/yeast.k31.unitigs.fa
-    ./ust -k 35 -i ~/bcalm/build/yeast.k35.unitigs.fa
-    ./ust -k 39 -i ~/bcalm/build/yeast.k39.unitigs.fa
-    ./ust -k 43 -i ~/bcalm/build/yeast.k43.unitigs.fa
-    ./ust -k 47 -i ~/bcalm/build/yeast.k47.unitigs.fa
-    ./ust -k 51 -i ~/bcalm/build/yeast.k51.unitigs.fa
-    ./ust -k 55 -i ~/bcalm/build/yeast.k55.unitigs.fa
-    ./ust -k 59 -i ~/bcalm/build/yeast.k59.unitigs.fa
-    ./ust -k 63 -i ~/bcalm/build/yeast.k63.unitigs.fa
-    gzip yeast.k31.unitigs.fa.ust.fa
-    gzip yeast.k35.unitigs.fa.ust.fa
-    gzip yeast.k39.unitigs.fa.ust.fa
-    gzip yeast.k43.unitigs.fa.ust.fa
-    gzip yeast.k47.unitigs.fa.ust.fa
-    gzip yeast.k51.unitigs.fa.ust.fa
-    gzip yeast.k55.unitigs.fa.ust.fa
-    gzip yeast.k59.unitigs.fa.ust.fa
-    gzip yeast.k63.unitigs.fa.ust.fa
-
-    ./ust -k 31 -i ~/bcalm/build/celegans.k31.unitigs.fa
-    ./ust -k 35 -i ~/bcalm/build/celegans.k35.unitigs.fa
-    ./ust -k 39 -i ~/bcalm/build/celegans.k39.unitigs.fa
-    ./ust -k 43 -i ~/bcalm/build/celegans.k43.unitigs.fa
-    ./ust -k 47 -i ~/bcalm/build/celegans.k47.unitigs.fa
-    ./ust -k 51 -i ~/bcalm/build/celegans.k51.unitigs.fa
-    ./ust -k 55 -i ~/bcalm/build/celegans.k55.unitigs.fa
-    ./ust -k 59 -i ~/bcalm/build/celegans.k59.unitigs.fa
-    ./ust -k 63 -i ~/bcalm/build/celegans.k63.unitigs.fa
-    gzip celegans.k31.unitigs.fa.ust.fa
-    gzip celegans.k35.unitigs.fa.ust.fa
-    gzip celegans.k39.unitigs.fa.ust.fa
-    gzip celegans.k43.unitigs.fa.ust.fa
-    gzip celegans.k47.unitigs.fa.ust.fa
-    gzip celegans.k51.unitigs.fa.ust.fa
-    gzip celegans.k55.unitigs.fa.ust.fa
-    gzip celegans.k59.unitigs.fa.ust.fa
-    gzip celegans.k63.unitigs.fa.ust.fa -->
