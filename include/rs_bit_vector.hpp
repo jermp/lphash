@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RS_BIT_VECTOR_HPP
+#define RS_BIT_VECTOR_HPP
 
 #include <algorithm>
 #include <vector>
@@ -182,3 +183,5 @@ protected:
     std::vector<uint64_t> m_block_rank_pairs;
     std::vector<uint64_t> m_select_hints;
 };
+
+#endif

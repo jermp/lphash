@@ -100,4 +100,9 @@ kmer128_t operator>> (kmer128_t const& val, unsigned int shift)
     return res;
 }
 
+std::string get_group_id()
+{
+    return std::to_string(pthash::clock_type::now().time_since_epoch().count());
+}
+
 }

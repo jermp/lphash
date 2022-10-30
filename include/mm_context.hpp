@@ -8,7 +8,7 @@ namespace lphash {
 namespace minimizer {
 
 struct mm_quartet_t {
-    mm_quartet_t() : hash(0), p1(0), size(0){};
+    mm_quartet_t() : hash(0), itself(0), p1(0), size(0){};
     void clear() noexcept {
         itself = 0;  // AAA...A
         hash = std::numeric_limits<decltype(hash)>::max();
@@ -22,8 +22,8 @@ struct mm_quartet_t {
 
     uint64_t hash;    // minimizer hash
     uint64_t itself;  // 2-bit minimizer itself
-    uint32_t p1;      // position inside first k-mer of the super-k-mer
-    uint32_t size;    // size (number of k-mers) in the super-k-mer
+    uint8_t p1;      // position inside first k-mer of the super-k-mer
+    uint8_t size;    // size (number of k-mers) in the super-k-mer
 };
 
 } // namespace minimizer
