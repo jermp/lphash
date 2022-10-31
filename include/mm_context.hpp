@@ -17,10 +17,11 @@ struct mm_quartet_t {
     };
 
     friend std::ostream& operator<<(std::ostream& os, mm_quartet_t const& other) {
-        return os << other.itself << " " << other.hash << ' ' << other.p1 << ' ' << other.size;
+        return os << other.itself << " " << other.hash << " " << other.id << " " << other.p1 << " " << other.size;
     }
 
     uint64_t hash;    // minimizer hash
+    uint64_t id;
     uint64_t itself;  // 2-bit minimizer itself
     uint8_t p1;      // position inside first k-mer of the super-k-mer
     uint8_t size;    // size (number of k-mers) in the super-k-mer

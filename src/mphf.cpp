@@ -4,23 +4,6 @@
 
 namespace lphash {
 
-/*
-class vector_mm_triplet_to_pthash_itr_adapter : std::forward_iterator_tag {
-public:
-    typedef mm_triplet_t value_type;
-    vector_mm_triplet_to_pthash_itr_adapter(std::vector<mm_triplet_t>::iterator begin, std::vector<mm_triplet_t>::iterator end) : begin(begin), end(end), current(begin){};
-    
-    inline uint64_t operator*() const { return current->itself; };
-    inline void operator++() {
-        uint64_t prev_mm = current->itself;
-        while (current != end && current->itself == prev_mm) { ++current; }
-    };
-
-private:
-	std::vector<mm_triplet_t>::iterator begin, end, current;
-};
-*/
-
 mphf::mphf()
     : k(0)
     , m(0)
@@ -106,10 +89,11 @@ void mphf::build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& k
 }
 
 void mphf::build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iterator& start, std::size_t number_of_distinct_minimizers) {
-    std::size_t n_maximal = 0, colliding_minimizers = 0;
+    n_maximal = 0;
+    std::size_t colliding_minimizers = 0;
     uint64_t universe = 0;
     quartet_wtree_builder wtb(number_of_distinct_minimizers);
-    auto cmp64 = [](uint64_t const& a, uint64_t const& b) {return a < b;};
+    auto cmp64 = []([[maybe_unused]] uint64_t const& a, [[maybe_unused]] uint64_t const& b) {return false;};
     sorted_external_vector<uint64_t> left_positions(max_ram * essentials::GB / 4, cmp64, mphf_configuration.tmp_dir, get_group_id());
     sorted_external_vector<uint64_t> right_or_collision_sizes(max_ram * essentials::GB / 4, cmp64, mphf_configuration.tmp_dir, get_group_id());
     sorted_external_vector<uint64_t> none_sizes(max_ram * essentials::GB / 4, cmp64, mphf_configuration.tmp_dir, get_group_id());
@@ -149,19 +133,10 @@ void mphf::build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iter
     assert(none_positions.size() == none_sizes.size());
 
     wtree.build(wtb);
-    std::cerr << "tree ok" << std::endl;
 
     right_coll_sizes_start = left_positions.size();
-	// left_positions.insert(left_positions.end(), right_or_collision_sizes.begin(), right_or_collision_sizes.end());
-	// right_or_collision_sizes.clear();
-
 	none_sizes_start = right_coll_sizes_start + right_or_collision_sizes.size();
-	// left_positions.insert(left_positions.end(), none_sizes.begin(), none_sizes.end());
-	// none_sizes.clear();
-
 	none_pos_start = none_sizes_start + none_sizes.size();
-	// left_positions.insert(left_positions.end(), none_positions.begin(), none_positions.end());
-	// none_positions.clear();
 
     if (mphf_configuration.verbose_output) {
         double maximal = static_cast<double>(n_maximal) / number_of_distinct_minimizers * 100;
@@ -184,22 +159,10 @@ void mphf::build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iter
     sp.emplace_back(std::piecewise_construct, std::make_tuple(none_sizes.cbegin()), std::make_tuple(none_sizes.cend()));
     sp.emplace_back(std::piecewise_construct, std::make_tuple(none_positions.cbegin()), std::make_tuple(none_positions.cend()));
     append_iterator sp_itr(sp);
-    std::cerr << "append iterator ok" << std::endl;
     cumulative_iterator c_itr(sp_itr);
-    std::cerr << "cumulative iterator ok" << std::endl;
     assert(number_of_distinct_minimizers == none_pos_start + n_maximal);
     distinct_minimizers = number_of_distinct_minimizers;
-    // for (std::size_t i = 0; i < number_of_distinct_minimizers; ++i) {
-    //     std::cerr << *c_itr << "\n";
-    //     ++c_itr;
-    // }
-    std::cerr << left_positions.size() << " " 
-              << right_or_collision_sizes.size() << " " 
-              << none_sizes.size() << " " 
-              << none_positions.size() << " " 
-              << n_maximal << "\n";
 	sizes_and_positions.encode(c_itr, none_pos_start + none_positions.size(), universe);
-    std::cerr << "Encoding done" << std::endl;
 }
 
 uint64_t mphf::get_minimizer_L0() const noexcept { return distinct_minimizers; }
@@ -224,33 +187,37 @@ uint64_t mphf::get_minimizer_order(uint64_t mm) const
 mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const {
 	mm_context_t res;
 	uint64_t mp_hash = minimizer_order(minimizer);
+    // std::cerr << mp_hash << " ";
 	auto [mm_type, mm_type_rank] = wtree.rank_of(mp_hash);
+    // std::cerr << mm_type << " " << mm_type_rank << "\n";
+
+    // std::cerr << n_maximal << "\n";
 
 	switch (mm_type) {
 		case LEFT:
 			res.global_rank = sizes_and_positions.access(mm_type_rank) + (k - m + 1) * n_maximal; // number of left-KMERS before our bucket
 			res.local_rank = position;
 			res.type = LEFT;
-			std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
-			std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
+			// std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
+			// std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
 			break;
 		case RIGHT_OR_COLLISION: {
 			auto [val1, val2] = sizes_and_positions.pair(right_coll_sizes_start + mm_type_rank);
-            assert(val2 < val1);
+            assert(val2 >= val1);
 			uint64_t sk_size = val2 - val1;
 			if (sk_size == 0) {
 				res.global_rank = sizes_and_positions.access(none_pos_start) + (k - m + 1) * n_maximal; // prefix sum of all sizes (sizes of collisions are 0)
 				res.local_rank = fallback_kmer_order(kmer);
 				res.type = NONE + 1;
-				std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " <<
-				res.global_rank << ", "; std::cerr << "local shift = " << sk_size;
+				// std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " << res.global_rank << ", "; 
+                // std::cerr << "local shift = " << res.local_rank;
 			} else {
 				res.global_rank = val1 + (k - m + 1) * n_maximal; // global shift
 				res.local_rank = k - m - position;				  // local shift
 				res.type = RIGHT_OR_COLLISION;					  // in this case it is only RIGHT
-				std::cerr << "[RIGHT] rank = " << right_coll_sizes_start + mm_type_rank << ", ";
-				std::cerr << "global shift = " << res.global_rank << ", ";
-				std::cerr << "local shift = " << res.local_rank;
+				// std::cerr << "[RIGHT] rank = " << right_coll_sizes_start + mm_type_rank << ", ";
+				// std::cerr << "global shift = " << res.global_rank << ", ";
+				// std::cerr << "local shift = " << res.local_rank;
 			}
 		} break;
 		case MAXIMAL: // easy case
@@ -258,8 +225,8 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 			res.global_rank = (k - m + 1) * mm_type_rank;
 			res.local_rank = position;
 			res.type = MAXIMAL;
-			std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
-			std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
+			// std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
+			// std::cerr << "global shift = " << res.global_rank << ", local shift = " << res.local_rank;
 			break;
 		case NONE: {
 			// locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  // prefix sum of sizes 
@@ -268,15 +235,14 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 			uint64_t sk_size = sizes_and_positions.diff(none_pos_start + mm_type_rank); // p1 actually
 			res.local_rank = sk_size - position;
 			res.type = NONE;
-			std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " << none_sizes_start << " + " << mm_type_rank << ", "; 
-            std::cerr << "global rank = " << res.global_rank << ", "; 
-            std::cerr << "local shift = " << res.local_rank << ", p1 = " << sk_size << ", p = " << position;
+			// std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " << none_sizes_start << " + " << mm_type_rank << ", "; 
+            // std::cerr << "global rank = " << res.global_rank << ", "; 
+            // std::cerr << "local shift = " << res.local_rank << ", p1 = " << sk_size << ", p = " << position;
 		} break;
 		default: throw std::runtime_error("Unrecognized minimizer type");
 	}
-    std::cerr << "\n";
 	res.hval = res.global_rank + res.local_rank;
-    std::cerr << "hval = " << res.hval << "\n";
+    // std::cerr << "; hash value = " << res.hval << "\n";
 	return res;
 }
 
@@ -314,7 +280,6 @@ std::ostream& operator<<(std::ostream& out, mphf const& hf) {
 	return out;
 }
 
-/*
 mphf_alt::mphf_alt() : k(0), m(0), mm_seed(0), nkmers(0), distinct_minimizers(0), max_ram(false) {
     mphf_configuration.minimal_output = true;
     mphf_configuration.seed = constants::seed;
@@ -342,18 +307,7 @@ mphf_alt::mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_
     }
 }
 
-// std::vector<uint64_t> 
 std::unordered_set<uint64_t> mphf_alt::build_index(std::vector<mm_triplet_t>& minimizers) {
-    // std::sort(minimizers.begin(), minimizers.end());
-    // distinct_minimizers = 0;
-    // for (auto it = minimizers.begin(), prev = minimizers.begin(); it != minimizers.end(); ++it) {
-    //     if (prev->itself != it->itself) {
-    //         ++distinct_minimizers;
-    //         prev = it;
-    //     }
-    // }
-    // if (minimizers.size()) ++distinct_minimizers;
-    // auto begin = vector_mm_triplet_to_pthash_itr_adapter(minimizers.begin(), minimizers.end());
     {
         std::vector<uint64_t> random_access_buffer;
         {
@@ -461,6 +415,5 @@ std::ostream& operator<<(std::ostream& out, mphf_alt const& hf) {
 	out << "distinct minimizers = " << hf.distinct_minimizers << "\n";
 	return out;
 }
-*/
 
 } // namespace lphash

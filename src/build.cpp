@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     gzFile fp;
     kseq_t* seq;
     uint8_t k, m, nthreads;
-    uint64_t mm_seed;
+    uint64_t mm_seed, id;
     std::string tmp_dirname;
     double c;
     bool canonical;
@@ -83,9 +83,10 @@ int main(int argc, char* argv[]) {
         return 2;
     }
     seq = kseq_init(fp);
+    id = 0;
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, canonical, all_minimizers);  // non-canonical minimizers for now
+        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, canonical, id, all_minimizers);  // non-canonical minimizers for now
         total_kmers += n;
         ++total_contigs;
         check_total_kmers += contig.length() - k + 1;
@@ -98,12 +99,12 @@ int main(int argc, char* argv[]) {
 
     std::cerr << "Part 2: build MPHF\n";
     auto [unique_mms, coll_ids] = minimizer::classify(std::move(all_minimizers), max_memory, tmp_dirname);
-
     mphf locpres_mphf(k, m, mm_seed, total_kmers, c, nthreads, max_memory, tmp_dirname, verbose);
     {
         auto itr = unique_mms.cbegin();
         locpres_mphf.build_minimizers_mphf(itr, unique_mms.size());
     }
+
     std::cerr << "Part 3: build inverted index\n";
     {
         sorted_external_vector<mm_triplet_t> mm_sorted_by_mphf(uint64_t(max_memory) * essentials::GB, [](mm_triplet_t const& a, mm_triplet_t const& b) {return a.itself < b.itself;}, tmp_dirname, get_group_id());
@@ -112,19 +113,18 @@ int main(int argc, char* argv[]) {
             triplet.itself = locpres_mphf.get_minimizer_order(triplet.itself);
             mm_sorted_by_mphf.push_back(triplet);
         }
-        std::cerr << "3.1" << std::endl;
         explicit_garbage_collect(std::move(unique_mms));
-        std::cerr << "3.2" << std::endl;
         auto itr = mm_sorted_by_mphf.cbegin();
         locpres_mphf.build_inverted_index(itr, mm_sorted_by_mphf.size());
-        std::cerr << "3.3" << std::endl;
     }
     total_distinct_minimizers = locpres_mphf.get_minimizer_L0();
     total_colliding_minimizers = coll_ids.size();
 
-    std::cerr << "# of colliding minimizers = " << total_colliding_minimizers << "\n";
-
     std::cerr << "Part 4: build fallback MPHF\n";
+    // {
+    //     std::ofstream cids("dups.txt");
+    //     for(auto itr = coll_ids.cbegin(); itr != coll_ids.cend(); ++itr) cids << *itr << "\n";
+    // }
     {// garbage collector for unbucketable_kmers
         sorted_external_vector<kmer_t> unbucketable_kmers(uint64_t(max_memory) * essentials::GB, []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {return false;}, tmp_dirname, get_group_id());
         std::unordered_map<uint64_t, uint64_t> stats;
@@ -132,13 +132,23 @@ int main(int argc, char* argv[]) {
             std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
             return 2;
         }
+        id = 0;
+        auto start = coll_ids.cbegin();
+        auto stop = coll_ids.cend();
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
             std::string contig = std::string(seq->seq.s);
-            minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, canonical, coll_ids, unbucketable_kmers, stats);
+            minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, canonical, start, stop, id, unbucketable_kmers, stats);
         }
         if (seq) kseq_destroy(seq);
+        explicit_garbage_collect(std::move(coll_ids));
         gzclose(fp);
+        // {
+        //     std::ofstream ubks("ubks.txt");
+        //     for (auto itr = unbucketable_kmers.cbegin(); itr != unbucketable_kmers.cend(); ++itr) {
+        //         ubks << *itr << "\n";
+        //     }
+        // }
         {
             auto itr = unbucketable_kmers.cbegin();
             locpres_mphf.build_fallback_mphf(itr, unbucketable_kmers.size());

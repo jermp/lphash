@@ -4,6 +4,7 @@
 // #include <unordered_set>
 #include "../include/constants.hpp"
 #include "ef_sequence.hpp"
+// #include "ef_sequence_inmemory.hpp"
 #include "quartet_wtree.hpp"
 #include "mm_context.hpp"
 #include "sorted_external_vector.hpp"
@@ -69,7 +70,6 @@ public:
          uint8_t nthreads, uint8_t max_memory, std::string temporary_directory = "", bool verbose = false);
     void build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_minimizers);
     void build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr, std::size_t number_of_colliding_kmers);
-    // std::vector<uint64_t> 
     void build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iterator& start, std::size_t number_of_distinct_minimizers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
@@ -111,14 +111,12 @@ private:
     pthash_mphf_t minimizer_order;
     pthash_mphf_t fallback_kmer_order;
     quartet_wtree wtree;
-    ef_sequence<true> sizes_and_positions;
+    ef_sequence sizes_and_positions;
     uint64_t max_ram;
 
     class mm_itr_t {
         public:
             mm_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
-            // mm_itr_t(const mm_itr_t&) = delete;
-            // mm_itr_t& operator= (const mm_itr_t&) = delete;
             void operator++();
             uint64_t operator*() const;
         private:
@@ -431,7 +429,6 @@ void mphf::visit(Visitor& visitor) {
     visitor.visit(fallback_kmer_order);
 }
 
-/*
 class mphf_alt {
 public:
     mphf_alt();
@@ -767,7 +764,6 @@ void mphf_alt::visit(Visitor& visitor) {
     visitor.visit(sizes);
     visitor.visit(fallback_kmer_order);
 }
-*/
 
 }  // namespace lphash
 
