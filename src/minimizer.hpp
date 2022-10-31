@@ -8,7 +8,7 @@ namespace lphash {
 namespace minimizer {
 
 template <typename MinimizerHasher>
-[[nodiscard]] uint64_t from_string(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, uint64_t& mm_count, lphash::sorted_external_vector<mm_record_t>& accumulator) {
+[[nodiscard]] uint64_t from_string(char const* contig, std::size_t contig_size, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, uint64_t& mm_count, lphash::sorted_external_vector<mm_record_t>& accumulator) {
     std::size_t buf_pos, min_pos;
     mm_quartet_t current;
     uint64_t shift = 2 * (m - 1);
@@ -34,7 +34,7 @@ template <typename MinimizerHasher>
     min_pos = buffer.size();
     kmer_count = 0;
     z = 0;
-    for (uint64_t i = 0; i < contig.size(); ++i) {
+    for (uint64_t i = 0; i < contig_size; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         current.clear();
         if (c < 4) [[likely]] {
@@ -143,7 +143,7 @@ template <typename MinimizerHasher>
 }
 
 template <typename MinimizerHasher>
-void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, sorted_external_vector<uint64_t>::const_iterator& itr, sorted_external_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count, sorted_external_vector<kmer_t>& accumulator, std::unordered_map<uint64_t, uint64_t>& statistics) {
+void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, sorted_external_vector<uint64_t>::const_iterator& itr, sorted_external_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count, sorted_external_vector<kmer_t>& accumulator, std::unordered_map<uint64_t, uint64_t>& statistics) {
     std::vector<mm_record_t> mm_buffer(k - m + 1);
     std::vector<kmer_t> km_buffer;
     std::size_t mm_buf_pos = 0, min_pos = mm_buffer.size();
@@ -168,7 +168,7 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
     };
 
     km_buffer.reserve(2 * k - m);
-    for (uint64_t i = 0; i < contig.size(); ++i) {
+    for (uint64_t i = 0; i < contig_size; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         if (c < 4) [[likely]] {
                 mm[0] = (mm[0] << 2 | c) & mm_mask;            /* forward k-mer */
@@ -255,14 +255,14 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
 
 std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname)
 {
+    auto start = minimizers.cbegin(); // this forces the remaining buffer to be written to disk
+    auto stop = minimizers.cend();
     uint64_t colliding_mm_size_estimate = static_cast<uint64_t>(static_cast<double>(minimizers.size()) * 0.01 * sizeof(uint64_t));
     colliding_mm_size_estimate = colliding_mm_size_estimate < 4000000 ? 4000000 : colliding_mm_size_estimate;
     uint64_t unique_minimizer_mm_size_estimate = uint64_t(max_memory) * essentials::GB - colliding_mm_size_estimate;
     sorted_external_vector<mm_triplet_t> unique_minimizers(unique_minimizer_mm_size_estimate, []([[maybe_unused]] mm_triplet_t const& a, [[maybe_unused]] mm_triplet_t const& b){return false;}, tmp_dirname, get_group_id());
     sorted_external_vector<uint64_t> colliding_minimizer_ids(colliding_mm_size_estimate, [](uint64_t a, uint64_t b){return a < b;}, tmp_dirname, get_group_id());
 
-    auto start = minimizers.cbegin();
-    auto stop = minimizers.cend();
     mm_record_t prev;
     prev.size = prev.p1 = 0;
     while (start != stop) {

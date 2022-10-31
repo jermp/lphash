@@ -62,6 +62,44 @@ bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, 
     return true;
 }
 
+class mm_itr_t {
+    public:
+        mm_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+        void operator++();
+        uint64_t operator*() const;
+    private:
+        sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+};
+
+class km_itr_t {
+    public:
+        km_itr_t(sorted_external_vector<kmer_t>::const_iterator& mm_itr);
+        void operator++();
+        kmer_t const& operator*() const;
+    private:
+        sorted_external_vector<kmer_t>::const_iterator& m_iterator;
+};
+
+class pos_itr_t {
+    public:
+        typedef uint8_t value_type;
+        pos_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+        void operator++();
+        uint8_t const& operator*() const;
+    private:
+        sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+};
+
+class size_itr_t {
+    public:
+        typedef uint8_t value_type;
+        size_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+        void operator++();
+        uint8_t const& operator*() const;
+    private:
+        sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+};
+
 class mphf 
 {
 public:
@@ -70,25 +108,22 @@ public:
          uint8_t nthreads, uint8_t max_memory, std::string temporary_directory = "", bool verbose = false);
     void build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_minimizers);
     void build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr, std::size_t number_of_colliding_kmers);
-    void build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iterator& start, std::size_t number_of_distinct_minimizers);
+    void build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
-                                     bool canonical = false) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
-                                     bool dummy) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length,
-                                      bool canonical = false) const;
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
 
@@ -113,24 +148,6 @@ private:
     quartet_wtree wtree;
     ef_sequence sizes_and_positions;
     uint64_t max_ram;
-
-    class mm_itr_t {
-        public:
-            mm_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
-            void operator++();
-            uint64_t operator*() const;
-        private:
-            sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
-    };
-
-    class km_itr_t {
-        public:
-            km_itr_t(sorted_external_vector<kmer_t>::const_iterator& mm_itr);
-            void operator++();
-            kmer_t const& operator*() const;
-        private:
-            sorted_external_vector<kmer_t>::const_iterator& m_iterator;
-    };
 
     struct mm_context_t {
         uint64_t hval;
@@ -433,30 +450,30 @@ class mphf_alt {
 public:
     mphf_alt();
     mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c, 
-             uint8_t nthreads, uint8_t in_memory, std::string temporary_directory = "", bool verbose = false);
-    // std::vector<uint64_t> 
-    std::unordered_set<uint64_t> build_index(std::vector<mm_triplet_t>& minimizers);
-    void build_fallback_mphf(std::vector<kmer_t>& colliding_kmers);
+             uint8_t nthreads, uint8_t max_memory, std::string temporary_directory = "", bool verbose = false);
+    void build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers);
+    void build_pos_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers, uint64_t pos_sum);
+    void build_size_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers, uint64_t size_sum);
+    void build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr, std::size_t number_of_colliding_kmers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
-                                     bool canonical = false) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
-                                     bool dummy) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length,
-                                      bool canonical = false) const;
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
+
+    uint64_t get_minimizer_order(uint64_t mm) const;
 
     void print_statistics() const noexcept;
 
@@ -473,8 +490,8 @@ private:
     uint64_t distinct_minimizers;
     uint64_t num_kmers_in_main_index;
     pthash_mphf_t minimizer_order;
-    ef_sequence<true> positions;
-    ef_sequence<true> sizes;
+    ef_sequence positions;
+    ef_sequence sizes;
     pthash_mphf_t fallback_kmer_order;
     uint8_t max_ram;
 

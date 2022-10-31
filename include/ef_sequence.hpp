@@ -10,20 +10,24 @@ template <typename Iterator>
 class cumulative_iterator
 {
     public:
-        typedef typename Iterator::value_type value_type;
-        cumulative_iterator(Iterator& other) : itr(other), cumulative_sum(*other) {}
+        typedef std::size_t value_type;
+        cumulative_iterator(Iterator& other) : inc(false), itr(other), cumulative_sum(*other) {}
         void operator++() {
+            if (inc) cumulative_sum += *itr;
             ++itr;
-            if (itr.has_next()) { // FIXME use begin and end instead
-                cumulative_sum += *itr;
-            }
+            inc = true;
         }
-        value_type operator*() const {
+        std::size_t operator*() {
+            if (inc) {
+                cumulative_sum += *itr;
+                inc = false;
+            }
             return cumulative_sum;
         }
     private:
+        bool inc;
         Iterator& itr;
-        value_type cumulative_sum;
+        std::size_t cumulative_sum;
 };
 
 struct ef_sequence {
@@ -53,12 +57,12 @@ struct ef_sequence {
             auto v = *begin;
             // if constexpr (encode_prefix_sum) {
             //     v = v + last;             // prefix sum
-            // } else if (i and v < last) {  // check the order
-            //     std::cerr << "error at " << i << "/" << n << ":\n";
-            //     std::cerr << "last " << last << "\n";
-            //     std::cerr << "current " << v << "\n";
-            //     throw std::runtime_error("ef_sequence is not sorted");
-            // }
+            if (i and v < last) {  // check the order
+                std::cerr << "error at " << i << "/" << n << ":\n";
+                std::cerr << "last " << last << "\n";
+                std::cerr << "current " << static_cast<uint64_t>(v) << "\n";
+                throw std::runtime_error("ef_sequence is not sorted");
+            }
             if (l) cv_builder_low_bits.push_back(v & low_mask);
             bvb_high_bits.set((v >> l) + i + true, 1); // encode_prefix_sum, 1);
             last = v;

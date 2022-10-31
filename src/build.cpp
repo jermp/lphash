@@ -5,7 +5,7 @@ extern "C" {
 #include "../include/constants.hpp"
 #include "../include/parser_build.hpp"
 #include "../include/mphf.hpp"
-#include "minimizer.hpp" // DO NOT MOVE from the last position
+#include "minimizer.hpp"
 
 // #include "../include/prettyprint.hpp"
 
@@ -16,12 +16,11 @@ KSEQ_INIT(gzFile, gzread)
 int main(int argc, char* argv[]) {
     gzFile fp;
     kseq_t* seq;
-    uint8_t k, m, nthreads;
+    uint8_t k, m, nthreads, max_memory;
     uint64_t mm_seed, id;
     std::string tmp_dirname;
     double c;
     bool canonical;
-    uint8_t max_memory;
     bool check;
     bool verbose;
     cmd_line_parser::parser parser(argc, argv);
@@ -85,16 +84,14 @@ int main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     id = 0;
     while (kseq_read(seq) >= 0) {
-        std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        auto n = minimizer::from_string<hash64>(contig, k, m, mm_seed, canonical, id, all_minimizers);  // non-canonical minimizers for now
+        auto n = minimizer::from_string<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id, all_minimizers);  // non-canonical minimizers for now
         total_kmers += n;
         ++total_contigs;
-        check_total_kmers += contig.length() - k + 1;
+        check_total_kmers += seq->seq.l - k + 1;
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);
     total_minimizers = all_minimizers.size();
-
     assert(total_kmers == check_total_kmers);
 
     std::cerr << "Part 2: build MPHF\n";
@@ -121,10 +118,6 @@ int main(int argc, char* argv[]) {
     total_colliding_minimizers = coll_ids.size();
 
     std::cerr << "Part 4: build fallback MPHF\n";
-    // {
-    //     std::ofstream cids("dups.txt");
-    //     for(auto itr = coll_ids.cbegin(); itr != coll_ids.cend(); ++itr) cids << *itr << "\n";
-    // }
     {// garbage collector for unbucketable_kmers
         sorted_external_vector<kmer_t> unbucketable_kmers(uint64_t(max_memory) * essentials::GB, []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {return false;}, tmp_dirname, get_group_id());
         std::unordered_map<uint64_t, uint64_t> stats;
@@ -137,18 +130,11 @@ int main(int argc, char* argv[]) {
         auto stop = coll_ids.cend();
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
-            std::string contig = std::string(seq->seq.s);
-            minimizer::get_colliding_kmers<hash64>(contig, k, m, mm_seed, canonical, start, stop, id, unbucketable_kmers, stats);
+            minimizer::get_colliding_kmers<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, start, stop, id, unbucketable_kmers, stats);
         }
         if (seq) kseq_destroy(seq);
-        explicit_garbage_collect(std::move(coll_ids));
         gzclose(fp);
-        // {
-        //     std::ofstream ubks("ubks.txt");
-        //     for (auto itr = unbucketable_kmers.cbegin(); itr != unbucketable_kmers.cend(); ++itr) {
-        //         ubks << *itr << "\n";
-        //     }
-        // }
+        explicit_garbage_collect(std::move(coll_ids));
         {
             auto itr = unbucketable_kmers.cbegin();
             locpres_mphf.build_fallback_mphf(itr, unbucketable_kmers.size());
