@@ -76,13 +76,23 @@ struct hash64 : public pthash::murmurhash2_64 {
 
 typedef pthash::single_phf<hash64, pthash::dictionary_dictionary, true> pthash_mphf_t;
 
+bool operator< (mm_record_t const& a, mm_record_t const& b);
+
+bool operator> (mm_record_t const& a, mm_record_t const& b);
+
 bool operator< (mm_triplet_t const& a, mm_triplet_t const& b);
+
+bool operator> (mm_triplet_t const& a, mm_triplet_t const& b);
 
 std::ostream &operator<<(std::ostream &os, kmer128_t const& val);
 
+bool operator== (kmer128_t const& a, kmer128_t const& b);
+
+bool operator!= (kmer128_t const& a, kmer128_t const& b);
+
 bool operator< (kmer128_t const& a, kmer128_t const& b);
 
-bool operator== (kmer128_t const& a, kmer128_t const& b);
+bool operator> (kmer128_t const& a, kmer128_t const& b);
 
 kmer128_t operator& (kmer128_t const& a, kmer128_t const& b);
 

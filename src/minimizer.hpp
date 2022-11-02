@@ -3,6 +3,8 @@
 #include "../include/mm_context.hpp"
 #include "../include/sorted_external_vector.hpp"
 
+#include <unordered_set>
+
 namespace lphash {
 
 namespace minimizer {
@@ -182,6 +184,8 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
                     // current.itself = mm[z];
                     current.itself = MinimizerHasher::hash(mm[z], seed).first();  // here we use itself as hash field since we are not interested in minimizers
                     current.id = mm_count++;
+                    // std::cerr << current.id << " " << *itr << "\n";
+                    // assert(current.id <= *itr + 1);
                     if (nbases_since_last_break == k + 1) [[unlikely]] {  // we have seen the first window after a break, time to search for the minimum
                         min_pos = 0;
                         for (std::size_t j = 0; j < mm_buffer.size(); ++j) {
@@ -190,10 +194,12 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
                         sks = 1;  // number of k-mers after a break is 1
                     }
                     if (nbases_since_last_break >= k + 1) [[likely]] {  // time to update the minimum, if necessary
+                        // std::cerr << "current minimizer id = " << mm_buffer[min_pos].id << "\n";
                         assert(sks != 0);
                         assert(sks <= k - m + 1);
                         if (((mm_buf_pos) % mm_buffer.size()) == min_pos || current.itself < mm_buffer[min_pos].itself) {  // update min
                             assert(sks == km_buffer.size());
+                            assert(*itr >= mm_buffer[min_pos].id);
                             if (itr != stop && *itr == mm_buffer[min_pos].id) {
                                 update_output(km_buffer);  // we save all k-mers in the super-k-mer
                                 ++itr;
@@ -224,6 +230,7 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
             if (min_pos < mm_buffer.size()) // conditions && itr != stop && *itr == mm_count are superfluous
             {
                 assert(sks == km_buffer.size());
+                assert(*itr >= mm_buffer[min_pos].id);
                 if (itr != stop && *itr == mm_buffer[min_pos].id) {
                     update_output(km_buffer);
                     ++itr;
@@ -246,6 +253,7 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
     if (min_pos < mm_buffer.size()) // conditions && itr != stop && *itr == mm_count are superfluous
     {
         assert(sks == km_buffer.size());
+        assert(*itr >= mm_buffer[min_pos].id);
         if (itr != stop && *itr == mm_buffer[min_pos].id) {
             update_output(km_buffer);
             ++itr;
@@ -287,7 +295,7 @@ std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>
     }
     if (prev.size) unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
 
-    return std::make_pair(unique_minimizers, colliding_minimizer_ids);
+    return std::make_pair(std::move(unique_minimizers), std::move(colliding_minimizer_ids));
 }
 
 std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname)

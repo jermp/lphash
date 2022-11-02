@@ -231,6 +231,7 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 
     // std::cerr << n_maximal << "\n";
 
+    // std::cerr << kmer << ", " << minimizer << " (" << mp_hash << "), ";
 	switch (mm_type) {
 		case LEFT:
 			res.global_rank = sizes_and_positions.access(mm_type_rank) + (k - m + 1) * n_maximal; // number of left-KMERS before our bucket
@@ -280,7 +281,7 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
 		default: throw std::runtime_error("Unrecognized minimizer type");
 	}
 	res.hval = res.global_rank + res.local_rank;
-    // std::cerr << "; hash value = " << res.hval << "\n";
+    // if (res.type == NONE + 1) std::cerr << "; hash value = " << res.hval << "\n";
 	return res;
 }
 

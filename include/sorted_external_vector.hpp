@@ -65,13 +65,14 @@ class sorted_external_vector {
 		void advance_heap_head();
 	};
 
-	sorted_external_vector(uint64_t available_space_bytes, std::function<bool(T const&, T const&)> cmp, std::string tmp_dir, std::string name = "");
-	sorted_external_vector(uint64_t available_space_bytes, std::string tmp_dir, std::string name = "");
-	void push_back(T const& elem);
-	const_iterator cbegin();
-	const_iterator cend() const;
-	std::size_t size() const;
-	~sorted_external_vector();
+        sorted_external_vector(uint64_t available_space_bytes, std::function<bool(T const&, T const&)> cmp, std::string tmp_dir, std::string name = "");
+        sorted_external_vector(uint64_t available_space_bytes, std::string tmp_dir, std::string name = "");
+        sorted_external_vector(sorted_external_vector &&) = default;
+        void push_back(T const& elem);
+        const_iterator cbegin();
+        const_iterator cend() const;
+        std::size_t size() const;
+        ~sorted_external_vector();
 
 		private:
 	void init(uint64_t available_space_bytes);
@@ -119,14 +120,14 @@ void sorted_external_vector<T>::push_back(T const& elem) {
 }
 
 template <typename T>
-typename sorted_external_vector<T>::const_iterator sorted_external_vector<T>::cbegin() {
-	if (m_buffer.size() != 0) {
-		// std::cerr << "non-empty buffer" << std::endl;
-		sort_and_flush();
-	}
-	m_buffer.clear();
-	m_buffer.shrink_to_fit();
-	return const_iterator(this);
+typename sorted_external_vector<T>::const_iterator sorted_external_vector<T>::cbegin()
+{
+    if (m_buffer.size() != 0) {
+        sort_and_flush();
+    }
+    m_buffer.clear();
+    m_buffer.shrink_to_fit();
+    return const_iterator(this);
 }
 
 template <typename T>
@@ -164,18 +165,19 @@ std::string sorted_external_vector<T>::get_tmp_output_filename(uint64_t id) cons
 }
 
 template <typename T>
-sorted_external_vector<T>::const_iterator::const_iterator(sorted_external_vector<T> const* vec)
-	: v(vec), m_mm_files(v->m_tmp_files.size()), heap_idx_comparator([this](uint32_t i, uint32_t j) { return v->m_sorter(*m_iterators[i], *m_iterators[j]); }) {
-	m_iterators.reserve(v->m_tmp_files.size());
-	m_idx_heap.reserve(v->m_tmp_files.size());
+sorted_external_vector<T>::const_iterator::const_iterator(sorted_external_vector<T> const* vec) 
+    : v(vec), m_mm_files(v->m_tmp_files.size()), heap_idx_comparator([this](uint32_t i, uint32_t j) {return (*m_iterators[i] > *m_iterators[j]);})
+{
+    m_iterators.reserve(v->m_tmp_files.size());
+    m_idx_heap.reserve(v->m_tmp_files.size());
 
-	/* create the input iterators and make the heap */
-	for (uint64_t i = 0; i != v->m_tmp_files.size(); ++i) {
-		m_mm_files[i].open(v->m_tmp_files[i], mm::advice::sequential);
-		m_iterators.emplace_back(m_mm_files[i].data(), m_mm_files[i].data() + m_mm_files[i].size());
-		m_idx_heap.push_back(i);
-	}
-	std::make_heap(m_idx_heap.begin(), m_idx_heap.end(), heap_idx_comparator);
+    /* create the input iterators and make the heap */
+    for (uint64_t i = 0; i != v->m_tmp_files.size(); ++i) {
+        m_mm_files[i].open(v->m_tmp_files.at(i), mm::advice::sequential);
+        m_iterators.emplace_back(m_mm_files[i].data(), m_mm_files[i].data() + m_mm_files[i].size());
+        m_idx_heap.push_back(i);
+    }
+    std::make_heap(m_idx_heap.begin(), m_idx_heap.end(), heap_idx_comparator);
 }
 
 template <typename T>
