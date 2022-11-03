@@ -17,7 +17,22 @@ const std::array<uint8_t, 256> seq_nt4_table = {
 
 }
 
+bool operator< (mm_record_t const& a, mm_record_t const& b)
+{
+    return a.itself < b.itself;
+}
+
+bool operator> (mm_record_t const& a, mm_record_t const& b)
+{
+    return a.itself > b.itself;
+}
+
 bool operator< (mm_triplet_t const& a, mm_triplet_t const& b)
+{
+    return a.itself < b.itself;
+}
+
+bool operator> (mm_triplet_t const& a, mm_triplet_t const& b)
 {
     return a.itself < b.itself;
 }
@@ -33,9 +48,20 @@ bool operator< (kmer128_t const& a, kmer128_t const& b)
     return (a.upper < b.upper);
 }
 
+bool operator> (kmer128_t const& a, kmer128_t const& b)
+{
+    if (a.upper == b.upper) return a.lower > b.lower;
+    return (a.upper > b.upper);
+}
+
 bool operator== (kmer128_t const& a, kmer128_t const& b)
 {
     return a.upper == b.upper && a.lower == b.lower;
+}
+
+bool operator!= (kmer128_t const& a, kmer128_t const& b)
+{
+    return not (a == b);
 }
 
 kmer128_t operator& (kmer128_t const& a, kmer128_t const& b)
@@ -98,6 +124,11 @@ kmer128_t operator>> (kmer128_t const& val, unsigned int shift)
         res.upper = 0;
     }
     return res;
+}
+
+std::string get_group_id()
+{
+    return std::to_string(pthash::clock_type::now().time_since_epoch().count());
 }
 
 }

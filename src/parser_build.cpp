@@ -33,7 +33,7 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
     //            "This option changes the parsing and results in a trade-off between index space and lookup time.",
     //            "--canonical-parsing", 
     //            true);
-    parser.add("in-memory", "Do not use external memory during the construction of the internal MPHFs (disabled by default).", "--in-memory", true);
+    parser.add("max-memory", "Maximum internal memory [GB] for building (8GB by default). Use external memory if needed.", "--max-memory", false);
     parser.add("check", "Check correctness after construction (disabled by default).", "--check", true);
     parser.add("verbose", "Verbose output during construction (disabled by default).", "--verbose", true);
 

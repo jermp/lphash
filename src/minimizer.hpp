@@ -1,15 +1,16 @@
-#include <array>
 #include <vector>
-#include <ostream>
 #include "../include/constants.hpp"
 #include "../include/mm_context.hpp"
+#include "../include/sorted_external_vector.hpp"
+
+#include <unordered_set>
 
 namespace lphash {
 
 namespace minimizer {
 
 template <typename MinimizerHasher>
-[[nodiscard]] uint64_t from_string(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<mm_triplet_t>& accumulator) {
+[[nodiscard]] uint64_t from_string(char const* contig, std::size_t contig_size, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, uint64_t& mm_count, lphash::sorted_external_vector<mm_record_t>& accumulator) {
     std::size_t buf_pos, min_pos;
     mm_quartet_t current;
     uint64_t shift = 2 * (m - 1);
@@ -23,18 +24,19 @@ template <typename MinimizerHasher>
     uint8_t z;
     bool find_brand_new_min = false;
 
-    auto update_output = [](std::vector<mm_triplet_t>& accumulator, mm_quartet_t const& added) {
-        accumulator.push_back({added.itself, added.p1, added.size});
+    auto update_output = [](decltype(accumulator)& accumulator, mm_quartet_t const& added) {
+        // std::cerr << added.itself << " " << unique_mm_id << " " << static_cast<uint64_t>(added.p1) << " " << static_cast<uint64_t>(added.size) << "\n";
+        accumulator.push_back({added.itself, added.id, added.p1, added.size});
     };
 
     assert(k >= m);
+    // std::cerr << "buffer size = " << buffer.size() << "\n";
 
     buf_pos = 0;
     min_pos = buffer.size();
-    // std::cerr << "buffer size = " << buffer.size() << "\n";
     kmer_count = 0;
     z = 0;
-    for (uint64_t i = 0; i < contig.size(); ++i) {
+    for (uint64_t i = 0; i < contig_size; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         current.clear();
         if (c < 4) [[likely]] {
@@ -47,6 +49,7 @@ template <typename MinimizerHasher>
                 // std::cerr << current.itself << "\n";
                 current.hash = MinimizerHasher::hash(mm[z], seed).first();  // insert new hash inside buffer
                 current.p1 = i - m + 1;  // FIXME this is NOT the position inside the super-k-mer!
+                current.id = mm_count++;
                 if (nbases_since_last_break == k) ++kmer_count;
                 if (nbases_since_last_break == k + 1) [[unlikely]] {   // have seen the first window after a break, time to search for the minimum note that the current m-mer is checked by the next if
                     min_pos = p1 = 0;
@@ -142,13 +145,11 @@ template <typename MinimizerHasher>
 }
 
 template <typename MinimizerHasher>
-void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::unordered_set<uint64_t> const& colliding_minimizers, std::vector<kmer_t>& accumulator) {
-// void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, std::vector<uint64_t> const& colliding_minimizers, std::vector<kmer_t>& accumulator) {
-    typedef std::pair<uint64_t, uint64_t> mm_pair_t;
-    std::vector<mm_pair_t> mm_buffer(k - m + 1);
+void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k, uint32_t m, uint64_t seed, bool canonical_m_mers, sorted_external_vector<uint64_t>::const_iterator& itr, sorted_external_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count, sorted_external_vector<kmer_t>& accumulator, std::unordered_map<uint64_t, uint64_t>& statistics) {
+    std::vector<mm_record_t> mm_buffer(k - m + 1);
     std::vector<kmer_t> km_buffer;
     std::size_t mm_buf_pos = 0, min_pos = mm_buffer.size();
-    mm_pair_t current;
+    mm_record_t current;
     uint64_t mm_shift = 2 * (m - 1);
     uint64_t mm_mask = (1ULL << (2 * m)) - 1;
     uint64_t km_shift = 2 * (k - 1);
@@ -162,12 +163,14 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
     int c;
     assert(k >= m);
 
-    auto update_output = [](std::vector<kmer_t> const& toadd, std::vector<kmer_t>& accumulator) {
-        accumulator.insert(accumulator.end(), toadd.begin(), toadd.end());
+    auto update_output = [&accumulator, &statistics](std::vector<kmer_t> const& toadd) {
+        for (auto kmer : toadd) accumulator.push_back(kmer);
+        if (statistics.count(toadd.size()) == 0) statistics[toadd.size()] = 1ULL;
+        else ++statistics[toadd.size()];
     };
 
     km_buffer.reserve(2 * k - m);
-    for (uint64_t i = 0; i < contig.size(); ++i) {
+    for (uint64_t i = 0; i < contig_size; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         if (c < 4) [[likely]] {
                 mm[0] = (mm[0] << 2 | c) & mm_mask;            /* forward k-mer */
@@ -178,27 +181,32 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
                 ++nbases_since_last_break;
 
                 if (nbases_since_last_break >= m) {
-                    current.first = mm[z];
-                    current.second = MinimizerHasher::hash(mm[z], seed).first();  // insert new hash inside buffer
+                    // current.itself = mm[z];
+                    current.itself = MinimizerHasher::hash(mm[z], seed).first();  // here we use itself as hash field since we are not interested in minimizers
+                    current.id = mm_count++;
+                    // std::cerr << current.id << " " << *itr << "\n";
+                    // assert(current.id <= *itr + 1);
                     if (nbases_since_last_break == k + 1) [[unlikely]] {  // we have seen the first window after a break, time to search for the minimum
                         min_pos = 0;
                         for (std::size_t j = 0; j < mm_buffer.size(); ++j) {
-                            if (mm_buffer[j].second < mm_buffer[min_pos].second) min_pos = j;
+                            if (mm_buffer[j].itself < mm_buffer[min_pos].itself) min_pos = j;
                         }
                         sks = 1;  // number of k-mers after a break is 1
                     }
                     if (nbases_since_last_break >= k + 1) [[likely]] {  // time to update the minimum, if necessary
+                        // std::cerr << "current minimizer id = " << mm_buffer[min_pos].id << "\n";
                         assert(sks != 0);
                         assert(sks <= k - m + 1);
-                        if (((mm_buf_pos) % mm_buffer.size()) == min_pos || current.second < mm_buffer[min_pos].second) {  // update min
-                            // if (std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)) {
-                            if (colliding_minimizers.find(mm_buffer[min_pos].first) != colliding_minimizers.end()) {
-                                assert(sks == km_buffer.size());
-                                update_output(km_buffer, accumulator);  // we save all k-mers in the super-k-mer
+                        if (((mm_buf_pos) % mm_buffer.size()) == min_pos || current.itself < mm_buffer[min_pos].itself) {  // update min
+                            assert(sks == km_buffer.size());
+                            assert(*itr >= mm_buffer[min_pos].id);
+                            if (itr != stop && *itr == mm_buffer[min_pos].id) {
+                                update_output(km_buffer);  // we save all k-mers in the super-k-mer
+                                ++itr;
                             }
                             km_buffer.clear();
                             if (((mm_buf_pos) % mm_buffer.size()) == min_pos) find_brand_new_min = true;  // old minimum outside window
-                            else if (current.second < mm_buffer[min_pos].second) min_pos = mm_buf_pos;  // new minimum, actual update is outside if
+                            else if (current.itself < mm_buffer[min_pos].itself) min_pos = mm_buf_pos;  // new minimum, actual update is outside if
                             sks = 0;
                         }
                         ++sks;
@@ -211,22 +219,24 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
                         find_brand_new_min = false;
                         min_pos = mm_buf_pos;
                         for (std::size_t j = (mm_buf_pos + 1) % mm_buffer.size(); j < mm_buffer.size(); ++j)
-                            if (mm_buffer[min_pos].second > mm_buffer[j].second) min_pos = j;
+                            if (mm_buffer[min_pos].itself > mm_buffer[j].itself) min_pos = j;
                         for (std::size_t j = 0; j <= mm_buf_pos; ++j)
-                            if (mm_buffer[min_pos].second > mm_buffer[j].second) min_pos = j;
+                            if (mm_buffer[min_pos].itself > mm_buffer[j].itself) min_pos = j;
                     }
                 }
             }
         else [[unlikely]] {
             nbases_since_last_break = 0;
-            if (min_pos < mm_buffer.size() && 
-                // std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)
-                colliding_minimizers.find(mm_buffer[min_pos].first) != colliding_minimizers.end()
-               ) 
+            if (min_pos < mm_buffer.size()) // conditions && itr != stop && *itr == mm_count are superfluous
             {
                 assert(sks == km_buffer.size());
-                update_output(km_buffer, accumulator);  // we save all k-mers in the super-k-mer
+                assert(*itr >= mm_buffer[min_pos].id);
+                if (itr != stop && *itr == mm_buffer[min_pos].id) {
+                    update_output(km_buffer);
+                    ++itr;
+                }
             }
+            
             km_buffer.clear();
             min_pos = mm_buffer.size();
             sks = 0;  // impossible value, wait for reinitialization of the first window
@@ -237,17 +247,60 @@ void get_colliding_kmers(std::string const& contig, uint32_t k, uint32_t m, uint
         min_pos = 0;
         sks = 1;
         for (std::size_t j = 0; j < mm_buffer.size(); ++j) {
-            if (mm_buffer[j].second < mm_buffer[min_pos].second) { min_pos = j; }
+            if (mm_buffer[j].itself < mm_buffer[min_pos].itself) { min_pos = j; }
         }
     }
-    if (min_pos < mm_buffer.size() && 
-        // std::binary_search(colliding_minimizers.begin(), colliding_minimizers.end(), mm_buffer[min_pos].first)
-        colliding_minimizers.find(mm_buffer[min_pos].first) != colliding_minimizers.end()
-       ) 
+    if (min_pos < mm_buffer.size()) // conditions && itr != stop && *itr == mm_count are superfluous
     {
         assert(sks == km_buffer.size());
-        update_output(km_buffer, accumulator);  // we save all k-mers in the super-k-mer
+        assert(*itr >= mm_buffer[min_pos].id);
+        if (itr != stop && *itr == mm_buffer[min_pos].id) {
+            update_output(km_buffer);
+            ++itr;
+        }
     }
+}
+
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname)
+{
+    auto start = minimizers.cbegin(); // this forces the remaining buffer to be written to disk
+    auto stop = minimizers.cend();
+    uint64_t colliding_mm_size_estimate = static_cast<uint64_t>(static_cast<double>(minimizers.size()) * 0.01 * sizeof(uint64_t));
+    colliding_mm_size_estimate = colliding_mm_size_estimate < 4000000 ? 4000000 : colliding_mm_size_estimate;
+    uint64_t unique_minimizer_mm_size_estimate = uint64_t(max_memory) * essentials::GB - colliding_mm_size_estimate;
+    sorted_external_vector<mm_triplet_t> unique_minimizers(unique_minimizer_mm_size_estimate, []([[maybe_unused]] mm_triplet_t const& a, [[maybe_unused]] mm_triplet_t const& b){return false;}, tmp_dirname, get_group_id());
+    sorted_external_vector<uint64_t> colliding_minimizer_ids(colliding_mm_size_estimate, [](uint64_t a, uint64_t b){return a < b;}, tmp_dirname, get_group_id());
+
+    mm_record_t prev;
+    prev.size = prev.p1 = 0;
+    while (start != stop) {
+        if (prev.size != 0) {
+            if (prev.itself == (*start).itself) {
+                prev.p1 = prev.size = 0;
+                unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
+                colliding_minimizer_ids.push_back(prev.id);
+                while (start != stop && (*start).itself == prev.itself) {
+                    colliding_minimizer_ids.push_back((*start).id);
+                    ++start;
+                }
+            } else {
+                unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
+                prev = *start;
+                ++start;
+            }
+        } else {
+            prev = *start;
+            ++start;
+        }
+    }
+    if (prev.size) unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
+
+    return std::make_pair(std::move(unique_minimizers), std::move(colliding_minimizer_ids));
+}
+
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname)
+{
+    return classify(minimizers, max_memory, tmp_dirname);
 }
 
 }  // namespace minimizer

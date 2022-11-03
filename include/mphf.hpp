@@ -1,10 +1,13 @@
-#pragma once
+#ifndef MPHF_HPP
+#define MPHF_HPP
 
-#include <unordered_set>
+// #include <unordered_set>
 #include "../include/constants.hpp"
 #include "ef_sequence.hpp"
+// #include "ef_sequence_inmemory.hpp"
 #include "quartet_wtree.hpp"
 #include "mm_context.hpp"
+#include "sorted_external_vector.hpp"
 
 namespace lphash {
 
@@ -59,36 +62,72 @@ bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, 
     return true;
 }
 
+class mm_itr_t {
+    public:
+        mm_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+        void operator++();
+        uint64_t operator*() const;
+    private:
+        sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+};
+
+class km_itr_t {
+    public:
+        km_itr_t(sorted_external_vector<kmer_t>::const_iterator& mm_itr);
+        void operator++();
+        kmer_t const& operator*() const;
+    private:
+        sorted_external_vector<kmer_t>::const_iterator& m_iterator;
+};
+
+class pos_itr_t {
+    public:
+        typedef uint8_t value_type;
+        pos_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+        void operator++();
+        uint8_t const& operator*() const;
+    private:
+        sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+};
+
+class size_itr_t {
+    public:
+        typedef uint8_t value_type;
+        size_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+        void operator++();
+        uint8_t const& operator*() const;
+    private:
+        sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+};
+
 class mphf 
 {
 public:
     mphf();
     mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c,
-         uint8_t nthreads, bool in_memory, std::string temporary_directory = "", bool verbose = false);
-    void build_minimizers_mphf(std::vector<mm_triplet_t>& minimizers);
-    void build_fallback_mphf(std::vector<kmer_t>& colliding_kmers);
-    // std::vector<uint64_t> 
-    std::unordered_set<uint64_t> build_inverted_index(std::vector<mm_triplet_t>& minimizers);
+         uint8_t nthreads, uint8_t max_memory, std::string temporary_directory = "", bool verbose = false);
+    void build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_minimizers);
+    void build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr, std::size_t number_of_colliding_kmers);
+    void build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
-                                     bool canonical = false) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
-                                     bool dummy) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length,
-                                      bool canonical = false) const;
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
+
+    uint64_t get_minimizer_order(uint64_t mm) const;
 
     void print_statistics() const noexcept;
 
@@ -107,8 +146,8 @@ private:
     pthash_mphf_t minimizer_order;
     pthash_mphf_t fallback_kmer_order;
     quartet_wtree wtree;
-    ef_sequence<true> sizes_and_positions;
-    bool ram_only;
+    ef_sequence sizes_and_positions;
+    uint64_t max_ram;
 
     struct mm_context_t {
         uint64_t hval;
@@ -239,8 +278,7 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length,
     std::vector<uint64_t> res;
     for (std::size_t i = 0; i < length - k + 1; ++i) {
         auto kmer = debug::string_to_integer_no_reverse(&contig[i], k);
-        debug::triplet_t triplet =
-            debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
+        debug::triplet_t triplet = debug::compute_minimizer_triplet<MinimizerHasher>(kmer, k, m, mm_seed);
         uint64_t mm = triplet.first;
         uint64_t p = triplet.third;
         auto ctx = query(kmer, mm, p);
@@ -408,38 +446,34 @@ void mphf::visit(Visitor& visitor) {
     visitor.visit(fallback_kmer_order);
 }
 
-// bool check_collisions(mphf const& hf, std::string const& contig, bool canonical, pthash::bit_vector_builder& population); 
-// bool check_perfection(mphf const& hf, pthash::bit_vector_builder& population); 
-// bool check_streaming_correctness(mphf const& hf, std::string const& contig, bool canonical);
-
 class mphf_alt {
 public:
     mphf_alt();
     mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c, 
-             uint8_t nthreads, bool in_memory, std::string temporary_directory = "", bool verbose = false);
-    // std::vector<uint64_t> 
-    std::unordered_set<uint64_t> build_index(std::vector<mm_triplet_t>& minimizers);
-    void build_fallback_mphf(std::vector<kmer_t>& colliding_kmers);
+             uint8_t nthreads, uint8_t max_memory, std::string temporary_directory = "", bool verbose = false);
+    void build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers);
+    void build_pos_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers, uint64_t pos_sum);
+    void build_size_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr, std::size_t number_of_distinct_minimizers, uint64_t size_sum);
+    void build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr, std::size_t number_of_colliding_kmers);
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
 
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
-                                     bool canonical = false) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
-                                     bool dummy) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical, bool dummy) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
     template <typename MinimizerHasher = hash64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length,
-                                      bool canonical = false) const;
+    uint64_t barebone_streaming_query(const char* contig, std::size_t length, bool canonical = false) const;
     template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
+
+    uint64_t get_minimizer_order(uint64_t mm) const;
 
     void print_statistics() const noexcept;
 
@@ -456,10 +490,10 @@ private:
     uint64_t distinct_minimizers;
     uint64_t num_kmers_in_main_index;
     pthash_mphf_t minimizer_order;
-    ef_sequence<true> positions;
-    ef_sequence<true> sizes;
+    ef_sequence positions;
+    ef_sequence sizes;
     pthash_mphf_t fallback_kmer_order;
-    bool ram_only;
+    uint8_t max_ram;
 
     struct mm_context_t {
         uint64_t hval;
@@ -500,8 +534,8 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
     for (uint64_t i = 0; i < length; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         if (c < 4) [[likely]] {
-                mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
-                mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; /* reverse m-mer */
+                mm[0] = (mm[0] << 2 | c) & mask;            // forward m-mer
+                mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; // reverse m-mer
                 km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
                 km[1] =
                     (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
@@ -640,8 +674,8 @@ uint64_t mphf_alt::barebone_streaming_query(const char* contig, std::size_t leng
     for (uint64_t i = 0; i < length; ++i) {
         c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
         if (c < 4) [[likely]] {
-                mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
-                mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; /* reverse m-mer */
+                mm[0] = (mm[0] << 2 | c) & mask;            // forward m-mer
+                mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; // reverse m-mer
                 km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
                 km[1] =
                     (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
@@ -749,3 +783,5 @@ void mphf_alt::visit(Visitor& visitor) {
 }
 
 }  // namespace lphash
+
+#endif

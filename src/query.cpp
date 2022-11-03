@@ -21,7 +21,14 @@ int main(int argc, char* argv[]) {
     std::size_t total_aggregated_time = 0;
     std::size_t total_aggregated_dumb_time = 0;
     bool canonical = false;
-    cmd_line_parser::parser parser = get_query_parser(argc, argv);
+    cmd_line_parser::parser parser(argc, argv);
+
+    try {
+        parser = get_query_parser(argc, argv);
+    } catch (const ParseError& e) {
+        return 1;
+    }
+
     mphf hf;
     std::string mphf_filename = parser.get<std::string>("mphf");
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());

@@ -42,11 +42,22 @@ extern const std::array<uint8_t, 256> seq_nt4_table;
 
 } // namespace constants
 
+#pragma pack(push, 2)
+struct mm_record_t {
+    uint64_t itself;
+    uint64_t id;
+    uint8_t p1;
+    uint8_t size;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 2)
 struct mm_triplet_t {
     uint64_t itself;
-    uint32_t p1;
-    uint32_t size;
+    uint8_t p1;
+    uint8_t size;
 };
+#pragma pack(pop)
 
 struct hash64 : public pthash::murmurhash2_64 {
     static inline pthash::hash64 hash(kmer128_t val, uint64_t seed) {
@@ -65,13 +76,23 @@ struct hash64 : public pthash::murmurhash2_64 {
 
 typedef pthash::single_phf<hash64, pthash::dictionary_dictionary, true> pthash_mphf_t;
 
+bool operator< (mm_record_t const& a, mm_record_t const& b);
+
+bool operator> (mm_record_t const& a, mm_record_t const& b);
+
 bool operator< (mm_triplet_t const& a, mm_triplet_t const& b);
+
+bool operator> (mm_triplet_t const& a, mm_triplet_t const& b);
 
 std::ostream &operator<<(std::ostream &os, kmer128_t const& val);
 
+bool operator== (kmer128_t const& a, kmer128_t const& b);
+
+bool operator!= (kmer128_t const& a, kmer128_t const& b);
+
 bool operator< (kmer128_t const& a, kmer128_t const& b);
 
-bool operator== (kmer128_t const& a, kmer128_t const& b);
+bool operator> (kmer128_t const& a, kmer128_t const& b);
 
 kmer128_t operator& (kmer128_t const& a, kmer128_t const& b);
 
@@ -84,6 +105,13 @@ kmer128_t operator- (kmer128_t const& a, int b);
 kmer128_t operator<< (kmer128_t const& val, unsigned int shift);
 
 kmer128_t operator>> (kmer128_t const& val, unsigned int shift);
+
+//------------------------------------------------------------------------------------------------------------------
+
+std::string get_group_id();
+
+template <class T>
+void explicit_garbage_collect([[maybe_unused]] T obj) {}
 
 //------------------------------------------------------------------------------------------------------------------
 
