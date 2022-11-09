@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
 	kseq_t* seq;
 	uint8_t k, m, nthreads, max_memory;
 	uint64_t mm_seed, id;
-	std::string tmp_dirname;
+	std::string tmp_dirname = constants::default_tmp_dirname;
 	double c;
 	bool canonical;
 	bool check;

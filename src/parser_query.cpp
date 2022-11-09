@@ -12,14 +12,14 @@ cmd_line_parser::parser get_query_parser(int argc, char* argv[]) {
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n");
 
     /* optional arguments */
-    parser.add("output_filename", 
-               "Output file name with the result of the query (default is stdout)",
-               "-o", 
-               false);
-    parser.add("results_filename",
-               "CSV file to append to",
-               "-r",
-               false);
+    // parser.add("output_filename", 
+    //            "Output file name with the result of the query (default is stdout)",
+    //            "-o", 
+    //            false);
+    // parser.add("results_filename",
+    //            "CSV file to append to",
+    //            "-r",
+    //            false);
     // parser.add("canonical_parsing",
     //            "Canonical parsing of k-mers. "
     //            "This option changes the parsing and results in a trade-off between index space and lookup time.",
