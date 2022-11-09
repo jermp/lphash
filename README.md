@@ -150,15 +150,17 @@ In the section [Input Files](#input-files), we explain how such collections of s
 
 This example
 
-    ./build ../data/unitigs_stitched/se.ust.k31.fa.gz 31 15 --check -o se_k31_m15.lph
+    ./build ../data/unitigs_stitched/se.ust.k31.fa.gz 31 15 --check -o se_k31_m15.lph --verbose
 
 builds a dictionary for the k-mers read from the file `data/unitigs_stitched/se.ust.k31.fa.gz`, with k = 31 and m = 15.
 It also check the correctness of the MPHF (`--check` option, for both minimality and collisions), and serializes it on disk to the file `se_k31_m15.lph`.
 
-To run a performance benchmark after construction of the index,
-use:
 
-    ./bench salmonella_enterica.index
+Another example is
+
+	./build ../data/unitigs_stitched/se.ust.k63.fa.gz 63 17 --check -o se_k63_m17.lph --verbose
+
+which uses k = 63 and m = 17.
 
 Similarly to `build`, the `query` command (or `query_alt` if the MPHF was built by `build_alt`) outputs single CSV lines on stdout.
 Queries can be performed by recomputing each hash value from scratch (random query) of by re-using the fact that successive k-mers overlap by k-1 bases (streaming).
@@ -184,7 +186,7 @@ These collections can be obtained, for example, by extracting the maximal unitig
 
 To do so, we can use the tool [BCALM2](https://github.com/GATB/bcalm)[4].
 This tool builds a compacted de Bruijn graph and outputs its maximal unitigs.
-From the output of BCALM2, we can then *stitch* (i.e., glue) some unitigs to reduce the number of nucleotides. 
+From the output of BCALM2, we can then *stitch* (i.e., glue) some unitigs to reduce the number of nucleotides.
 The stitiching process is carried out using the [UST](https://github.com/jermp/UST) tool.
 
 Below we provide a complete example (assuming both BCALM2 and UST are installed correctly) that downloads the Human (GRCh38) Chromosome 13 and extracts the maximal stitiched unitigs for k = 31.

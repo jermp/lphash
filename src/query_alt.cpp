@@ -1,9 +1,9 @@
 extern "C" {
-#include "../include/kseq.h"
+#include "../external/kseq.h"
 }
 #include <zlib.h>
 #include "../include/mphf.hpp"
-#include "../include/parser_build.hpp"
+#include "parser_config.hpp"
 
 KSEQ_INIT(gzFile, gzread)
 
@@ -25,9 +25,7 @@ int main(int argc, char* argv[]) {
 
     try {
         parser = get_query_parser(argc, argv);
-    } catch (const ParseError& e) {
-        return 1;
-    }
+    } catch (const ParseError& e) { return 1; }
 
     mphf_alt hf;
     std::string mphf_filename = parser.get<std::string>("mphf");

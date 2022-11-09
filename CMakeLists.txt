@@ -33,8 +33,6 @@ endif()
 
 set(LPHASH_SOURCES
   src/constants.cpp
-  src/parser_build.cpp
-  src/parser_query.cpp
   src/quartet_wtree.cpp
   src/mphf.cpp
 )

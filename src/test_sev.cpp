@@ -8,7 +8,9 @@ int main() {
     sorted_external_vector<uint64_t> vec64(100, ".", "test_sev");
     for (std::size_t i = 10; i > 0; --i) vec64.push_back(i);
     for (auto itr = vec64.cbegin(); itr != vec64.cend(); ++itr) std::cout << *itr << "\n";
-    sorted_external_vector<mm_record_t> vecmmr(1000, [](mm_record_t const& a, mm_record_t const& b){return a.itself < b.itself;}, ".", "test_sev");
+    sorted_external_vector<mm_record_t> vecmmr(
+        1000, [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; }, ".",
+        "test_sev");
     mm_record_t record;
     for (std::size_t i = 0; i < 10; ++i) {
         record.itself = i;

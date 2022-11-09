@@ -1,11 +1,12 @@
-#ifndef RS_BIT_VECTOR_HPP
-#define RS_BIT_VECTOR_HPP
+#pragma once
 
 #include <algorithm>
 #include <vector>
 
 #include "../external/pthash/external/essentials/include/essentials.hpp"
 #include "../external/pthash/include/encoders/bit_vector.hpp"
+
+namespace lphash {
 
 class rs_bit_vector : public pthash::bit_vector {
 public:
@@ -184,4 +185,4 @@ protected:
     std::vector<uint64_t> m_select_hints;
 };
 
-#endif
+}  // namespace lphash

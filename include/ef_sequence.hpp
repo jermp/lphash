@@ -7,27 +7,27 @@
 namespace lphash {
 
 template <typename Iterator>
-class cumulative_iterator
-{
-    public:
-        typedef std::size_t value_type;
-        cumulative_iterator(Iterator& other) : inc(false), itr(other), cumulative_sum(*other) {}
-        void operator++() {
-            if (inc) cumulative_sum += *itr;
-            ++itr;
-            inc = true;
+class cumulative_iterator {
+public:
+    typedef std::size_t value_type;
+    cumulative_iterator(Iterator& other) : inc(false), itr(other), cumulative_sum(*other) {}
+    void operator++() {
+        if (inc) cumulative_sum += *itr;
+        ++itr;
+        inc = true;
+    }
+    std::size_t operator*() {
+        if (inc) {
+            cumulative_sum += *itr;
+            inc = false;
         }
-        std::size_t operator*() {
-            if (inc) {
-                cumulative_sum += *itr;
-                inc = false;
-            }
-            return cumulative_sum;
-        }
-    private:
-        bool inc;
-        Iterator& itr;
-        std::size_t cumulative_sum;
+        return cumulative_sum;
+    }
+
+private:
+    bool inc;
+    Iterator& itr;
+    std::size_t cumulative_sum;
 };
 
 struct ef_sequence {
@@ -38,7 +38,7 @@ struct ef_sequence {
         if (n == 0) return;
 
         // if constexpr (encode_prefix_sum) {
-            n = n + 1;  // because I will add a zero at the beginning
+        n = n + 1;  // because I will add a zero at the beginning
         // }
 
         uint64_t l = uint64_t((n && u / n) ? pthash::util::msb(u / n) : 0);
@@ -49,9 +49,9 @@ struct ef_sequence {
         uint64_t last = 0;
         // I add a zero at the beginning
         // if constexpr (encode_prefix_sum) {
-            if (l) cv_builder_low_bits.push_back(0);
-            bvb_high_bits.set(0, 1);
-            n = n - 1;  // restore n
+        if (l) cv_builder_low_bits.push_back(0);
+        bvb_high_bits.set(0, 1);
+        n = n - 1;  // restore n
         // }
         for (size_t i = 0; i < n; ++i) {
             auto v = *begin;
@@ -64,7 +64,7 @@ struct ef_sequence {
                 throw std::runtime_error("ef_sequence is not sorted");
             }
             if (l) cv_builder_low_bits.push_back(v & low_mask);
-            bvb_high_bits.set((v >> l) + i + true, 1); // encode_prefix_sum, 1);
+            bvb_high_bits.set((v >> l) + i + true, 1);  // encode_prefix_sum, 1);
             last = v;
             ++begin;
         }
@@ -76,11 +76,12 @@ struct ef_sequence {
 
     inline uint64_t access(uint64_t i) const {
         assert(i < size());
-        return ((m_high_bits_d1.select(m_high_bits, i) - i) << m_low_bits.width()) | m_low_bits.access(i);
+        return ((m_high_bits_d1.select(m_high_bits, i) - i) << m_low_bits.width()) |
+               m_low_bits.access(i);
     }
 
     inline std::pair<uint64_t, uint64_t> pair(uint64_t i) const {
-        assert(i < size()); // and encode_prefix_sum);
+        assert(i < size());  // and encode_prefix_sum);
         uint64_t low1 = m_low_bits.access(i);
         uint64_t low2 = m_low_bits.access(i + 1);
         uint64_t l = m_low_bits.width();

@@ -1,9 +1,9 @@
 extern "C" {
-#include "../include/kseq.h"
+#include "../external/kseq.h"
 }
 #include <zlib.h>
 #include "../include/mphf.hpp"
-#include "../include/parser_build.hpp"
+#include "parser_config.hpp"
 
 KSEQ_INIT(gzFile, gzread)
 
@@ -25,9 +25,7 @@ int main(int argc, char* argv[]) {
 
     try {
         parser = get_query_parser(argc, argv);
-    } catch (const ParseError& e) {
-        return 1;
-    }
+    } catch (const ParseError& e) { return 1; }
 
     mphf hf;
     std::string mphf_filename = parser.get<std::string>("mphf");
@@ -120,22 +118,22 @@ int main(int argc, char* argv[]) {
 }
 
 /*
-    seq = kseq_init(fp);
-    while (kseq_read(seq) >= 0) {
-        std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency here
-        essentials::timer<std::chrono::high_resolution_clock, std::chrono::nanoseconds> t;
-        t.reset();
-        t.start();
-        auto n = hf.barebone_streaming_query(contig, canonical);
-        t.stop();
-        total_time += t.elapsed();
-        total_kmers += n;
-        t.reset();
-        t.start();
-        auto dumb_hashes = hf.dumb_evaluate(contig, false);
-        t.stop();
-        total_dumb_time += t.elapsed();
-    }
-    if (seq) kseq_destroy(seq);
-    gzclose(fp);
+        seq = kseq_init(fp);
+        while (kseq_read(seq) >= 0) {
+                std::string contig = std::string(seq->seq.s);  // we lose a little bit of efficiency
+   here essentials::timer<std::chrono::high_resolution_clock, std::chrono::nanoseconds> t;
+                t.reset();
+                t.start();
+                auto n = hf.barebone_streaming_query(contig, canonical);
+                t.stop();
+                total_time += t.elapsed();
+                total_kmers += n;
+                t.reset();
+                t.start();
+                auto dumb_hashes = hf.dumb_evaluate(contig, false);
+                t.stop();
+                total_dumb_time += t.elapsed();
+        }
+        if (seq) kseq_destroy(seq);
+        gzclose(fp);
 */
