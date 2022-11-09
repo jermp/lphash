@@ -130,43 +130,42 @@ int main(int argc, char* argv[]) {
 	total_distinct_minimizers = locpres_mphf.get_minimizer_L0();
 	total_colliding_minimizers = coll_ids.size();
 
-    std::cerr << "Part 4: build fallback MPHF\n";
-    {// garbage collector for unbucketable_kmers
-        sorted_external_vector<kmer_t> unbucketable_kmers(uint64_t(max_memory) * essentials::GB, []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {return false;}, tmp_dirname, get_group_id());
-        std::unordered_map<uint64_t, uint64_t> stats;
-        if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-            std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
-            return 2;
-        }
-        id = 0;
-        auto start = coll_ids.cbegin();
-        auto stop = coll_ids.cend();
-        seq = kseq_init(fp);
-        while (kseq_read(seq) >= 0) {
-            minimizer::get_colliding_kmers<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, start, stop, id, unbucketable_kmers, stats);
-        }
-        if (seq) kseq_destroy(seq);
-        gzclose(fp);
-        explicit_garbage_collect(std::move(coll_ids));
-// #ifndef NDEBUG
-//         {
-//             std::vector<kmer_t> kmer_check;
+	std::cerr << "Part 4: build fallback MPHF\n";
+	{ // garbage collector for unbucketable_kmers
+		sorted_external_vector<kmer_t> unbucketable_kmers(
+			uint64_t(max_memory) * essentials::GB, []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) { return false; }, tmp_dirname, get_group_id());
+		std::unordered_map<uint64_t, uint64_t> stats;
+		if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
+			std::cerr << "Unable to open the input file a second time" << input_filename << "\n";
+			return 2;
+		}
+		id = 0;
+		auto start = coll_ids.cbegin();
+		auto stop = coll_ids.cend();
+		seq = kseq_init(fp);
+		while (kseq_read(seq) >= 0) { minimizer::get_colliding_kmers<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, start, stop, id, unbucketable_kmers, stats); }
+		if (seq) kseq_destroy(seq);
+		gzclose(fp);
+		explicit_garbage_collect(std::move(coll_ids));
+		// #ifndef NDEBUG
+		//         {
+		//             std::vector<kmer_t> kmer_check;
 
-//             for (auto itr = unbucketable_kmers.cbegin(); itr != unbucketable_kmers.cend(); ++itr) {
-//                 kmer_check.push_back(*itr);
-//             }
-//             std::sort(kmer_check.begin(), kmer_check.end());
-//             std::ofstream kms("kmers.txt");
-//             for (auto kmer : kmer_check) kms << kmer << "\n";
-//             [[maybe_unused]] auto it = std::unique(kmer_check.begin(), kmer_check.end());
-// 	        assert(it == kmer_check.end()); // if false: there are some duplicates in unbucketable_kmers
-//         }
-// #endif
-        {
-            auto itr = unbucketable_kmers.cbegin();
-            locpres_mphf.build_fallback_mphf(itr, unbucketable_kmers.size());
-        }
-    }
+		//             for (auto itr = unbucketable_kmers.cbegin(); itr != unbucketable_kmers.cend(); ++itr) {
+		//                 kmer_check.push_back(*itr);
+		//             }
+		//             std::sort(kmer_check.begin(), kmer_check.end());
+		//             std::ofstream kms("kmers.txt");
+		//             for (auto kmer : kmer_check) kms << kmer << "\n";
+		//             [[maybe_unused]] auto it = std::unique(kmer_check.begin(), kmer_check.end());
+		// 	        assert(it == kmer_check.end()); // if false: there are some duplicates in unbucketable_kmers
+		//         }
+		// #endif
+		{
+			auto itr = unbucketable_kmers.cbegin();
+			locpres_mphf.build_fallback_mphf(itr, unbucketable_kmers.size());
+		}
+	}
 
 	if (parser.parsed("output_filename")) {
 		auto output_filename = parser.get<std::string>("output_filename");
