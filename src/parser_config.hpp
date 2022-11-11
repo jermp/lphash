@@ -23,17 +23,23 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
     parser.add("m", "Minimizer length (must be < k and <= 32).");
 
     /* optional arguments */
-    parser.add("seed", "Seed for minimizer computation (default is 42).", "-s", false);
-    parser.add("threads", "Number of threads for pthash (default is 1).", "-t", false);
+    parser.add("seed",
+               "Seed for minimizer computation (default is " +
+                   std::to_string(constants::default_seed) + ").",
+               "-s", false);
+    parser.add("threads",
+               "Number of threads for pthash (default is " +
+                   std::to_string(constants::default_num_threads) + ").",
+               "-t", false);
     parser.add("output_filename",
                "Output file name where the data structure will be serialized (no files generated "
                "by default).",
                "-o", false);
-    parser.add("tmp_dirname",
-               "Temporary directory used for construction in external memory (default is current "
-               "directory '" +
-                   constants::default_tmp_dirname + "').",
-               "-d", false);
+    parser.add(
+        "tmp_dirname",
+        "Temporary directory used for construction in external memory (default is directory '" +
+            constants::default_tmp_dirname + "').",
+        "-d", false);
     parser.add(
         "c",
         "A (floating point) constant that trades construction speed for space effectiveness of "

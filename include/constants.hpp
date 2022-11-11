@@ -36,7 +36,9 @@ struct MaxKChooser<kmer128_t> {
 
 constexpr uint64_t max_k =
     MaxKChooser<kmer_t>::value;  // max *odd* size that can be packed into the given k-mer type
-constexpr uint64_t seed = 1;
+constexpr uint64_t default_pthash_seed = 1;
+constexpr uint64_t default_seed = 42;
+constexpr uint64_t default_num_threads = 1;
 constexpr double c = 3.0;  // for PTHash
 static const std::string default_tmp_dirname(".");
 extern const std::array<uint8_t, 256> seq_nt4_table;

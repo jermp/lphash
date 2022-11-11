@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
     if (parser.parsed("pthash_filename")) {
         std::string pthash_filename = parser.get<std::string>("pthash_filename");
         pt_config.minimal_output = true;
-        pt_config.seed = constants::seed;
+        pt_config.seed = constants::default_pthash_seed;
         pt_config.c = (parser.parsed("c")) ? parser.get<double>("c") : constants::c;
         pt_config.alpha = 0.94;
         pt_config.ram = 8 * essentials::GB;

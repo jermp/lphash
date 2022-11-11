@@ -41,7 +41,7 @@ mphf::mphf()
     , none_pos_start(0)
     , max_ram(0) {
     mphf_configuration.minimal_output = true;
-    mphf_configuration.seed = constants::seed;
+    mphf_configuration.seed = constants::default_pthash_seed;
     mphf_configuration.c = constants::c;
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = false;
@@ -63,7 +63,7 @@ mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_o
     , none_pos_start(0)
     , max_ram(max_memory) {
     mphf_configuration.minimal_output = true;
-    mphf_configuration.seed = constants::seed;
+    mphf_configuration.seed = constants::default_pthash_seed;
     mphf_configuration.c = c;
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = verbose;
@@ -334,7 +334,7 @@ std::ostream& operator<<(std::ostream& out, mphf const& hf) {
 
 mphf_alt::mphf_alt() : k(0), m(0), mm_seed(0), nkmers(0), distinct_minimizers(0), max_ram(false) {
     mphf_configuration.minimal_output = true;
-    mphf_configuration.seed = constants::seed;
+    mphf_configuration.seed = constants::default_pthash_seed;
     mphf_configuration.c = constants::c;
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = false;
@@ -353,7 +353,7 @@ mphf_alt::mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_
     , distinct_minimizers(0)
     , max_ram(max_memory) {
     mphf_configuration.minimal_output = true;
-    mphf_configuration.seed = constants::seed;
+    mphf_configuration.seed = constants::default_pthash_seed;
     mphf_configuration.c = c;
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = verbose;
