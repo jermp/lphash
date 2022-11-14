@@ -2,10 +2,8 @@
 
 #include <vector>
 #include "../include/constants.hpp"
-#include "../include/mm_context.hpp"
+#include "../include/mm_quartet.hpp"
 #include "../include/sorted_external_vector.hpp"
-
-#include <unordered_set>
 
 namespace lphash::minimizer {
 
@@ -175,8 +173,7 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
                          uint64_t seed, bool canonical_m_mers,
                          sorted_external_vector<uint64_t>::const_iterator& itr,
                          sorted_external_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count,
-                         sorted_external_vector<kmer_t>& accumulator,
-                         std::unordered_map<uint64_t, uint64_t>& statistics) {
+                         sorted_external_vector<kmer_t>& accumulator) {
     std::vector<mm_record_t> mm_buffer(k - m + 1);
     std::vector<kmer_t> km_buffer;
     std::size_t mm_buf_pos = 0, min_pos = mm_buffer.size();
@@ -194,13 +191,13 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
     int c;
     assert(k >= m);
 
-    auto update_output = [&accumulator, &statistics](std::vector<kmer_t> const& toadd) {
+    auto update_output = [&accumulator](std::vector<kmer_t> const& toadd) {
         for (auto kmer : toadd) accumulator.push_back(kmer);
-        if (statistics.count(toadd.size()) == 0) {
-            statistics[toadd.size()] = 1ULL;
-        } else {
-            ++statistics[toadd.size()];
-        }
+        // if (statistics.count(toadd.size()) == 0) {
+        //     statistics[toadd.size()] = 1ULL;
+        // } else {
+        //     ++statistics[toadd.size()];
+        // }
     };
 
     km_buffer.reserve(2 * k - m);
@@ -320,56 +317,10 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
     }
 }
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
-    sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname) {
-    auto start = minimizers.cbegin();  // this forces the remaining buffer to be written to disk
-    auto stop = minimizers.cend();
-    uint64_t colliding_mm_size_estimate =
-        static_cast<uint64_t>(static_cast<double>(minimizers.size()) * 0.01 * sizeof(uint64_t));
-    colliding_mm_size_estimate =
-        colliding_mm_size_estimate < 4000000 ? 4000000 : colliding_mm_size_estimate;
-    uint64_t unique_minimizer_mm_size_estimate =
-        uint64_t(max_memory) * essentials::GB - colliding_mm_size_estimate;
-    sorted_external_vector<mm_triplet_t> unique_minimizers(
-        unique_minimizer_mm_size_estimate,
-        []([[maybe_unused]] mm_triplet_t const& a, [[maybe_unused]] mm_triplet_t const& b) {
-            return false;
-        },
-        tmp_dirname, get_group_id());
-    sorted_external_vector<uint64_t> colliding_minimizer_ids(
-        colliding_mm_size_estimate, [](uint64_t a, uint64_t b) { return a < b; }, tmp_dirname,
-        get_group_id());
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> 
+classify(sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
-    mm_record_t prev;
-    prev.size = prev.p1 = 0;
-    while (start != stop) {
-        if (prev.size != 0) {
-            if (prev.itself == (*start).itself) {
-                prev.p1 = prev.size = 0;
-                unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
-                colliding_minimizer_ids.push_back(prev.id);
-                while (start != stop && (*start).itself == prev.itself) {
-                    colliding_minimizer_ids.push_back((*start).id);
-                    ++start;
-                }
-            } else {
-                unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
-                prev = *start;
-                ++start;
-            }
-        } else {
-            prev = *start;
-            ++start;
-        }
-    }
-    if (prev.size) unique_minimizers.push_back({prev.itself, prev.p1, prev.size});
-
-    return std::make_pair(std::move(unique_minimizers), std::move(colliding_minimizer_ids));
-}
-
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
-    sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname) {
-    return classify(minimizers, max_memory, tmp_dirname);
-}
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> 
+classify(sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
 }  // namespace lphash::minimizer

@@ -1,14 +1,8 @@
-#pragma once
-
-#include <exception>
+#include "../include/constants.hpp"
+#include "../include/parser_build.hpp"
 #include "../external/pthash/external/cmd_line_parser/include/parser.hpp"
 
 namespace lphash {
-
-class ParseError : public std::exception {
-public:
-    const char* what() const noexcept { return "Unable to parse the arguments\n"; }
-};
 
 cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
     cmd_line_parser::parser parser(argc, argv);
@@ -61,13 +55,35 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
     return parser;
 }
 
-cmd_line_parser::parser get_query_parser(int argc, char* argv[]) {
-    cmd_line_parser::parser parser(argc, argv);
-    parser.add("mphf", "lphash minimal perfect hash function saved on disk\n");
-    parser.add("input_filename",
-               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n");
-    if (!parser.parse()) throw ParseError();
-    return parser;
+void parse_build_config(int argc, char* argv[], configuration& config) {
+    auto parser = get_build_parser(argc, argv);
+
+    config.input_filename = parser.get<std::string>("input_filename");
+    config.k = parser.get<uint64_t>("k");
+    if (config.k > constants::max_k) throw OptionError("k cannot be larger than " + std::to_string(constants::max_k));
+    config.m = parser.get<uint64_t>("m");
+    if (config.m > config.k) throw OptionError("m cannot be larger than k");
+    if (parser.parsed("output_filename")) config.output_filename = parser.get<std::string>("output_filename");
+
+    if (parser.parsed("seed")) config.mm_seed = parser.get<uint64_t>("seed");
+    if (parser.parsed("threads")) config.num_threads = parser.get<uint64_t>("threads");
+    if (parser.parsed("tmp_dirname")) {
+        config.tmp_dirname = parser.get<std::string>("tmp_dirname");
+        essentials::create_directory(config.tmp_dirname);
+    }
+
+    if (parser.parsed("c")) {
+        config.c = parser.get<double>("c");
+        if (config.c > 10.0 || config.c < 3.0) throw OptionError("3.0 <= c <= 10.0");
+    }
+
+    if (parser.parsed("max-memory")) {
+        config.max_memory = parser.get<uint64_t>("max-memory");
+        if (config.max_memory > 255) throw OptionError("The maximum allowed amount of ram is 255GB");
+    }
+
+    if (parser.parsed("check")) config.check = parser.get<bool>("check");
+    if (parser.parsed("verbose")) config.verbose = parser.get<bool>("verbose");
 }
 
 }  // namespace lphash

@@ -34,23 +34,19 @@ endif()
 set(LPHASH_SOURCES
   src/constants.cpp
   src/quartet_wtree.cpp
-  src/mphf.cpp
+  src/minimizer.cpp
+  src/build_configuration.cpp
+  src/partitioned_mphf.cpp
+  src/unpartitioned_mphf.cpp
+  src/mphf_utils.cpp
+  src/parser_build.cpp
+  src/build.cpp
+  src/query.cpp
 )
 
-# Create a static lib
-# add_library(lphash_static STATIC
-#   ${LPHASH_SOURCES}
-# )
-
-add_executable(build src/build.cpp ${LPHASH_SOURCES})
-target_link_libraries(build z)
-add_executable(query src/query.cpp ${LPHASH_SOURCES})
-target_link_libraries(query z)
+add_executable(lphash src/lphash.cpp ${LPHASH_SOURCES})
+target_link_libraries(lphash z)
 add_executable(ptbb_build src/ptbb_build.cpp src/ptbb_file_itr.cpp src/constants.cpp)
 target_link_libraries(ptbb_build z)
 add_executable(ptbb_query src/ptbb_query.cpp src/ptbb_file_itr.cpp src/constants.cpp)
 target_link_libraries(ptbb_query z)
-add_executable(build_alt src/build_alt.cpp ${LPHASH_SOURCES})
-target_link_libraries(build_alt z)
-add_executable(query_alt src/query_alt.cpp ${LPHASH_SOURCES})
-target_link_libraries(query_alt z)
