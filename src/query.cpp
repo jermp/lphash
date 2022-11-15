@@ -11,7 +11,7 @@ KSEQ_INIT(gzFile, gzread)
 
 namespace lphash {
 
-cmd_line_parser::parser get_query_parser(int argc, char* argv[]); // forward declaration
+cmd_line_parser::parser get_query_parser(int argc, char* argv[]);  // forward declaration
 
 int query_partitioned_main(int argc, char* argv[]) {
     gzFile fp;
@@ -234,4 +234,4 @@ cmd_line_parser::parser get_query_parser(int argc, char* argv[]) {
     return parser;
 }
 
-}
+}  // namespace lphash

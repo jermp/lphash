@@ -60,10 +60,12 @@ void parse_build_config(int argc, char* argv[], configuration& config) {
 
     config.input_filename = parser.get<std::string>("input_filename");
     config.k = parser.get<uint64_t>("k");
-    if (config.k > constants::max_k) throw OptionError("k cannot be larger than " + std::to_string(constants::max_k));
+    if (config.k > constants::max_k)
+        throw OptionError("k cannot be larger than " + std::to_string(constants::max_k));
     config.m = parser.get<uint64_t>("m");
     if (config.m > config.k) throw OptionError("m cannot be larger than k");
-    if (parser.parsed("output_filename")) config.output_filename = parser.get<std::string>("output_filename");
+    if (parser.parsed("output_filename"))
+        config.output_filename = parser.get<std::string>("output_filename");
 
     if (parser.parsed("seed")) config.mm_seed = parser.get<uint64_t>("seed");
     if (parser.parsed("threads")) config.num_threads = parser.get<uint64_t>("threads");
@@ -79,7 +81,8 @@ void parse_build_config(int argc, char* argv[], configuration& config) {
 
     if (parser.parsed("max-memory")) {
         config.max_memory = parser.get<uint64_t>("max-memory");
-        if (config.max_memory > 255) throw OptionError("The maximum allowed amount of ram is 255GB");
+        if (config.max_memory > 255)
+            throw OptionError("The maximum allowed amount of ram is 255GB");
     }
 
     if (parser.parsed("check")) config.check = parser.get<bool>("check");

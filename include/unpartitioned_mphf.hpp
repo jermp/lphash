@@ -14,7 +14,7 @@ public:
              uint8_t nthreads, uint8_t max_memory, std::string temporary_directory = "",
              bool verbose = false);
     void build(configuration const& config, std::ostream& res_strm);
-    
+
     uint64_t get_minimizer_L0() const noexcept;
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
@@ -356,4 +356,4 @@ void mphf_alt::visit(Visitor& visitor) {
     visitor.visit(fallback_kmer_order);
 }
 
-}
+}  // namespace lphash

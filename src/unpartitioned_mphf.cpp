@@ -21,8 +21,8 @@ mphf_alt::mphf_alt() : k(0), m(0), mm_seed(0), nkmers(0), distinct_minimizers(0)
 };
 
 // mphf_alt::mphf_alt(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers,
-//                    double c, uint8_t nthreads, uint8_t max_memory, std::string temporary_directory,
-//                    bool verbose)
+//                    double c, uint8_t nthreads, uint8_t max_memory, std::string
+//                    temporary_directory, bool verbose)
 //     : k(klen)
 //     , m(mm_size)
 //     , mm_seed(seed)
@@ -65,7 +65,7 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
     // if (config.tmp_dirname != "") {
     mphf_configuration.tmp_dir = config.tmp_dirname;
-        // essentials::create_directory(config.tmp_dirname);
+    // essentials::create_directory(config.tmp_dirname);
     // }
     uint64_t check_total_kmers = 0;
     uint64_t total_contigs = 0;
@@ -77,8 +77,8 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     if (config.verbose) std::cerr << "Part 1: file reading and info gathering\n";
     sorted_external_vector<mm_record_t> all_minimizers(
         uint64_t(max_ram) * essentials::GB,
-        [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; }, mphf_configuration.tmp_dir,
-        get_group_id());
+        [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; },
+        mphf_configuration.tmp_dir, get_group_id());
     if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
         throw std::runtime_error("Unable to open the input file " + config.input_filename + "\n");
     uint64_t id = 0;
@@ -135,8 +135,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
                 return false;
             },
             mphf_configuration.tmp_dir, get_group_id());
-        if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL) 
-            throw std::runtime_error("Unable to open the input file " + config.input_filename + " a seconf time\n");
+        if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
+            throw std::runtime_error("Unable to open the input file " + config.input_filename +
+                                     " a seconf time\n");
         id = 0;
         auto start = coll_ids.cbegin();
         auto stop = coll_ids.cend();
@@ -155,12 +156,11 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     }
     if (total_contigs >= 1) --total_contigs;
     res_strm << config.input_filename << "," << static_cast<uint32_t>(k) << ","
-              << static_cast<uint32_t>(m) << ","
-              << static_cast<double>(total_colliding_minimizers) / distinct_minimizers << ","
-              << 2.0 / ((k - m + 1) + 1) << ","
-              << static_cast<double>(total_minimizers) / nkmers << ","
-              << static_cast<double>(total_contigs) / nkmers << ","
-              << static_cast<double>(num_bits()) / get_kmer_count();
+             << static_cast<uint32_t>(m) << ","
+             << static_cast<double>(total_colliding_minimizers) / distinct_minimizers << ","
+             << 2.0 / ((k - m + 1) + 1) << "," << static_cast<double>(total_minimizers) / nkmers
+             << "," << static_cast<double>(total_contigs) / nkmers << ","
+             << static_cast<double>(num_bits()) / get_kmer_count();
     res_strm << "\n";
 }
 
@@ -280,7 +280,8 @@ void check_alt(mphf_alt const& hf, configuration& config) {
     kseq_t* seq = nullptr;
     pthash::bit_vector_builder population(hf.get_kmer_count());
     if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
-        throw std::runtime_error("Unable to open input file " + config.input_filename + " for checking\n");
+        throw std::runtime_error("Unable to open input file " + config.input_filename +
+                                 " for checking\n");
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);
@@ -292,4 +293,4 @@ void check_alt(mphf_alt const& hf, configuration& config) {
     if (config.check) check_perfection(hf, population);
 }
 
-}
+}  // namespace lphash

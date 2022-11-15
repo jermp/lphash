@@ -72,20 +72,21 @@ if you are on Linux/Ubuntu, or
 
 if you have a Mac (and Homebrew installed: https://brew.sh/).
 
+
 Build a Function
 ----------------
 
-The driver program called `lphash` can be used to build Locality-Preserving MPHFs.
-The subcommand `partitioned` uses the partitioning strategy, while `unpartitioned` does not (check out the paper for more details).
-In the following, we will focus on `partitioned` alone since it is the most memory efficient between the two.
+The driver program called `lphash` can be used to build and query Locality-Preserving MPHFs.
+The subcommand `build-p` uses the partitioning strategy, while `build-u` does not (check out the paper for more details).
+In the following, we will focus on `build-p` alone since it is the most memory efficient between the two.
 
 From within the directory where the code was compiled (see the section [Compiling the Code](#compiling-the-code)), run the command:
 
-    ./lphash partitioned --help
+    ./lphash build-p --help
 
 to show the usage of the subcommand (reported below for convenience).
 
-	Usage: ./partitioned [-h,--help] input_filename k m [-s seed] [-t threads] [-o output_filename] [-d tmp_dirname] [-c c] [--max-memory max-memory] [--check] [--verbose]
+	Usage: build-p [-h,--help] input_filename k m [-s seed] [-t threads] [-o output_filename] [-d tmp_dirname] [-c c] [--max-memory max-memory] [--check] [--verbose]
 
 	 input_filename
 		Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:
@@ -129,7 +130,7 @@ to show the usage of the subcommand (reported below for convenience).
 
 ### Output format
 
-`lphash partitioned` prints useful statistics about the constructed MPHF on stdout as single comma-separated values whose fields are:
+`./lphash build-p` prints useful statistics about the constructed MPHF on stdout as single comma-separated values whose fields are:
 
 1. The input filename used to build the MPHF,
 2. k-mer length k,
@@ -150,7 +151,7 @@ In the section [Input Files](#input-files), we explain how such collections of s
 
 This example
 
-    ./lphash partitioned ../data/unitigs_stitched/se.ust.k31.fa.gz 31 15 --check -o se_k31_m15.lph --verbose
+    ./lphash build-p ../data/unitigs_stitched/se.ust.k31.fa.gz 31 15 --check -o se_k31_m15.lph --verbose
 
 builds a dictionary for the k-mers read from the file `data/unitigs_stitched/se.ust.k31.fa.gz`, with k = 31 and m = 15.
 It also check the correctness of the MPHF (`--check` option, for both minimality and collisions), and serializes it on disk to the file `se_k31_m15.lph`.
@@ -158,11 +159,11 @@ It also check the correctness of the MPHF (`--check` option, for both minimality
 
 Another example is
 
-	./lphash partitioned ../data/unitigs_stitched/se.ust.k63.fa.gz 63 17 --check -o se_k63_m17.lph --verbose
+	./lphash build-p ../data/unitigs_stitched/se.ust.k63.fa.gz 63 17 --check -o se_k63_m17.lph --verbose
 
 which uses k = 63 and m = 17.
 
-Similarly to `partitioned`, the `qp` command (or `qu` if the MPHF was built by `unpartitioned`) outputs single CSV lines on stdout.
+Similarly to `build-p`, the `query-p` command (or `query-u` if the MPHF was built by `build-u`) outputs single CSV lines on stdout.
 Queries can be performed by recomputing each hash value from scratch (random query) of by re-using the fact that successive k-mers overlap by k-1 bases (streaming).
 The fields are:
 input file,lphash file,total k-mers,barebone streaming time,barebone random time,full streaming time,full random time
@@ -176,7 +177,7 @@ input file,lphash file,total k-mers,barebone streaming time,barebone random time
 
 ### Example
 
-    ./lphash qp se_k31_m15.lph ../data/queries/salmonella_enterica.fasta.gz
+    ./lphash query-p se_k31_m15.lph ../data/queries/salmonella_enterica.fasta.gz
 
 Input Files
 -----------

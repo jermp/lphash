@@ -15,6 +15,7 @@ public:
     OptionError(const char* message) : msg(message) {}
     OptionError(std::string const& message) : msg(message) {}
     const char* what() const noexcept { return msg.c_str(); }
+
 private:
     std::string msg;
 };
@@ -33,4 +34,4 @@ struct configuration {
     bool check, verbose;
 };
 
-}
+}  // namespace lphash

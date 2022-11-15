@@ -317,10 +317,10 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
     }
 }
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> 
-classify(sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname);
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
+    sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> 
-classify(sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname);
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
+    sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
 }  // namespace lphash::minimizer

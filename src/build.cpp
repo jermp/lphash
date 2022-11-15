@@ -16,7 +16,7 @@ int build_partitioned_main(int argc, char* argv[]) {
         std::cerr << e.what() << std::endl;
         return 3;
     }
-    
+
     mphf f;
     f.build(config, std::cout);
 
@@ -29,7 +29,8 @@ int build_partitioned_main(int argc, char* argv[]) {
     if (config.check) {
         std::cerr << "Checking...\n";
         if (config.output_filename != "") {
-            [[maybe_unused]] uint64_t num_bytes_read = essentials::load(f, config.output_filename.c_str());
+            [[maybe_unused]] uint64_t num_bytes_read =
+                essentials::load(f, config.output_filename.c_str());
             std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
         }
         check(f, config);
@@ -47,14 +48,14 @@ int build_unpartitioned_main(int argc, char* argv[]) {
     configuration config;
     try {
         parse_build_config(argc, argv, config);
-    } catch (const ParseError& e) { 
+    } catch (const ParseError& e) {
         std::cerr << e.what() << std::endl;
         return 2;
     } catch (const OptionError& e) {
         std::cerr << e.what() << std::endl;
         return 3;
     }
-    
+
     mphf_alt f;
     f.build(config, std::cout);
 
@@ -67,7 +68,8 @@ int build_unpartitioned_main(int argc, char* argv[]) {
     if (config.check) {
         std::cerr << "Checking...\n";
         if (config.output_filename != "") {
-            [[maybe_unused]] uint64_t num_bytes_read = essentials::load(f, config.output_filename.c_str());
+            [[maybe_unused]] uint64_t num_bytes_read =
+                essentials::load(f, config.output_filename.c_str());
             std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
         }
         check_alt(f, config);
@@ -81,4 +83,4 @@ int build_unpartitioned_main(int argc, char* argv[]) {
     return 0;
 }
 
-}
+}  // namespace lphash

@@ -2,8 +2,8 @@
 
 namespace lphash::minimizer {
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> 
-classify(sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname) {
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
+    sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname) {
     auto start = minimizers.cbegin();  // this forces the remaining buffer to be written to disk
     auto stop = minimizers.cend();
     uint64_t colliding_mm_size_estimate =
@@ -49,9 +49,9 @@ classify(sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, st
     return std::make_pair(std::move(unique_minimizers), std::move(colliding_minimizer_ids));
 }
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> 
-classify(sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname) {
+std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
+    sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname) {
     return classify(minimizers, max_memory, tmp_dirname);
 }
 
-}
+}  // namespace lphash::minimizer

@@ -1,5 +1,3 @@
-#pragma once
-
 #include "../include/mphf_utils.hpp"
 
 namespace lphash {
@@ -31,4 +29,4 @@ uint8_t const& size_itr_t::operator*() const { return (*m_iterator).size; }
 
 void size_itr_t::operator++() { ++m_iterator; }
 
-}
+}  // namespace lphash

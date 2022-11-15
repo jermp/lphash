@@ -30,7 +30,8 @@ mphf::mphf()
     mphf_configuration.ram = 8 * essentials::GB;
 };
 
-// mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double c,
+// mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double
+// c,
 //            uint8_t nthreads, uint8_t max_memory, std::string temporary_directory, bool verbose)
 //     : k(klen)
 //     , m(mm_size)
@@ -77,7 +78,7 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
     // if (config.tmp_dirname != "") {
     mphf_configuration.tmp_dir = config.tmp_dirname;
-        // essentials::create_directory(config.tmp_dirname);
+    // essentials::create_directory(config.tmp_dirname);
     // }
     uint64_t check_total_kmers = 0;
     uint64_t total_contigs = 0;
@@ -89,9 +90,9 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     if (config.verbose) std::cerr << "Part 1: file reading and info gathering\n";
     sorted_external_vector<mm_record_t> all_minimizers(
         uint64_t(max_ram) * essentials::GB,
-        [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; }, config.tmp_dirname,
-        get_group_id());
-    if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL) 
+        [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; },
+        config.tmp_dirname, get_group_id());
+    if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
         throw std::runtime_error("Unable to open the input file " + config.input_filename + "\n");
     seq = kseq_init(fp);
     uint64_t id = 0;
@@ -110,7 +111,8 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     assert(nkmers == check_total_kmers);
 
     if (config.verbose) std::cerr << "Part 2: build MPHF\n";
-    auto [unique_mms, coll_ids] = minimizer::classify(std::move(all_minimizers), max_ram, mphf_configuration.tmp_dir);
+    auto [unique_mms, coll_ids] =
+        minimizer::classify(std::move(all_minimizers), max_ram, mphf_configuration.tmp_dir);
     // mphf f(k, m, mm_seed, total_kmers, c, num_threads, max_memory, tmp_dirname, verbose);
     {
         auto itr = unique_mms.cbegin();
@@ -132,7 +134,7 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
         auto itr = mm_sorted_by_mphf.cbegin();
         build_inverted_index(itr, mm_sorted_by_mphf.size());
     }
-    
+
     total_colliding_minimizers = coll_ids.size();
 
     if (config.verbose) std::cerr << "Part 4: build fallback MPHF\n";
@@ -143,8 +145,9 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
                 return false;
             },
             mphf_configuration.tmp_dir, get_group_id());
-        if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL) 
-            throw std::runtime_error("Unable to open the input file a second time " + config.input_filename + "\n");
+        if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
+            throw std::runtime_error("Unable to open the input file a second time " +
+                                     config.input_filename + "\n");
         id = 0;
         auto start = coll_ids.cbegin();
         auto stop = coll_ids.cend();
@@ -162,12 +165,11 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
         }
     }
     res_strm << config.input_filename << "," << static_cast<uint32_t>(k) << ","
-              << static_cast<uint32_t>(m) << ","
-              << static_cast<double>(total_colliding_minimizers) / distinct_minimizers << ","
-              << 2.0 / ((k - m + 1) + 1) << ","
-              << static_cast<double>(total_minimizers) / nkmers << ","
-              << static_cast<double>(total_contigs) / nkmers << ","
-              << static_cast<double>(num_bits()) / nkmers;
+             << static_cast<uint32_t>(m) << ","
+             << static_cast<double>(total_colliding_minimizers) / distinct_minimizers << ","
+             << 2.0 / ((k - m + 1) + 1) << "," << static_cast<double>(total_minimizers) / nkmers
+             << "," << static_cast<double>(total_contigs) / nkmers << ","
+             << static_cast<double>(num_bits()) / nkmers;
     res_strm << "\n";
 }
 
@@ -434,7 +436,8 @@ void check(mphf const& hf, configuration& config) {
     kseq_t* seq = nullptr;
     pthash::bit_vector_builder population(hf.get_kmer_count());
     if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
-        throw std::runtime_error("Unable to open input file " + config.input_filename + " for checking\n");
+        throw std::runtime_error("Unable to open input file " + config.input_filename +
+                                 " for checking\n");
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);

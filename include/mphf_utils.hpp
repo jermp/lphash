@@ -47,7 +47,6 @@ private:
     sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
-
 template <typename MPHFType>
 bool check_collisions(
     MPHFType const& hf, std::string const& contig, bool canonical,
@@ -98,7 +97,6 @@ bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, 
     }
     return true;
 }
-
 
 namespace debug {
 
@@ -153,4 +151,4 @@ static triplet_t compute_minimizer_triplet(kmer_t kmer, uint64_t k, uint64_t m, 
 
 }  // namespace debug
 
-}
+}  // namespace lphash
