@@ -85,7 +85,7 @@ From within the directory where the code was compiled (see the section [Compilin
 
 to show the usage of the subcommand (reported below for convenience).
 
-	Usage: ./build [-h,--help] input_filename k m [-s seed] [-t threads] [-o output_filename] [-d tmp_dirname] [-c c] [--max-memory max-memory] [--check] [--verbose]
+	Usage: ./partitioned [-h,--help] input_filename k m [-s seed] [-t threads] [-o output_filename] [-d tmp_dirname] [-c c] [--max-memory max-memory] [--check] [--verbose]
 
 	 input_filename
 		Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:
