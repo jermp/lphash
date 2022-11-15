@@ -440,9 +440,8 @@ void check(mphf const& hf, configuration& config) {
                                  " for checking\n");
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
-        std::string contig = std::string(seq->seq.s);
-        config.check = check_collisions(hf, contig, canonical, population);
-        if (config.check) config.check = check_streaming_correctness(hf, contig, canonical);
+        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
+        if (config.check) config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);
