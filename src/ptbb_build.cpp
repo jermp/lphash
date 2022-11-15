@@ -4,7 +4,6 @@ extern "C" {
 #include <zlib.h>
 #include <string>
 
-#include "../include/constants.hpp"
 #include "../include/ptbb_file_itr.hpp"
 #include "../external/pthash/external/cmd_line_parser/include/parser.hpp"
 #include "../external/BooPHF.hpp"

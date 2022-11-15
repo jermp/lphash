@@ -8,34 +8,12 @@
 
 namespace lphash {
 
-struct kmer128_t {
-    kmer128_t() : upper(0), lower(0) {}
-    // kmer128_t(uint8_t v) : upper(0), lower(static_cast<uint64_t>(v)) {}
-    // kmer128_t(int v) : upper(0), lower(static_cast<uint64_t>(v)) {}
-    kmer128_t(uint64_t v) : upper(0), lower(v) {}
-    uint64_t upper;
-    uint64_t lower;
-};
-
 #include "compile_constants.tpd"
 
 namespace constants {
 
-template <typename T>
-struct MaxKChooser;
-
-template <>
-struct MaxKChooser<uint64_t> {
-    static uint64_t const value = 31;
-};
-
-template <>
-struct MaxKChooser<kmer128_t> {
-    static uint64_t const value = 63;
-};
-
-constexpr uint64_t max_k =
-    MaxKChooser<kmer_t>::value;  // max *odd* size that can be packed into the given k-mer type
+/* max *odd* size that can be packed into the given k-mer type */
+constexpr uint64_t max_k = (sizeof(kmer_t) * 8) / 2 - 1;
 constexpr uint64_t default_pthash_seed = 1;
 constexpr uint64_t default_seed = 42;
 constexpr uint64_t default_num_threads = 1;
@@ -62,42 +40,22 @@ struct mm_triplet_t {
 };
 #pragma pack(pop)
 
+static bool operator<(mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; }
+static bool operator>(mm_record_t const& a, mm_record_t const& b) { return a.itself > b.itself; }
+static bool operator<(mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; }
+static bool operator>(mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; }
+
 struct hash64 : public pthash::murmurhash2_64 {
-    static inline pthash::hash64 hash(kmer128_t val, uint64_t seed) {
+    static inline pthash::hash64 hash(kmer_t val, uint64_t seed) {
         return pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed);
-    }
-    static inline pthash::hash64 hash(pthash::byte_range range, uint64_t seed) {
-        return murmurhash2_64::hash(range, seed);
-    }
-    static inline pthash::hash64 hash(std::string const& val, uint64_t seed) {
-        return murmurhash2_64::hash(val, seed);
-    }
-    static inline pthash::hash64 hash(uint64_t val, uint64_t seed) {
-        return murmurhash2_64::hash(val, seed);
     }
 };
 
 typedef pthash::single_phf<hash64, pthash::dictionary_dictionary, true> pthash_mphf_t;
 
-bool operator<(mm_record_t const& a, mm_record_t const& b);
-bool operator>(mm_record_t const& a, mm_record_t const& b);
-bool operator<(mm_triplet_t const& a, mm_triplet_t const& b);
-bool operator>(mm_triplet_t const& a, mm_triplet_t const& b);
-bool operator==(kmer128_t const& a, kmer128_t const& b);
-bool operator!=(kmer128_t const& a, kmer128_t const& b);
-bool operator<(kmer128_t const& a, kmer128_t const& b);
-bool operator>(kmer128_t const& a, kmer128_t const& b);
-std::ostream& operator<<(std::ostream& os, kmer128_t const& val);
-kmer128_t operator&(kmer128_t const& a, kmer128_t const& b);
-kmer128_t operator|(kmer128_t const& a, kmer128_t const& b);
-kmer128_t operator^(kmer128_t const& a, kmer128_t const& b);
-kmer128_t operator-(kmer128_t const& a, int b);
-kmer128_t operator<<(kmer128_t const& val, unsigned int shift);
-kmer128_t operator>>(kmer128_t const& val, unsigned int shift);
-
-//------------------------------------------------------------------------------------------------------------------
-
-std::string get_group_id();
+static std::string get_group_id() {
+    return std::to_string(pthash::clock_type::now().time_since_epoch().count());
+}
 
 template <class T>
 void explicit_garbage_collect([[maybe_unused]] T obj) {}

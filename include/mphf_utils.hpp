@@ -106,24 +106,12 @@ struct triplet_t {
 
 static kmer_t char_to_uint(char c) { return constants::seq_nt4_table[static_cast<uint8_t>(c)] & 3; }
 
-[[maybe_unused]] static uint64_t extract_minimizer(uint64_t v) { return v; }
-[[maybe_unused]] static uint64_t extract_minimizer(kmer128_t v) { return v.lower; }
-
 [[maybe_unused]] static kmer_t string_to_integer_no_reverse(const char* str, uint64_t k) {
     assert(k <= 64);
     kmer_t y;
     y = 0;
     for (uint64_t i = 0; i != k; ++i) { y = (y << 2) | char_to_uint(str[i]); }
     return y;
-}
-
-template <typename Hasher = hash64>
-static void print_hashes(std::string contig, uint64_t m, uint64_t seed) {
-    for (uint64_t i = 0; i < contig.length() - m + 1; ++i) {
-        kmer_t pmmer = string_to_integer_no_reverse(&contig.data()[i], m);
-        uint64_t hash = Hasher::hash(pmmer, seed).first();
-        std::cerr << "[" << i << "] : " << pmmer << " " << hash << "\n";
-    }
 }
 
 template <typename Hasher = hash64>
@@ -135,7 +123,7 @@ static triplet_t compute_minimizer_triplet(kmer_t kmer, uint64_t k, uint64_t m, 
     kmer_t mask = (static_cast<kmer_t>(1) << (2 * m)) - 1;
     uint64_t pos = 0;
     for (uint64_t i = 0; i != k - m + 1; ++i) {
-        uint64_t mmer = extract_minimizer(kmer & mask);
+        uint64_t mmer = kmer & mask;
         uint64_t hash = Hasher::hash(mmer, seed).first();
         if (hash <=
             min_hash) {  // <= because during construction we take the left-most minimum.
