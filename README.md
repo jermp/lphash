@@ -17,6 +17,7 @@ Datasets are available on Zenodo here: [https://zenodo.org/record/7239205](https
 #### Table of contents
 * [Compiling the Code](#compiling-the-code)
 * [Dependencies](#dependencies)
+* [Tools](#tools)
 * [Build a Function](#build-a-function)
 * [Example](#Example)
 * [Input Files](#input-files)
@@ -71,6 +72,23 @@ if you are on Linux/Ubuntu, or
     brew install zlib
 
 if you have a Mac (and Homebrew installed: https://brew.sh/).
+
+
+Tools
+-----
+
+There is one main executable called `lphash` after the compilation, which can be used to run a tool.
+Run `./lphash` as follows to see a list of available tools.
+
+	LP-Hash: (L)ocality (P)reserving Minimal Perfect (Hash)ing of k-mers
+
+	Usage: ./lphash <tool> ...
+
+	Available tools:
+	  build-p      build a partitioned LP-MPHF
+	  build-u      build an unpartitioned LP-MPHF
+	  query-p      query a partitioned LP-MPHF
+	  query-u      query an unpartitioned LP-MPHF
 
 
 Build a Function

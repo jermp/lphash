@@ -5,7 +5,7 @@
 using namespace lphash;
 
 int help(char* arg0) {
-    std::cerr << "LP-Hash: Locality Preserving Minimal Perfect Hahsing of k-mers\n\n";
+    std::cerr << "LP-Hash: (L)ocality (P)reserving Minimal Perfect (Hash)ing of k-mers\n\n";
     std::cerr << "Usage: " << arg0 << " <tool> ...\n\n";
     std::cerr << "Available tools:\n";
     std::cerr << "  build-p      build a partitioned LP-MPHF\n";
