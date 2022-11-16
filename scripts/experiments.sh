@@ -13,17 +13,17 @@ MPHF_FOLDER=$BINARIES_PATH
 RESULTS_FOLDER=$LPHASH_DIR/results
 TMP_FOLDER="/data2/DNA/tmp_dir"
 
-LPBUILD=$LPHASH_DIR/build/build
-LPQUERY=$LPHASH_DIR/build/query
-LPBUILD_ALT=$LPHASH_DIR/build/build_alt
-LPQUERY_ALT=$LPHASH_DIR/build/query_alt
+LPBUILD=$LPHASH_DIR/build/lphash build-p
+LPQUERY=$LPHASH_DIR/build/lphash query-p
+LPBUILD_ALT=$LPHASH_DIR/build/lphash build-u
+LPQUERY_ALT=$LPHASH_DIR/build/lphash query-u
 PTBUILD=$LPHASH_DIR/build/ptbb_build
 PTQUERY=$LPHASH_DIR/build/ptbb_query
 
-LPBUILD_RESULTS=$LPHASH_DIR/results/lphash_build.csv
-LPQUERY_RESULTS=$LPHASH_DIR/results/lphash_query.csv
-LPBUILD_RESULTS_ALT=$LPHASH_DIR/results/lphash_build_alt.csv
-LPQUERY_RESULTS_ALT=$LPHASH_DIR/results/lphash_query_alt.csv
+LPBUILD_RESULTS=$LPHASH_DIR/results/lphash_build_partitioned.csv
+LPQUERY_RESULTS=$LPHASH_DIR/results/lphash_query_partitioned.csv
+LPBUILD_RESULTS_ALT=$LPHASH_DIR/results/lphash_build_unpartitioned.csv
+LPQUERY_RESULTS_ALT=$LPHASH_DIR/results/lphash_query_unpartitioned.csv
 PTBUILD_RESULTS=$LPHASH_DIR/results/pthash_build.csv
 PTQUERY_RESULTS=$LPHASH_DIR/results/pthash_query.csv
 
