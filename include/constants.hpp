@@ -45,19 +45,21 @@ static bool operator>(mm_record_t const& a, mm_record_t const& b) { return a.its
 static bool operator<(mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; }
 static bool operator>(mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; }
 
-struct fallback_hasher {
-    typedef pthash::hash64 hash_type;
-    static inline pthash::hash64 hash(kmer_t val, uint64_t seed) {
-        return pthash::hash64(
-            pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed));
-    }
-};
-
-// struct hash64_v2 : public pthash::murmurhash2_64 {
-//     static inline pthash::hash64 hash(uint64_t val, uint64_t seed) {
-//         return murmurhash2_64::hash(val, seed);
+// struct fallback_hasher {
+//     typedef pthash::hash64 hash_type;
+//     static inline pthash::hash64 hash(kmer_t val, uint64_t seed) {
+//         return pthash::hash64(
+//             pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed));
 //     }
 // };
+
+struct fallback_hasher {
+    typedef pthash::hash128 hash_type;
+    static inline pthash::hash128 hash(kmer_t val, uint64_t seed) {
+        return {pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed),
+                pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), ~seed)};
+    }
+};
 
 typedef pthash::single_phf<pthash::murmurhash2_64, pthash::dictionary_dictionary, true>
     pthash_minimizers_mphf_t;
