@@ -45,20 +45,24 @@ static bool operator>(mm_record_t const& a, mm_record_t const& b) { return a.its
 static bool operator<(mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; }
 static bool operator>(mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; }
 
-struct hash64 : public pthash::murmurhash2_64 {
+struct fallback_hasher {
+    typedef pthash::hash64 hash_type;
     static inline pthash::hash64 hash(kmer_t val, uint64_t seed) {
-        return pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed);
+        return pthash::hash64(
+            pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed));
     }
 };
 
-struct hash64_v2 : public pthash::murmurhash2_64 {
-    static inline pthash::hash64 hash(uint64_t val, uint64_t seed) {
-        return murmurhash2_64::hash(val, seed);
-    }
-};
+// struct hash64_v2 : public pthash::murmurhash2_64 {
+//     static inline pthash::hash64 hash(uint64_t val, uint64_t seed) {
+//         return murmurhash2_64::hash(val, seed);
+//     }
+// };
 
-typedef pthash::single_phf<hash64_v2, pthash::dictionary_dictionary, true> pthash_minimizers_mphf_t;
-typedef pthash::single_phf<hash64, pthash::dictionary_dictionary, true> pthash_fallback_mphf_t;
+typedef pthash::single_phf<pthash::murmurhash2_64, pthash::dictionary_dictionary, true>
+    pthash_minimizers_mphf_t;
+typedef pthash::single_phf<fallback_hasher, pthash::dictionary_dictionary, true>
+    pthash_fallback_mphf_t;
 
 static std::string get_group_id() {
     return std::to_string(pthash::clock_type::now().time_since_epoch().count());

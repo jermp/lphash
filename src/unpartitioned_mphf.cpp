@@ -84,9 +84,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     uint64_t id = 0;
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
-        auto n =
-            minimizer::from_string<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id,
-                                           all_minimizers);  // non-canonical minimizers for now
+        auto n = minimizer::from_string<pthash::murmurhash2_64>(
+            seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id,
+            all_minimizers);  // non-canonical minimizers for now
         nkmers += n;
         ++total_contigs;
         check_total_kmers += seq->seq.l - k + 1;
@@ -143,8 +143,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
         auto stop = coll_ids.cend();
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
-            minimizer::get_colliding_kmers<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical,
-                                                   start, stop, id, unbucketable_kmers);
+            minimizer::get_colliding_kmers<pthash::murmurhash2_64>(seq->seq.s, seq->seq.l, k, m,
+                                                                   mm_seed, canonical, start, stop,
+                                                                   id, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
         gzclose(fp);

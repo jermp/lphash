@@ -115,7 +115,7 @@ static kmer_t char_to_uint(char c) { return constants::seq_nt4_table[static_cast
     return y;
 }
 
-template <typename Hasher = hash64>
+template <typename Hasher = pthash::murmurhash2_64>
 static triplet_t compute_minimizer_triplet(kmer_t kmer, uint64_t k, uint64_t m, uint64_t seed) {
     assert(m <= 32);
     assert(m <= k);
