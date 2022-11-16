@@ -62,13 +62,13 @@ private:
     };
     mm_context_t query(kmer_t kmer, uint64_t minimizer, uint32_t position) const;
 
-    void build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+    void build_minimizers_mphf(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                                std::size_t number_of_distinct_minimizers);
-    void build_pos_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+    void build_pos_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                          std::size_t number_of_distinct_minimizers, uint64_t pos_sum);
-    void build_size_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+    void build_size_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                           std::size_t number_of_distinct_minimizers, uint64_t size_sum);
-    void build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr,
+    void build_fallback_mphf(external_memory_vector<kmer_t>::const_iterator& km_itr,
                              std::size_t number_of_colliding_kmers);
 
     uint64_t get_minimizer_order(uint64_t mm) const;

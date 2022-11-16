@@ -1,50 +1,50 @@
 #pragma once
 
 #include "constants.hpp"
-#include "sorted_external_vector.hpp"
+#include "external_memory_vector.hpp"
 
 namespace lphash {
 
 class mm_itr_t {
 public:
-    mm_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+    mm_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr);
     void operator++();
     uint64_t operator*() const;
 
 private:
-    sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
 class km_itr_t {
 public:
-    km_itr_t(sorted_external_vector<kmer_t>::const_iterator& mm_itr);
+    km_itr_t(external_memory_vector<kmer_t>::const_iterator& mm_itr);
     void operator++();
     kmer_t const& operator*() const;
 
 private:
-    sorted_external_vector<kmer_t>::const_iterator& m_iterator;
+    external_memory_vector<kmer_t>::const_iterator& m_iterator;
 };
 
 class pos_itr_t {
 public:
     typedef uint8_t value_type;
-    pos_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+    pos_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr);
     void operator++();
     uint8_t const& operator*() const;
 
 private:
-    sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
 class size_itr_t {
 public:
     typedef uint8_t value_type;
-    size_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+    size_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr);
     void operator++();
     uint8_t const& operator*() const;
 
 private:
-    sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
 template <typename MPHFType>

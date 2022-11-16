@@ -88,7 +88,7 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     gzFile fp = nullptr;
     kseq_t* seq = nullptr;
     if (config.verbose) std::cerr << "Part 1: file reading and info gathering\n";
-    sorted_external_vector<mm_record_t> all_minimizers(
+    external_memory_vector<mm_record_t> all_minimizers(
         uint64_t(max_ram) * essentials::GB,
         [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; },
         config.tmp_dirname, get_group_id());
@@ -121,7 +121,7 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
 
     if (config.verbose) std::cerr << "Part 3: build inverted index\n";
     {
-        sorted_external_vector<mm_triplet_t> mm_sorted_by_mphf(
+        external_memory_vector<mm_triplet_t> mm_sorted_by_mphf(
             uint64_t(max_ram) * essentials::GB,
             [](mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; },
             mphf_configuration.tmp_dir, get_group_id());
@@ -139,7 +139,7 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
 
     if (config.verbose) std::cerr << "Part 4: build fallback MPHF\n";
     {  // garbage collector for unbucketable_kmers
-        sorted_external_vector<kmer_t> unbucketable_kmers(
+        external_memory_vector<kmer_t> unbucketable_kmers(
             uint64_t(max_ram) * essentials::GB,
             []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {
                 return false;
@@ -173,7 +173,7 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void mphf::build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+void mphf::build_minimizers_mphf(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                                  std::size_t number_of_distinct_minimizers) {
     mm_itr_t dummy_itr(mm_itr);
     distinct_minimizers = number_of_distinct_minimizers;
@@ -181,33 +181,31 @@ void mphf::build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_ite
                                              mphf_configuration);
 }
 
-void mphf::build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr,
+void mphf::build_fallback_mphf(external_memory_vector<kmer_t>::const_iterator& km_itr,
                                std::size_t number_of_colliding_kmers) {
     km_itr_t dummy_itr(km_itr);
     fallback_kmer_order.build_in_external_memory(dummy_itr, number_of_colliding_kmers,
                                                  mphf_configuration);
 }
 
-void mphf::build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+void mphf::build_inverted_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                                 [[maybe_unused]] std::size_t number_of_distinct_minimizers) {
     assert(distinct_minimizers == number_of_distinct_minimizers);
     n_maximal = 0;
     std::size_t colliding_minimizers = 0;
     uint64_t universe = 0;
     quartet_wtree_builder wtb(distinct_minimizers);
-    auto cmp64 = []([[maybe_unused]] uint64_t const& a, [[maybe_unused]] uint64_t const& b) {
-        return false;
-    };
+    // auto cmp64 = []([[maybe_unused]] uint64_t const& a, [[maybe_unused]] uint64_t const& b) {
+    //     return false;
+    // };
     uint64_t array_mem = max_ram * essentials::GB / 4;
     array_mem = array_mem < 4000000 ? 4000000 : array_mem;
-    sorted_external_vector<uint64_t> left_positions(array_mem, cmp64, mphf_configuration.tmp_dir,
-                                                    get_group_id());
-    sorted_external_vector<uint64_t> right_or_collision_sizes(
-        array_mem, cmp64, mphf_configuration.tmp_dir, get_group_id());
-    sorted_external_vector<uint64_t> none_sizes(array_mem, cmp64, mphf_configuration.tmp_dir,
-                                                get_group_id());
-    sorted_external_vector<uint64_t> none_positions(array_mem, cmp64, mphf_configuration.tmp_dir,
-                                                    get_group_id());
+    external_memory_vector<uint64_t, false> left_positions(array_mem, mphf_configuration.tmp_dir, get_group_id());
+    external_memory_vector<uint64_t, false> right_or_collision_sizes(array_mem, mphf_configuration.tmp_dir, get_group_id());
+    external_memory_vector<uint64_t, false> none_sizes(array_mem, mphf_configuration.tmp_dir, get_group_id());
+    external_memory_vector<uint64_t, false> none_positions(array_mem, mphf_configuration.tmp_dir, get_group_id());
+    typedef external_memory_vector<uint64_t, false>::const_iterator itr_t;
+    
     for (std::size_t i = 0; i < distinct_minimizers; ++i) {
         mm_triplet_t mm = *mm_itr;
         if (mm.size == 0) {
@@ -264,7 +262,6 @@ void mphf::build_inverted_index(sorted_external_vector<mm_triplet_t>::const_iter
         std::cerr << "Percentage of ambiguous minimizers: " << ambiguous << "%\n";
     }
 
-    typedef sorted_external_vector<uint64_t>::const_iterator itr_t;
     std::vector<std::pair<itr_t, itr_t>> sp;
     // The following is needed to build the pairs in-place, since const_iterator is non
     // copy-constructible
