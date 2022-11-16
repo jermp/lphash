@@ -120,22 +120,20 @@ static triplet_t compute_minimizer_triplet(kmer_t kmer, uint64_t k, uint64_t m, 
     assert(m <= 32);
     assert(m <= k);
     uint64_t min_hash = uint64_t(-1);
-    uint64_t minimizer = uint64_t(-1);
-    kmer_t mask = (static_cast<kmer_t>(1) << (2 * m)) - 1;
+    kmer_t minimizer = kmer_t(-1);
+    kmer_t mask = (kmer_t(1) << (2 * m)) - 1;
     uint64_t pos = 0;
     for (uint64_t i = 0; i != k - m + 1; ++i) {
-        uint64_t mmer = kmer & mask;
+        kmer_t mmer = kmer & mask;
         uint64_t hash = Hasher::hash(mmer, seed).first();
-        if (hash <=
-            min_hash) {  // <= because during construction we take the left-most minimum.
-                         // Here we start looking from the right so we need to update every time.
+        if (hash <= min_hash) {
             min_hash = hash;
             minimizer = mmer;
             pos = i;
         }
         kmer = kmer >> 2;
     }
-    return triplet_t{minimizer, min_hash, k - (pos + m)};
+    return triplet_t{static_cast<uint64_t>(minimizer), min_hash, k - (pos + m)};
 }
 
 }  // namespace debug
