@@ -42,7 +42,8 @@ template <typename T>
 struct unsorted_base {};
 
 template <typename T, bool sorted = true>
-class external_memory_vector : public std::conditional<sorted, sorted_base<T>, unsorted_base<T>>::type {
+class external_memory_vector
+    : public std::conditional<sorted, sorted_base<T>, unsorted_base<T>>::type {
 public:
     class const_iterator : std::forward_iterator_tag {
     public:
@@ -55,9 +56,9 @@ public:
         bool operator!=(const_iterator const& other) const;
 
     private:
-        class mm_loader_iterator {
-        public:
-            mm_loader_iterator(uint8_t const* begin, uint8_t const* end) : m_begin(begin), m_end(end) {}
+        struct mm_loader_iterator {
+            mm_loader_iterator(uint8_t const* begin, uint8_t const* end)
+                : m_begin(begin), m_end(end) {}
             void operator++() { m_begin += sizeof(T); }
             bool has_next() const { return m_begin != m_end; }
             T const& operator*() const { return *reinterpret_cast<T const*>(m_begin); }
@@ -78,25 +79,16 @@ public:
         typename std::enable_if<!s, void>::type advance_heap_head();
     };
 
-    template<bool s = sorted>
-    external_memory_vector(
-        typename std::enable_if<s, uint64_t>::type available_space_bytes,
-        std::function<bool(T const&, T const&)> cmp, 
-        std::string tmp_dir,
-        std::string name = ""
-    );
     template <bool s = sorted>
-    external_memory_vector(
-        typename std::enable_if<s, uint64_t>::type available_space_bytes, 
-        std::string tmp_dir,
-        std::string name = ""
-    );
+    external_memory_vector(typename std::enable_if<s, uint64_t>::type available_space_bytes,
+                           std::function<bool(T const&, T const&)> cmp, std::string tmp_dir,
+                           std::string name = "");
     template <bool s = sorted>
-    external_memory_vector(
-        typename std::enable_if<!s, uint64_t>::type available_space_bytes,
-        std::string tmp_dir,
-        std::string name = ""
-    );
+    external_memory_vector(typename std::enable_if<s, uint64_t>::type available_space_bytes,
+                           std::string tmp_dir, std::string name = "");
+    template <bool s = sorted>
+    external_memory_vector(typename std::enable_if<!s, uint64_t>::type available_space_bytes,
+                           std::string tmp_dir, std::string name = "");
     external_memory_vector(external_memory_vector&&) = default;
     void push_back(T const& elem);
     const_iterator cbegin();
@@ -122,40 +114,29 @@ template <typename T, bool sorted>
 template <bool s>
 external_memory_vector<T, sorted>::external_memory_vector(
     typename std::enable_if<s, uint64_t>::type available_space_bytes,
-    std::function<bool(T const&, T const&)> cmp,
-    std::string tmp_dir, 
-    std::string name)
-    : //m_sorter(cmp),
-    sorted_base<T>(cmp), 
-    m_total_elems(0), 
-    m_tmp_dirname(tmp_dir), 
-    m_prefix(name) {
-        init(available_space_bytes);
+    std::function<bool(T const&, T const&)> cmp, std::string tmp_dir, std::string name)
+    : sorted_base<T>(cmp), m_total_elems(0), m_tmp_dirname(tmp_dir), m_prefix(name) {
+    init(available_space_bytes);
 }
 
 template <typename T, bool sorted>
 template <bool s>
 external_memory_vector<T, sorted>::external_memory_vector(
-    typename std::enable_if<s, uint64_t>::type available_space_bytes,
-    std::string tmp_dir, 
+    typename std::enable_if<s, uint64_t>::type available_space_bytes, std::string tmp_dir,
     std::string name)
-    : //m_sorter([](T const& a, T const& b) { return a < b; })
-    sorted_base<T>([](T const& a, T const& b) { return a < b; })
+    : sorted_base<T>([](T const& a, T const& b) { return a < b; })
     , m_total_elems(0)
     , m_tmp_dirname(tmp_dir)
     , m_prefix(name) {
-        init(available_space_bytes);
+    init(available_space_bytes);
 }
 
 template <typename T, bool sorted>
 template <bool s>
 external_memory_vector<T, sorted>::external_memory_vector(
-    typename std::enable_if<!s, uint64_t>::type available_space_bytes,
-    std::string tmp_dir, 
+    typename std::enable_if<!s, uint64_t>::type available_space_bytes, std::string tmp_dir,
     std::string name)
-    : m_total_elems(0)
-    , m_tmp_dirname(tmp_dir)
-    , m_prefix(name) {
+    : m_total_elems(0), m_tmp_dirname(tmp_dir), m_prefix(name) {
     init(available_space_bytes);
 }
 
@@ -176,7 +157,8 @@ void external_memory_vector<T, sorted>::push_back(T const& elem) {
 }
 
 template <typename T, bool sorted>
-typename external_memory_vector<T, sorted>::const_iterator external_memory_vector<T, sorted>::cbegin() {
+typename external_memory_vector<T, sorted>::const_iterator
+external_memory_vector<T, sorted>::cbegin() {
     if (m_buffer.size() != 0) sort_and_flush();
     m_buffer.clear();
     m_buffer.shrink_to_fit();
@@ -184,7 +166,8 @@ typename external_memory_vector<T, sorted>::const_iterator external_memory_vecto
 }
 
 template <typename T, bool sorted>
-typename external_memory_vector<T, sorted>::const_iterator external_memory_vector<T, sorted>::cend() const {
+typename external_memory_vector<T, sorted>::const_iterator external_memory_vector<T, sorted>::cend()
+    const {
     return const_iterator();
 }
 
@@ -218,10 +201,12 @@ std::string external_memory_vector<T, sorted>::get_tmp_output_filename(uint64_t 
 }
 
 template <typename T, bool sorted>
-external_memory_vector<T, sorted>::const_iterator::const_iterator(external_memory_vector<T, sorted> const* vec)
+external_memory_vector<T, sorted>::const_iterator::const_iterator(
+    external_memory_vector<T, sorted> const* vec)
     : v(vec)
     , m_mm_files(v->m_tmp_files.size())
-    , heap_idx_comparator([this](uint32_t i, uint32_t j) { return (*m_iterators[i] > *m_iterators[j]); }) {
+    , heap_idx_comparator(
+          [this](uint32_t i, uint32_t j) { return (*m_iterators[i] > *m_iterators[j]); }) {
     m_iterators.reserve(v->m_tmp_files.size());
     m_idx_heap.reserve(v->m_tmp_files.size());
 
@@ -231,8 +216,10 @@ external_memory_vector<T, sorted>::const_iterator::const_iterator(external_memor
         m_iterators.emplace_back(m_mm_files[i].data(), m_mm_files[i].data() + m_mm_files[i].size());
         m_idx_heap.push_back(i);
     }
-    if constexpr (sorted) std::make_heap(m_idx_heap.begin(), m_idx_heap.end(), heap_idx_comparator);
-    else std::reverse(m_idx_heap.begin(), m_idx_heap.end());
+    if constexpr (sorted)
+        std::make_heap(m_idx_heap.begin(), m_idx_heap.end(), heap_idx_comparator);
+    else
+        std::reverse(m_idx_heap.begin(), m_idx_heap.end());
 }
 
 template <typename T, bool sorted>
@@ -252,18 +239,21 @@ void external_memory_vector<T, sorted>::const_iterator::operator++() {
 }
 
 template <typename T, bool sorted>
-bool external_memory_vector<T, sorted>::const_iterator::operator==(const_iterator const& other) const {
+bool external_memory_vector<T, sorted>::const_iterator::operator==(
+    const_iterator const& other) const {
     return m_idx_heap.size() == other.m_idx_heap.size();  // TODO make it a little bit stronger
 }
 
 template <typename T, bool sorted>
-bool external_memory_vector<T, sorted>::const_iterator::operator!=(const_iterator const& other) const {
+bool external_memory_vector<T, sorted>::const_iterator::operator!=(
+    const_iterator const& other) const {
     return !(operator==(other));
 }
 
 template <typename T, bool sorted>
 template <bool s>
-typename std::enable_if<s, void>::type external_memory_vector<T, sorted>::const_iterator::advance_heap_head() {
+typename std::enable_if<s, void>::type
+external_memory_vector<T, sorted>::const_iterator::advance_heap_head() {
     uint32_t idx = m_idx_heap.front();
     ++m_iterators[idx];
     if (m_iterators[idx].has_next()) {  // percolate down the head
@@ -284,8 +274,9 @@ typename std::enable_if<s, void>::type external_memory_vector<T, sorted>::const_
 
 template <typename T, bool sorted>
 template <bool s>
-typename std::enable_if<!s, void>::type external_memory_vector<T, sorted>::const_iterator::advance_heap_head() {
-    uint32_t idx = m_idx_heap.back(); // we reversed the array when !sorted
+typename std::enable_if<!s, void>::type
+external_memory_vector<T, sorted>::const_iterator::advance_heap_head() {
+    uint32_t idx = m_idx_heap.back();  // we reversed the array when !sorted
     ++m_iterators[idx];
     if (m_iterators[idx].has_next()) {  // percolate down the head
         // do nothing since next time the index will be still valid

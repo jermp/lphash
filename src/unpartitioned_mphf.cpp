@@ -164,8 +164,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void mphf_alt::build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
-                                     std::size_t number_of_distinct_minimizers) {
+void mphf_alt::build_minimizers_mphf(
+    external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
+    std::size_t number_of_distinct_minimizers) {
     mm_itr_t dummy_itr(mm_itr);
     distinct_minimizers = number_of_distinct_minimizers;
     minimizer_order.build_in_external_memory(dummy_itr, distinct_minimizers, mphf_configuration);
@@ -285,7 +286,8 @@ void check_alt(mphf_alt const& hf, configuration& config) {
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
         config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
-        if (config.check) config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
+        if (config.check)
+            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);

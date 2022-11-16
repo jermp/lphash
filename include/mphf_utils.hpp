@@ -80,7 +80,8 @@ bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population
 }
 
 template <typename MPHFType>
-bool check_streaming_correctness(MPHFType const& hf, char const* contig, std::size_t contig_len, bool canonical) {
+bool check_streaming_correctness(MPHFType const& hf, char const* contig, std::size_t contig_len,
+                                 bool canonical) {
     auto dumb_hashes = hf(contig, contig_len, canonical, false);
     auto fast_hashes = hf(contig, contig_len, canonical);
     if (dumb_hashes.size() != fast_hashes.size()) {
