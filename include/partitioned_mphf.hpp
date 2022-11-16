@@ -20,21 +20,21 @@ public:
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
 
-    template <typename MinimizerHasher = hash64_v2>
+    template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(const char* contig, std::size_t length,
                                      bool canonical = false) const;
-    template <typename MinimizerHasher = hash64_v2>
+    template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
                                      bool dummy) const;
-    template <typename MinimizerHasher = hash64_v2>
+    template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
-    template <typename MinimizerHasher = hash64_v2>
+    template <typename MinimizerHasher = hash64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
-    template <typename MinimizerHasher = hash64_v2>
+    template <typename MinimizerHasher = hash64>
     uint64_t barebone_streaming_query(const char* contig, std::size_t length,
                                       bool canonical = false) const;
-    template <typename MinimizerHasher = hash64_v2>
+    template <typename MinimizerHasher = hash64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
 
     void print_statistics() const noexcept;
