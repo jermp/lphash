@@ -2,8 +2,8 @@
 
 namespace lphash::minimizer {
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
-    sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname) {
+std::pair<external_memory_vector<mm_triplet_t, false>, external_memory_vector<uint64_t>> classify(
+    external_memory_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname) {
     auto start = minimizers.cbegin();  // this forces the remaining buffer to be written to disk
     auto stop = minimizers.cend();
     uint64_t colliding_mm_size_estimate =
@@ -12,13 +12,13 @@ std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>
         colliding_mm_size_estimate < 4000000 ? 4000000 : colliding_mm_size_estimate;
     uint64_t unique_minimizer_mm_size_estimate =
         uint64_t(max_memory) * essentials::GB - colliding_mm_size_estimate;
-    sorted_external_vector<mm_triplet_t> unique_minimizers(
+    external_memory_vector<mm_triplet_t, false> unique_minimizers(
         unique_minimizer_mm_size_estimate,
-        []([[maybe_unused]] mm_triplet_t const& a, [[maybe_unused]] mm_triplet_t const& b) {
-            return false;
-        },
+        // []([[maybe_unused]] mm_triplet_t const& a, [[maybe_unused]] mm_triplet_t const& b) {
+        //     return false;
+        // },
         tmp_dirname, get_group_id());
-    sorted_external_vector<uint64_t> colliding_minimizer_ids(
+    external_memory_vector<uint64_t> colliding_minimizer_ids(
         colliding_mm_size_estimate, [](uint64_t a, uint64_t b) { return a < b; }, tmp_dirname,
         get_group_id());
 
@@ -49,8 +49,8 @@ std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>
     return std::make_pair(std::move(unique_minimizers), std::move(colliding_minimizer_ids));
 }
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
-    sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname) {
+std::pair<external_memory_vector<mm_triplet_t, false>, external_memory_vector<uint64_t>> classify(
+    external_memory_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname) {
     return classify(minimizers, max_memory, tmp_dirname);
 }
 

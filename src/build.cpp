@@ -16,7 +16,7 @@ int build_partitioned_main(int argc, char* argv[]) {
         std::cerr << e.what() << std::endl;
         return 3;
     }
-
+    external_memory_vector<uint64_t, false> bla(1000, ".", "bla");
     mphf f;
     f.build(config, std::cout);
 

@@ -1,58 +1,58 @@
 #pragma once
 
 #include "constants.hpp"
-#include "sorted_external_vector.hpp"
+#include "external_memory_vector.hpp"
 
 namespace lphash {
 
 class mm_itr_t {
 public:
-    mm_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+    mm_itr_t(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr);
     void operator++();
     uint64_t operator*() const;
 
 private:
-    sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t, false>::const_iterator& m_iterator;
 };
 
 class km_itr_t {
 public:
-    km_itr_t(sorted_external_vector<kmer_t>::const_iterator& mm_itr);
+    km_itr_t(external_memory_vector<kmer_t, false>::const_iterator& mm_itr);
     void operator++();
     kmer_t const& operator*() const;
 
 private:
-    sorted_external_vector<kmer_t>::const_iterator& m_iterator;
+    external_memory_vector<kmer_t, false>::const_iterator& m_iterator;
 };
 
 class pos_itr_t {
 public:
     typedef uint8_t value_type;
-    pos_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+    pos_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr);
     void operator++();
     uint8_t const& operator*() const;
 
 private:
-    sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
 class size_itr_t {
 public:
     typedef uint8_t value_type;
-    size_itr_t(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr);
+    size_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr);
     void operator++();
     uint8_t const& operator*() const;
 
 private:
-    sorted_external_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
 template <typename MPHFType>
 bool check_collisions(
-    MPHFType const& hf, std::string const& contig, bool canonical,
+    MPHFType const& hf, char const* contig, std::size_t contig_len, bool canonical,
     pthash::bit_vector_builder&
         population) {  // Note fast and dumb hashes are compared in check_streaming_correctness
-    auto hashes = hf(contig, canonical, false);
+    auto hashes = hf(contig, contig_len, canonical, false);
     for (auto hash : hashes) {
         if (hash > hf.get_kmer_count()) {
             std::cerr << "[Error] overflow : " << hash << " > " << hf.get_kmer_count() << std::endl;
@@ -80,9 +80,9 @@ bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population
 }
 
 template <typename MPHFType>
-bool check_streaming_correctness(MPHFType const& hf, std::string const& contig, bool canonical) {
-    auto dumb_hashes = hf(contig, canonical, false);
-    auto fast_hashes = hf(contig, canonical);
+bool check_streaming_correctness(MPHFType const& hf, char const* contig, std::size_t contig_len, bool canonical) {
+    auto dumb_hashes = hf(contig, contig_len, canonical, false);
+    auto fast_hashes = hf(contig, contig_len, canonical);
     if (dumb_hashes.size() != fast_hashes.size()) {
         std::cerr << "[Error] different number of hashes, maybe there were some Ns in the input "
                      "(not supported as of now)\n";

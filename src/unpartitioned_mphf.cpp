@@ -75,7 +75,7 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     gzFile fp = nullptr;
     kseq_t* seq = nullptr;
     if (config.verbose) std::cerr << "Part 1: file reading and info gathering\n";
-    sorted_external_vector<mm_record_t> all_minimizers(
+    external_memory_vector<mm_record_t> all_minimizers(
         uint64_t(max_ram) * essentials::GB,
         [](mm_record_t const& a, mm_record_t const& b) { return a.itself < b.itself; },
         mphf_configuration.tmp_dir, get_group_id());
@@ -106,7 +106,7 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
 
     if (config.verbose) std::cerr << "Part 3: build inverted index\n";
     {
-        sorted_external_vector<mm_triplet_t> mm_sorted_by_mphf(
+        external_memory_vector<mm_triplet_t> mm_sorted_by_mphf(
             uint64_t(max_ram) * essentials::GB,
             [](mm_triplet_t const& a, mm_triplet_t const& b) { return a.itself < b.itself; },
             mphf_configuration.tmp_dir, get_group_id());
@@ -129,11 +129,11 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
 
     if (config.verbose) std::cerr << "Part 4: build fallback MPHF\n";
     {  // garbage collector for unbucketable_kmers
-        sorted_external_vector<kmer_t> unbucketable_kmers(
+        external_memory_vector<kmer_t, false> unbucketable_kmers(
             uint64_t(max_ram) * essentials::GB,
-            []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {
-                return false;
-            },
+            // []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {
+            //     return false;
+            // },
             mphf_configuration.tmp_dir, get_group_id());
         if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
             throw std::runtime_error("Unable to open the input file " + config.input_filename +
@@ -164,21 +164,21 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void mphf_alt::build_minimizers_mphf(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+void mphf_alt::build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
                                      std::size_t number_of_distinct_minimizers) {
     mm_itr_t dummy_itr(mm_itr);
     distinct_minimizers = number_of_distinct_minimizers;
     minimizer_order.build_in_external_memory(dummy_itr, distinct_minimizers, mphf_configuration);
 }
 
-void mphf_alt::build_fallback_mphf(sorted_external_vector<kmer_t>::const_iterator& km_itr,
+void mphf_alt::build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr,
                                    std::size_t number_of_colliding_kmers) {
     km_itr_t dummy_itr(km_itr);
     fallback_kmer_order.build_in_external_memory(dummy_itr, number_of_colliding_kmers,
                                                  mphf_configuration);
 }
 
-void mphf_alt::build_pos_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+void mphf_alt::build_pos_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                                [[maybe_unused]] std::size_t number_of_distinct_minimizers,
                                uint64_t pos_sum) {
     assert(distinct_minimizers == number_of_distinct_minimizers);
@@ -187,7 +187,7 @@ void mphf_alt::build_pos_index(sorted_external_vector<mm_triplet_t>::const_itera
     positions.encode(c_itr, distinct_minimizers, pos_sum);
 }
 
-void mphf_alt::build_size_index(sorted_external_vector<mm_triplet_t>::const_iterator& mm_itr,
+void mphf_alt::build_size_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                                 [[maybe_unused]] std::size_t number_of_distinct_minimizers,
                                 uint64_t size_sum) {
     assert(distinct_minimizers == number_of_distinct_minimizers);
@@ -284,9 +284,8 @@ void check_alt(mphf_alt const& hf, configuration& config) {
                                  " for checking\n");
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
-        std::string contig = std::string(seq->seq.s);
-        config.check = check_collisions(hf, contig, canonical, population);
-        if (config.check) config.check = check_streaming_correctness(hf, contig, canonical);
+        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
+        if (config.check) config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);

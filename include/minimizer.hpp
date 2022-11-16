@@ -3,7 +3,7 @@
 #include <vector>
 #include "../include/constants.hpp"
 #include "../include/mm_quartet.hpp"
-#include "../include/sorted_external_vector.hpp"
+#include "../include/external_memory_vector.hpp"
 
 namespace lphash::minimizer {
 
@@ -11,7 +11,7 @@ template <typename MinimizerHasher>
 [[nodiscard]] uint64_t from_string(char const* contig, std::size_t contig_size, uint32_t k,
                                    uint32_t m, uint64_t seed, bool canonical_m_mers,
                                    uint64_t& mm_count,
-                                   lphash::sorted_external_vector<mm_record_t>& accumulator) {
+                                   lphash::external_memory_vector<mm_record_t>& accumulator) {
     std::size_t buf_pos, min_pos;
     mm_quartet_t current;
     uint64_t shift = 2 * (m - 1);
@@ -171,9 +171,9 @@ template <typename MinimizerHasher>
 template <typename MinimizerHasher>
 void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k, uint32_t m,
                          uint64_t seed, bool canonical_m_mers,
-                         sorted_external_vector<uint64_t>::const_iterator& itr,
-                         sorted_external_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count,
-                         sorted_external_vector<kmer_t>& accumulator) {
+                         external_memory_vector<uint64_t>::const_iterator& itr,
+                         external_memory_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count,
+                         external_memory_vector<kmer_t, false>& accumulator) {
     std::vector<mm_record_t> mm_buffer(k - m + 1);
     std::vector<kmer_t> km_buffer;
     std::size_t mm_buf_pos = 0, min_pos = mm_buffer.size();
@@ -317,10 +317,10 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
     }
 }
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
-    sorted_external_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname);
+std::pair<external_memory_vector<mm_triplet_t, false>, external_memory_vector<uint64_t>> classify(
+    external_memory_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
-std::pair<sorted_external_vector<mm_triplet_t>, sorted_external_vector<uint64_t>> classify(
-    sorted_external_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname);
+std::pair<external_memory_vector<mm_triplet_t, false>, external_memory_vector<uint64_t>> classify(
+    external_memory_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
 }  // namespace lphash::minimizer
