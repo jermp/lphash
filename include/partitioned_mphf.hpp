@@ -52,8 +52,8 @@ private:
     uint64_t distinct_minimizers;
     uint64_t n_maximal, right_coll_sizes_start, none_sizes_start,
         none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
-    pthash_mphf_t minimizer_order;
-    pthash_mphf_t fallback_kmer_order;
+    pthash_minimizers_mphf_t minimizer_order;
+    pthash_fallback_mphf_t fallback_kmer_order;
     quartet_wtree wtree;
     ef_sequence sizes_and_positions;
     uint64_t max_ram;

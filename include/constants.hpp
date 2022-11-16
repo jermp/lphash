@@ -57,7 +57,8 @@ struct hash64_v2 : public pthash::murmurhash2_64 {
     }
 };
 
-typedef pthash::single_phf<hash64, pthash::dictionary_dictionary, true> pthash_mphf_t;
+typedef pthash::single_phf<hash64_v2, pthash::dictionary_dictionary, true> pthash_minimizers_mphf_t;
+typedef pthash::single_phf<hash64, pthash::dictionary_dictionary, true> pthash_fallback_mphf_t;
 
 static std::string get_group_id() {
     return std::to_string(pthash::clock_type::now().time_since_epoch().count());

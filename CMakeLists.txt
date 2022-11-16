@@ -47,10 +47,10 @@ set(LPHASH_SOURCES
 add_executable(lphash src/lphash.cpp ${LPHASH_SOURCES})
 target_link_libraries(lphash z)
 
-add_executable(ptbb_build src/ptbb_build.cpp src/ptbb_file_itr.cpp src/constants.cpp)
-target_link_libraries(ptbb_build z)
-add_executable(ptbb_query src/ptbb_query.cpp src/ptbb_file_itr.cpp src/constants.cpp)
-target_link_libraries(ptbb_query z)
+#add_executable(ptbb_build src/ptbb_build.cpp src/ptbb_file_itr.cpp src/constants.cpp)
+#target_link_libraries(ptbb_build z)
+#add_executable(ptbb_query src/ptbb_query.cpp src/ptbb_file_itr.cpp src/constants.cpp)
+#target_link_libraries(ptbb_query z)
 
 # add_executable(test_sev tests/test_sev.cpp src/constants.cpp)
 # target_link_libraries(test_sev z)

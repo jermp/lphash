@@ -50,10 +50,10 @@ private:
     uint64_t nkmers;
     uint64_t distinct_minimizers;
     uint64_t num_kmers_in_main_index;
-    pthash_mphf_t minimizer_order;
+    pthash_minimizers_mphf_t minimizer_order;
     ef_sequence positions;
     ef_sequence sizes;
-    pthash_mphf_t fallback_kmer_order;
+    pthash_fallback_mphf_t fallback_kmer_order;
     uint8_t max_ram;
 
     struct mm_context_t {
