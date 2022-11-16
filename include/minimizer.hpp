@@ -173,7 +173,7 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
                          uint64_t seed, bool canonical_m_mers,
                          external_memory_vector<uint64_t>::const_iterator& itr,
                          external_memory_vector<uint64_t>::const_iterator& stop, uint64_t& mm_count,
-                         external_memory_vector<kmer_t>& accumulator) {
+                         external_memory_vector<kmer_t, false>& accumulator) {
     std::vector<mm_record_t> mm_buffer(k - m + 1);
     std::vector<kmer_t> km_buffer;
     std::size_t mm_buf_pos = 0, min_pos = mm_buffer.size();
@@ -317,10 +317,10 @@ void get_colliding_kmers(char const* contig, std::size_t contig_size, uint32_t k
     }
 }
 
-std::pair<external_memory_vector<mm_triplet_t>, external_memory_vector<uint64_t>> classify(
+std::pair<external_memory_vector<mm_triplet_t, false>, external_memory_vector<uint64_t>> classify(
     external_memory_vector<mm_record_t>& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
-std::pair<external_memory_vector<mm_triplet_t>, external_memory_vector<uint64_t>> classify(
+std::pair<external_memory_vector<mm_triplet_t, false>, external_memory_vector<uint64_t>> classify(
     external_memory_vector<mm_record_t>&& minimizers, uint8_t max_memory, std::string tmp_dirname);
 
 }  // namespace lphash::minimizer

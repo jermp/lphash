@@ -66,9 +66,9 @@ private:
     };
     mm_context_t query(kmer_t kmer, uint64_t minimizer, uint32_t position) const;
 
-    void build_minimizers_mphf(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
+    void build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
                                std::size_t number_of_minimizers);
-    void build_fallback_mphf(external_memory_vector<kmer_t>::const_iterator& km_itr,
+    void build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr,
                              std::size_t number_of_colliding_kmers);
     void build_inverted_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                               std::size_t number_of_distinct_minimizers);

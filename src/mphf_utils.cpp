@@ -2,14 +2,14 @@
 
 namespace lphash {
 
-mm_itr_t::mm_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr)
+mm_itr_t::mm_itr_t(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr)
     : m_iterator(mm_itr) {}
 
 uint64_t mm_itr_t::operator*() const { return (*m_iterator).itself; }
 
 void mm_itr_t::operator++() { ++m_iterator; }
 
-km_itr_t::km_itr_t(external_memory_vector<kmer_t>::const_iterator& km_itr) : m_iterator(km_itr) {}
+km_itr_t::km_itr_t(external_memory_vector<kmer_t, false>::const_iterator& km_itr) : m_iterator(km_itr) {}
 
 kmer_t const& km_itr_t::operator*() const { return (*m_iterator); }
 

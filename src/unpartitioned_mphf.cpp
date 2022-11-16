@@ -129,11 +129,11 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
 
     if (config.verbose) std::cerr << "Part 4: build fallback MPHF\n";
     {  // garbage collector for unbucketable_kmers
-        external_memory_vector<kmer_t> unbucketable_kmers(
+        external_memory_vector<kmer_t, false> unbucketable_kmers(
             uint64_t(max_ram) * essentials::GB,
-            []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {
-                return false;
-            },
+            // []([[maybe_unused]] kmer_t const& a, [[maybe_unused]] kmer_t const& b) {
+            //     return false;
+            // },
             mphf_configuration.tmp_dir, get_group_id());
         if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
             throw std::runtime_error("Unable to open the input file " + config.input_filename +
@@ -164,14 +164,14 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void mphf_alt::build_minimizers_mphf(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
+void mphf_alt::build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
                                      std::size_t number_of_distinct_minimizers) {
     mm_itr_t dummy_itr(mm_itr);
     distinct_minimizers = number_of_distinct_minimizers;
     minimizer_order.build_in_external_memory(dummy_itr, distinct_minimizers, mphf_configuration);
 }
 
-void mphf_alt::build_fallback_mphf(external_memory_vector<kmer_t>::const_iterator& km_itr,
+void mphf_alt::build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr,
                                    std::size_t number_of_colliding_kmers) {
     km_itr_t dummy_itr(km_itr);
     fallback_kmer_order.build_in_external_memory(dummy_itr, number_of_colliding_kmers,

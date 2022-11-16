@@ -7,22 +7,22 @@ namespace lphash {
 
 class mm_itr_t {
 public:
-    mm_itr_t(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr);
+    mm_itr_t(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr);
     void operator++();
     uint64_t operator*() const;
 
 private:
-    external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
+    external_memory_vector<mm_triplet_t, false>::const_iterator& m_iterator;
 };
 
 class km_itr_t {
 public:
-    km_itr_t(external_memory_vector<kmer_t>::const_iterator& mm_itr);
+    km_itr_t(external_memory_vector<kmer_t, false>::const_iterator& mm_itr);
     void operator++();
     kmer_t const& operator*() const;
 
 private:
-    external_memory_vector<kmer_t>::const_iterator& m_iterator;
+    external_memory_vector<kmer_t, false>::const_iterator& m_iterator;
 };
 
 class pos_itr_t {
