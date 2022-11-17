@@ -137,7 +137,7 @@ done
 
 ## -----------------------------------------------------------------------------
 
-echo "typedef kmer128_t kmer_t;\n// typedef uint64_t kmer_t;" > $COMPILE_OPTIONS
+echo "typedef __uint128_t kmer_t;\n// typedef uint64_t kmer_t;" > $COMPILE_OPTIONS
 cd $BUILD_DIR
 make -j
 cd $THIS_PATH
