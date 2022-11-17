@@ -13,10 +13,10 @@ MPHF_FOLDER=$BINARIES_PATH
 RESULTS_FOLDER=$LPHASH_DIR/results
 TMP_FOLDER="/data2/DNA/tmp_dir"
 
-LPBUILD=$LPHASH_DIR/build/lphash build-p
-LPQUERY=$LPHASH_DIR/build/lphash query-p
-LPBUILD_ALT=$LPHASH_DIR/build/lphash build-u
-LPQUERY_ALT=$LPHASH_DIR/build/lphash query-u
+LPBUILD="$LPHASH_DIR/build/lphash build-p"
+LPQUERY="$LPHASH_DIR/build/lphash query-p"
+LPBUILD_ALT="$LPHASH_DIR/build/lphash build-u"
+LPQUERY_ALT="$LPHASH_DIR/build/lphash query-u"
 PTBUILD=$LPHASH_DIR/build/ptbb_build
 PTQUERY=$LPHASH_DIR/build/ptbb_query
 
