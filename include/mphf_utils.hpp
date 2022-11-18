@@ -80,7 +80,8 @@ bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population
 }
 
 template <typename MPHFType>
-bool check_streaming_correctness(MPHFType const& hf, char const* contig, std::size_t contig_len, bool canonical) {
+bool check_streaming_correctness(MPHFType const& hf, char const* contig, std::size_t contig_len,
+                                 bool canonical) {
     auto dumb_hashes = hf(contig, contig_len, canonical, false);
     auto fast_hashes = hf(contig, contig_len, canonical);
     if (dumb_hashes.size() != fast_hashes.size()) {
@@ -106,9 +107,6 @@ struct triplet_t {
 
 static kmer_t char_to_uint(char c) { return constants::seq_nt4_table[static_cast<uint8_t>(c)] & 3; }
 
-[[maybe_unused]] static uint64_t extract_minimizer(uint64_t v) { return v; }
-[[maybe_unused]] static uint64_t extract_minimizer(kmer128_t v) { return v.lower; }
-
 [[maybe_unused]] static kmer_t string_to_integer_no_reverse(const char* str, uint64_t k) {
     assert(k <= 64);
     kmer_t y;
@@ -117,36 +115,25 @@ static kmer_t char_to_uint(char c) { return constants::seq_nt4_table[static_cast
     return y;
 }
 
-template <typename Hasher = hash64>
-static void print_hashes(std::string contig, uint64_t m, uint64_t seed) {
-    for (uint64_t i = 0; i < contig.length() - m + 1; ++i) {
-        kmer_t pmmer = string_to_integer_no_reverse(&contig.data()[i], m);
-        uint64_t hash = Hasher::hash(pmmer, seed).first();
-        std::cerr << "[" << i << "] : " << pmmer << " " << hash << "\n";
-    }
-}
-
-template <typename Hasher = hash64>
+template <typename Hasher = pthash::murmurhash2_64>
 static triplet_t compute_minimizer_triplet(kmer_t kmer, uint64_t k, uint64_t m, uint64_t seed) {
     assert(m <= 32);
     assert(m <= k);
     uint64_t min_hash = uint64_t(-1);
-    uint64_t minimizer = uint64_t(-1);
-    kmer_t mask = (static_cast<kmer_t>(1) << (2 * m)) - 1;
+    kmer_t minimizer = kmer_t(-1);
+    kmer_t mask = (kmer_t(1) << (2 * m)) - 1;
     uint64_t pos = 0;
     for (uint64_t i = 0; i != k - m + 1; ++i) {
-        uint64_t mmer = extract_minimizer(kmer & mask);
+        kmer_t mmer = kmer & mask;
         uint64_t hash = Hasher::hash(mmer, seed).first();
-        if (hash <=
-            min_hash) {  // <= because during construction we take the left-most minimum.
-                         // Here we start looking from the right so we need to update every time.
+        if (hash <= min_hash) {
             min_hash = hash;
             minimizer = mmer;
             pos = i;
         }
         kmer = kmer >> 2;
     }
-    return triplet_t{minimizer, min_hash, k - (pos + m)};
+    return triplet_t{static_cast<uint64_t>(minimizer), min_hash, k - (pos + m)};
 }
 
 }  // namespace debug

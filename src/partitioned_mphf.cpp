@@ -97,9 +97,9 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     seq = kseq_init(fp);
     uint64_t id = 0;
     while (kseq_read(seq) >= 0) {
-        uint64_t n =
-            minimizer::from_string<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id,
-                                           all_minimizers);  // non-canonical minimizers for now
+        uint64_t n = minimizer::from_string<pthash::murmurhash2_64>(
+            seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id,
+            all_minimizers);  // non-canonical minimizers for now
         nkmers += n;
         ++total_contigs;
         check_total_kmers += seq->seq.l - k + 1;
@@ -153,8 +153,9 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
         auto stop = coll_ids.cend();
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
-            minimizer::get_colliding_kmers<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical,
-                                                   start, stop, id, unbucketable_kmers);
+            minimizer::get_colliding_kmers<pthash::murmurhash2_64>(seq->seq.s, seq->seq.l, k, m,
+                                                                   mm_seed, canonical, start, stop,
+                                                                   id, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
         gzclose(fp);
@@ -173,8 +174,9 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void mphf::build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
-                                 std::size_t number_of_distinct_minimizers) {
+void mphf::build_minimizers_mphf(
+    external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
+    std::size_t number_of_distinct_minimizers) {
     mm_itr_t dummy_itr(mm_itr);
     distinct_minimizers = number_of_distinct_minimizers;
     minimizer_order.build_in_external_memory(std::move(dummy_itr), distinct_minimizers,
@@ -200,12 +202,16 @@ void mphf::build_inverted_index(external_memory_vector<mm_triplet_t>::const_iter
     // };
     uint64_t array_mem = max_ram * essentials::GB / 4;
     array_mem = array_mem < 4000000 ? 4000000 : array_mem;
-    external_memory_vector<uint64_t, false> left_positions(array_mem, mphf_configuration.tmp_dir, get_group_id());
-    external_memory_vector<uint64_t, false> right_or_collision_sizes(array_mem, mphf_configuration.tmp_dir, get_group_id());
-    external_memory_vector<uint64_t, false> none_sizes(array_mem, mphf_configuration.tmp_dir, get_group_id());
-    external_memory_vector<uint64_t, false> none_positions(array_mem, mphf_configuration.tmp_dir, get_group_id());
+    external_memory_vector<uint64_t, false> left_positions(array_mem, mphf_configuration.tmp_dir,
+                                                           get_group_id());
+    external_memory_vector<uint64_t, false> right_or_collision_sizes(
+        array_mem, mphf_configuration.tmp_dir, get_group_id());
+    external_memory_vector<uint64_t, false> none_sizes(array_mem, mphf_configuration.tmp_dir,
+                                                       get_group_id());
+    external_memory_vector<uint64_t, false> none_positions(array_mem, mphf_configuration.tmp_dir,
+                                                           get_group_id());
     typedef external_memory_vector<uint64_t, false>::const_iterator itr_t;
-    
+
     for (std::size_t i = 0; i < distinct_minimizers; ++i) {
         mm_triplet_t mm = *mm_itr;
         if (mm.size == 0) {
@@ -438,7 +444,8 @@ void check(mphf const& hf, configuration& config) {
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
         config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
-        if (config.check) config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
+        if (config.check)
+            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);

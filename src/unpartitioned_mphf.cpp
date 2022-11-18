@@ -84,9 +84,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     uint64_t id = 0;
     seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
-        auto n =
-            minimizer::from_string<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id,
-                                           all_minimizers);  // non-canonical minimizers for now
+        auto n = minimizer::from_string<pthash::murmurhash2_64>(
+            seq->seq.s, seq->seq.l, k, m, mm_seed, canonical, id,
+            all_minimizers);  // non-canonical minimizers for now
         nkmers += n;
         ++total_contigs;
         check_total_kmers += seq->seq.l - k + 1;
@@ -143,8 +143,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
         auto stop = coll_ids.cend();
         seq = kseq_init(fp);
         while (kseq_read(seq) >= 0) {
-            minimizer::get_colliding_kmers<hash64>(seq->seq.s, seq->seq.l, k, m, mm_seed, canonical,
-                                                   start, stop, id, unbucketable_kmers);
+            minimizer::get_colliding_kmers<pthash::murmurhash2_64>(seq->seq.s, seq->seq.l, k, m,
+                                                                   mm_seed, canonical, start, stop,
+                                                                   id, unbucketable_kmers);
         }
         if (seq) kseq_destroy(seq);
         gzclose(fp);
@@ -164,8 +165,9 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void mphf_alt::build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
-                                     std::size_t number_of_distinct_minimizers) {
+void mphf_alt::build_minimizers_mphf(
+    external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
+    std::size_t number_of_distinct_minimizers) {
     mm_itr_t dummy_itr(mm_itr);
     distinct_minimizers = number_of_distinct_minimizers;
     minimizer_order.build_in_external_memory(dummy_itr, distinct_minimizers, mphf_configuration);
@@ -285,7 +287,8 @@ void check_alt(mphf_alt const& hf, configuration& config) {
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
         config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
-        if (config.check) config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
+        if (config.check)
+            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);

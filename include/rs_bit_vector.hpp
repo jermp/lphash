@@ -21,14 +21,7 @@ public:
         build(bvb, with_select_hints);
     }
 
-    // void swap(rs_bit_vector& other) {
-    //     pthash::bit_vector::swap(other);
-    //     m_block_rank_pairs.swap(other.m_block_rank_pairs);
-    //     m_select_hints.swap(other.m_select_hints);
-    // }
-
     inline uint64_t num_ones() const { return *(m_block_rank_pairs.end() - 2); }
-
     inline uint64_t num_zeros() const { return size() - num_ones(); }
 
     inline uint64_t rank(uint64_t pos) const {

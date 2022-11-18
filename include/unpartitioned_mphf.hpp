@@ -19,21 +19,21 @@ public:
     uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
 
-    template <typename MinimizerHasher = hash64>
+    template <typename MinimizerHasher = pthash::murmurhash2_64>
     std::vector<uint64_t> operator()(const char* contig, std::size_t length,
                                      bool canonical = false) const;
-    template <typename MinimizerHasher = hash64>
+    template <typename MinimizerHasher = pthash::murmurhash2_64>
     std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool canonical,
                                      bool dummy) const;
-    template <typename MinimizerHasher = hash64>
+    template <typename MinimizerHasher = pthash::murmurhash2_64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical = false) const;
-    template <typename MinimizerHasher = hash64>
+    template <typename MinimizerHasher = pthash::murmurhash2_64>
     std::vector<uint64_t> operator()(std::string const& contig, bool canonical, bool dummy) const;
 
-    template <typename MinimizerHasher = hash64>
+    template <typename MinimizerHasher = pthash::murmurhash2_64>
     uint64_t barebone_streaming_query(const char* contig, std::size_t length,
                                       bool canonical = false) const;
-    template <typename MinimizerHasher = hash64>
+    template <typename MinimizerHasher = pthash::murmurhash2_64>
     uint64_t barebone_dumb_query(const char* contig, std::size_t length, bool canonical) const;
 
     void print_statistics() const noexcept;
@@ -50,10 +50,10 @@ private:
     uint64_t nkmers;
     uint64_t distinct_minimizers;
     uint64_t num_kmers_in_main_index;
-    pthash_mphf_t minimizer_order;
+    pthash_minimizers_mphf_t minimizer_order;
     ef_sequence positions;
     ef_sequence sizes;
-    pthash_mphf_t fallback_kmer_order;
+    pthash_fallback_mphf_t fallback_kmer_order;
     uint8_t max_ram;
 
     struct mm_context_t {

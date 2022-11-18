@@ -1,27 +1,11 @@
-extern "C" {
-#include "../external/kseq.h"
-}
-#include <zlib.h>
-#include <string>
+#include <iostream>
 
-#include "../include/constants.hpp"
-#include "../include/ptbb_file_itr.hpp"
-#include "../external/pthash/external/cmd_line_parser/include/parser.hpp"
-#include "../external/BooPHF.hpp"
-
-KSEQ_INIT(gzFile, gzread)
+#include "../../external/pthash/external/cmd_line_parser/include/parser.hpp"
+#include "ptbb.hpp"
 
 using namespace lphash;
 
 int main(int argc, char* argv[]) {
-    gzFile fp;
-    kseq_t* seq;
-    int c;
-    std::size_t total_kmers;
-    uint64_t k;
-    std::string input_filename;
-    bool check;
-
     cmd_line_parser::parser parser(argc, argv);
     parser.add("input_filename",
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n"
@@ -54,21 +38,21 @@ int main(int argc, char* argv[]) {
     parser.add("check", "Check output", "--check", true);
     if (!parser.parse()) return 1;
 
-    input_filename = parser.get<std::string>("input_filename");
-    k = parser.get<uint64_t>("k");
+    auto input_filename = parser.get<std::string>("input_filename");
+    auto k = parser.get<uint64_t>("k");
 
-    fp = NULL;
+    gzFile fp = NULL;
     if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
         std::cerr << "Unable to open the input file " << input_filename << "\n";
         return 2;
     }
-    total_kmers = 0;
-    seq = kseq_init(fp);
+    uint64_t total_kmers = 0;
+    kseq_t* seq = kseq_init(fp);
     while (kseq_read(seq) >= 0) {
         std::string contig = std::string(seq->seq.s);
-        std::size_t nbases_since_last_break = 0;
-        for (std::size_t i = 0; i < contig.size(); ++i) {
-            c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
+        uint64_t nbases_since_last_break = 0;
+        for (uint64_t i = 0; i < contig.size(); ++i) {
+            uint8_t c = constants::seq_nt4_table[static_cast<uint8_t>(contig[i])];
             if (c < 4) {
                 ++nbases_since_last_break;
                 if (nbases_since_last_break >= k) ++total_kmers;
@@ -81,25 +65,24 @@ int main(int argc, char* argv[]) {
     gzclose(fp);
     std::cout << input_filename << "," << k << "," << total_kmers;
 
-    other::ptbb_file_itr kmer_itr(input_filename, k);
-    other::ptbb_file_itr kmer_end;
-    std::size_t check_total_kmers = 0;
+    ptbb::ptbb_file_itr kmer_itr(input_filename, k);
+    ptbb::ptbb_file_itr kmer_end;
+    uint64_t check_total_kmers = 0;
     for (; kmer_itr != kmer_end; ++kmer_itr) { ++check_total_kmers; }
     assert(total_kmers == check_total_kmers);
 
     pthash::build_configuration pt_config;
-    if (parser.parsed("threads"))
+    if (parser.parsed("threads")) {
         pt_config.num_threads = parser.get<uint32_t>("threads");
-    else
+    } else {
         pt_config.num_threads = 1;
-    if (parser.parsed("check"))
-        check = parser.get<bool>("check");
-    else
-        check = false;
-    if (parser.parsed("verbose"))
+    }
+    bool check = parser.get<bool>("check");
+    if (parser.parsed("verbose")) {
         pt_config.verbose_output = parser.get<bool>("verbose");
-    else
+    } else {
         pt_config.verbose_output = false;
+    }
 
     if (parser.parsed("pthash_filename")) {
         std::string pthash_filename = parser.get<std::string>("pthash_filename");
@@ -112,25 +95,25 @@ int main(int argc, char* argv[]) {
             pt_config.tmp_dir = parser.get<std::string>("tmp_dirname");
             essentials::create_directory(pt_config.tmp_dir);
         }
-        pthash_mphf_t kmer_order;
+        ptbb::pthash_mphf_t pthash_mphf;
         {
-            other::ptbb_file_itr kmer_itr(input_filename, k);
-            kmer_order.build_in_external_memory(kmer_itr, total_kmers, pt_config);
+            ptbb::ptbb_file_itr kmer_itr(input_filename, k);
+            pthash_mphf.build_in_external_memory(kmer_itr, total_kmers, pt_config);
         }
-        essentials::save(kmer_order, pthash_filename.c_str());
-        assert(total_kmers == kmer_order.num_keys());
-        std::cout << "," << kmer_order.num_bits() << ","
-                  << static_cast<double>(kmer_order.num_bits()) / kmer_order.num_keys();
+        essentials::save(pthash_mphf, pthash_filename.c_str());
+        assert(total_kmers == pthash_mphf.num_keys());
+        std::cout << "," << pthash_mphf.num_bits() << ","
+                  << static_cast<double>(pthash_mphf.num_bits()) / pthash_mphf.num_keys();
 
         if (check) {
-            std::cerr << "Checking PTHash" << std::endl;
+            std::cerr << "Checking PTHash...";
             pthash::bit_vector_builder population(total_kmers);
-            std::size_t check_total_kmers = 0;
+            uint64_t check_total_kmers = 0;
             {
-                other::ptbb_file_itr kmer_itr(input_filename, k);
-                other::ptbb_file_itr kmer_end;
+                ptbb::ptbb_file_itr kmer_itr(input_filename, k);
+                ptbb::ptbb_file_itr kmer_end;
                 for (; kmer_itr != kmer_end; ++kmer_itr) {
-                    auto idx = kmer_order(*kmer_itr);
+                    auto idx = pthash_mphf(*kmer_itr);
                     if (idx >= total_kmers) {
                         std::cerr << "[Error] out of bounds" << std::endl;
                         return 2;
@@ -143,48 +126,49 @@ int main(int argc, char* argv[]) {
                 }
             }
             assert(total_kmers == check_total_kmers);
-            for (std::size_t i = 0; i < total_kmers; ++i) {
+            for (uint64_t i = 0; i < total_kmers; ++i) {
                 if (!population.get(i)) {
                     std::cerr << "[Error] hash is not perfect" << std::endl;
                     return 2;
                 }
             }
+            std::cerr << "EVERYTHING OK\n";
         }
     } else {
         std::cout << ",,";
     }
+
     if (parser.parsed("bbhash_filename")) {
         std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
         double gammaFactor;
-        if (parser.parsed("gamma"))
+        if (parser.parsed("gamma")) {
             gammaFactor = parser.get<double>("gamma");
-        else
+        } else {
             gammaFactor = 1.0;
+        }
         if (gammaFactor < 1.0) throw std::runtime_error("BBHash gamma factor < 1");
 
         std::vector<kmer_t> keys;
-        other::ptbb_file_itr boo_itr_begin(input_filename, k);
-        other::ptbb_file_itr boo_itr_end;
+        ptbb::ptbb_file_itr boo_itr_begin(input_filename, k);
+        ptbb::ptbb_file_itr boo_itr_end;
         for (; boo_itr_begin != boo_itr_end; ++boo_itr_begin) keys.push_back(*boo_itr_begin);
         auto data_iterator = boomphf::range(keys.begin(), keys.end());
-        boomphf::mphf<kmer_t, other::BBHasher<kmer_t>> bphf(total_kmers, data_iterator,
-                                                            pt_config.num_threads, gammaFactor,
-                                                            true, pt_config.verbose_output, 0);
+        ptbb::bbhash_mphf_t bbhash_mphf(total_kmers, data_iterator, pt_config.num_threads,
+                                        gammaFactor, true, pt_config.verbose_output, 0);
         assert(keys.size() == total_kmers);
         keys.reserve(0);
-        std::cout << "," << bphf.totalBitSize() << ","
-                  << static_cast<double>(bphf.totalBitSize()) / total_kmers;
+        std::cout << "," << bbhash_mphf.totalBitSize() << ","
+                  << static_cast<double>(bbhash_mphf.totalBitSize()) / total_kmers;
 
         if (check) {
-            std::cerr << "Checking BBHash" << std::endl;
-
+            std::cerr << "Checking BBHash...";
             pthash::bit_vector_builder population(total_kmers);
-            std::size_t check_total_kmers = 0;
+            uint64_t check_total_kmers = 0;
             {
-                other::ptbb_file_itr kmer_itr(input_filename, k);
-                other::ptbb_file_itr kmer_end;
+                ptbb::ptbb_file_itr kmer_itr(input_filename, k);
+                ptbb::ptbb_file_itr kmer_end;
                 for (; kmer_itr != kmer_end; ++kmer_itr) {
-                    auto idx = bphf.lookup(*kmer_itr);
+                    auto idx = bbhash_mphf.lookup(*kmer_itr);
                     if (idx >= total_kmers) {
                         std::cerr << "[Error] out of bounds: " << idx << std::endl;
                         return 2;
@@ -197,20 +181,22 @@ int main(int argc, char* argv[]) {
                 }
             }
             assert(total_kmers == check_total_kmers);
-            for (std::size_t i = 0; i < total_kmers; ++i) {
+            for (uint64_t i = 0; i < total_kmers; ++i) {
                 if (!population.get(i)) {
                     std::cerr << "[Error] hash is not perfect" << std::endl;
                     return 2;
                 }
             }
+            std::cerr << "EVERYTHING OK\n";
         }
 
-        {  //
+        {
             std::ofstream bbh_strm(bbhash_filename, std::ios::binary);
-            bphf.save(bbh_strm);
-        }  //
+            bbhash_mphf.save(bbh_strm);
+        }
     } else {
         std::cout << ",,";
     }
+
     std::cout << std::endl;
 }

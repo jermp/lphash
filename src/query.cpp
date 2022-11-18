@@ -34,13 +34,13 @@ int query_partitioned_main(int argc, char* argv[]) {
     mphf hf;
     std::string mphf_filename = parser.get<std::string>("mphf");
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());
-    std::string input_filename = parser.get<std::string>("input_filename");
+    std::string query_filename = parser.get<std::string>("query_filename");
     if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
 
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
     fp = NULL;
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -56,8 +56,8 @@ int query_partitioned_main(int argc, char* argv[]) {
 
     t.reset();
 
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -73,8 +73,8 @@ int query_partitioned_main(int argc, char* argv[]) {
 
     t.reset();
 
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -91,8 +91,8 @@ int query_partitioned_main(int argc, char* argv[]) {
 
     t.reset();
 
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -107,7 +107,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     gzclose(fp);
     total_aggregated_dumb_time = t.elapsed();
 
-    std::cout << input_filename << "," << mphf_filename << "," << total_kmers << ","
+    std::cout << query_filename << "," << mphf_filename << "," << total_kmers << ","
               << static_cast<double>(total_time * 1000) / total_kmers << ","
               << static_cast<double>(total_dumb_time * 1000) / total_dumb_kmers << ","
               << static_cast<double>(total_aggregated_time * 1000) / total_aggregated_kmers << ","
@@ -142,13 +142,13 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     mphf_alt hf;
     std::string mphf_filename = parser.get<std::string>("mphf");
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());
-    std::string input_filename = parser.get<std::string>("input_filename");
+    std::string query_filename = parser.get<std::string>("query_filename");
     if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
 
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
     fp = NULL;
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -164,8 +164,8 @@ int query_unpartitioned_main(int argc, char* argv[]) {
 
     t.reset();
 
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -181,8 +181,8 @@ int query_unpartitioned_main(int argc, char* argv[]) {
 
     t.reset();
 
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -199,8 +199,8 @@ int query_unpartitioned_main(int argc, char* argv[]) {
 
     t.reset();
 
-    if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
-        std::cerr << "Unable to open the input file " << input_filename << "\n";
+    if ((fp = gzopen(query_filename.c_str(), "r")) == NULL) {
+        std::cerr << "Unable to open the input file " << query_filename << "\n";
         return 2;
     }
     seq = kseq_init(fp);
@@ -215,7 +215,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     gzclose(fp);
     total_aggregated_dumb_time = t.elapsed();
 
-    std::cout << input_filename << "," << mphf_filename << "," << total_kmers << ","
+    std::cout << query_filename << "," << mphf_filename << "," << total_kmers << ","
               << static_cast<double>(total_time * 1000) / total_kmers << ","
               << static_cast<double>(total_dumb_time * 1000) / total_dumb_kmers << ","
               << static_cast<double>(total_aggregated_time * 1000) / total_aggregated_kmers << ","
@@ -227,9 +227,9 @@ int query_unpartitioned_main(int argc, char* argv[]) {
 
 cmd_line_parser::parser get_query_parser(int argc, char* argv[]) {
     cmd_line_parser::parser parser(argc, argv);
-    parser.add("mphf", "lphash minimal perfect hash function saved on disk\n");
-    parser.add("input_filename",
-               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n");
+    parser.add("mphf", "LP-Hash MPHF saved on disk.\n");
+    parser.add("query_filename",
+               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.");
     if (!parser.parse()) throw ParseError();
     return parser;
 }
