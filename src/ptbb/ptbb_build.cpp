@@ -77,11 +77,7 @@ int main(int argc, char* argv[]) {
     } else {
         pt_config.num_threads = 1;
     }
-    bool check = false;
-    if (parser.parsed("check")) {
-        check = true;
-        assert(check == parser.get<bool>("check"));
-    }
+    bool check = parser.get<bool>("check");
     if (parser.parsed("verbose")) {
         pt_config.verbose_output = parser.get<bool>("verbose");
     } else {

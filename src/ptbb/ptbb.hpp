@@ -14,15 +14,19 @@ KSEQ_INIT(gzFile, gzread)
 namespace ptbb {
 
 struct PTHasher {
-    typedef pthash::hash64 hash_type;
-    static inline pthash::hash64 hash(lphash::kmer_t val, uint64_t seed) {
-        return pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed);
+    typedef pthash::hash128 hash_type;
+    static inline pthash::hash128 hash(lphash::kmer_t val, uint64_t seed) {
+        return {pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed),
+                pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), ~seed)};
     }
 };
 
 struct BBHasher {
     uint64_t operator()(lphash::kmer_t val, uint64_t seed = 1234567890) const {
-        return pthash::murmurhash2_64::hash(val, seed).first();
+        pthash::hash128 hash{
+            pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed),
+            pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), ~seed)};
+        return hash.mix();
     };
 };
 
