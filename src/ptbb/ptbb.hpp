@@ -1,14 +1,65 @@
-#include "../include/ptbb_file_itr.hpp"
+#pragma once
+
+#include <zlib.h>
 
 extern "C" {
-#include "../external/kseq.h"
+#include "../../external/kseq.h"
 }
 
 KSEQ_INIT(gzFile, gzread)
 
-namespace lphash {
+#include "../../include/constants.hpp"
+#include "../../external/BooPHF.hpp"
 
-namespace other {
+namespace ptbb {
+
+struct PTHasher {
+    typedef pthash::hash64 hash_type;
+    static inline pthash::hash64 hash(lphash::kmer_t val, uint64_t seed) {
+        return pthash::MurmurHash2_64(reinterpret_cast<char const*>(&val), sizeof(val), seed);
+    }
+};
+
+struct BBHasher {
+    uint64_t operator()(lphash::kmer_t val, uint64_t seed = 1234567890) const {
+        return pthash::murmurhash2_64::hash(val, seed).first();
+    };
+};
+
+typedef pthash::single_phf<PTHasher, pthash::dictionary_dictionary, true> pthash_mphf_t;
+typedef boomphf::mphf<lphash::kmer_t, BBHasher> bbhash_mphf_t;
+
+class ptbb_file_itr : std::forward_iterator_tag {
+public:
+    typedef lphash::kmer_t value_type;
+    ptbb_file_itr(const ptbb_file_itr&);
+    ptbb_file_itr();
+    ptbb_file_itr(std::string fasta_file, uint64_t kmer_len);
+    ~ptbb_file_itr();
+    inline lphash::kmer_t operator*() const { return km[z]; };
+    inline bool has_next() const { return hn; };
+    inline void* memory_management() {
+        return sequence_file;
+    };  // FIXME very bad workaround but ok for now.
+    void operator++();
+
+private:
+    int c, z;
+    uint64_t k;
+    gzFile fp;
+    void* sequence_file;
+    std::size_t nbases_since_last_break;
+    std::size_t base_index;
+    uint64_t km_shift;
+    lphash::kmer_t km_mask;
+    std::array<lphash::kmer_t, 2> km;
+    bool hn;
+    uint64_t* ref_count;
+    friend bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b);
+};
+
+bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b) { return a.hn == b.hn; }
+bool operator!=(ptbb_file_itr const& a, ptbb_file_itr const& b) { return !(a == b); }
 
 ptbb_file_itr::ptbb_file_itr()
     : z(0)
@@ -23,7 +74,7 @@ ptbb_file_itr::ptbb_file_itr()
 ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len)
     : z(0), k(kmer_len), fp(nullptr), nbases_since_last_break(0), base_index(0) {
     km_shift = 2 * (k - 1);
-    km_mask = (static_cast<kmer_t>(1) << (2 * k)) - 1;
+    km_mask = (static_cast<lphash::kmer_t>(1) << (2 * k)) - 1;
     km[0] = 0;
     km[1] = 0;
     if ((fp = gzopen(fasta_file.c_str(), "r")) == NULL)
@@ -41,7 +92,7 @@ ptbb_file_itr::ptbb_file_itr(std::string fasta_file, uint64_t kmer_len)
     *ref_count = 1;
 }
 
-ptbb_file_itr::ptbb_file_itr(const ptbb_file_itr& other) {
+ptbb_file_itr::ptbb_file_itr(ptbb_file_itr const& other) {
     z = other.z;
     k = other.k;
     fp = other.fp;
@@ -70,11 +121,11 @@ void ptbb_file_itr::operator++() {
         }
     }
     while (hn && nbases_since_last_break < k && base_index < seq->seq.l) {
-        c = constants::seq_nt4_table[static_cast<uint8_t>(seq->seq.s[base_index])];
+        c = lphash::constants::seq_nt4_table[static_cast<uint8_t>(seq->seq.s[base_index])];
         if (c < 4) {
-            km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
-            km[1] = (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
-            // if (km[0] != km[1]) z = km[0] < km[1] ? 0 : 1;
+            km[0] = (km[0] << 2 | static_cast<lphash::kmer_t>(c)) & km_mask;
+            km[1] = (km[1] >> 2) |
+                    ((static_cast<lphash::kmer_t>(3) ^ static_cast<lphash::kmer_t>(c)) << km_shift);
             ++nbases_since_last_break;
         } else {
             nbases_since_last_break = 0;
@@ -96,9 +147,4 @@ ptbb_file_itr::~ptbb_file_itr() {
     }
 }
 
-bool operator==(ptbb_file_itr const& a, ptbb_file_itr const& b) { return a.hn == b.hn; }
-bool operator!=(ptbb_file_itr const& a, ptbb_file_itr const& b) { return !(a == b); }
-
-}  // namespace other
-
-}  // namespace lphash
+}  // namespace ptbb
