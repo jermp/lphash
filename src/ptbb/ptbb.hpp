@@ -10,7 +10,6 @@ KSEQ_INIT(gzFile, gzread)
 
 #include "../../include/constants.hpp"
 #include "../../external/BooPHF.hpp"
-#include "../../external/SicHash/include/SicHash.h"
 
 namespace ptbb {
 

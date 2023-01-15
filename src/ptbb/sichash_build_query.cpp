@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "../../external/pthash/external/cmd_line_parser/include/parser.hpp"
+#include "../../external/SicHash/include/SicHash.h"
 #include "ptbb.hpp"
 
 using namespace lphash;
