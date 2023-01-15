@@ -27,6 +27,8 @@ LPQUERY_RESULTS_ALT=$LPHASH_DIR/results/lphash_query_unpartitioned.csv
 PTBUILD_RESULTS=$LPHASH_DIR/results/pthash_build.csv
 PTQUERY_RESULTS=$LPHASH_DIR/results/pthash_query.csv
 
+SIC_RESULTS=$LPHASH_DIR/results/sic_build_query.csv
+
 ## -----------------------------------------------------------------------------
 
 mkdir -p $MPHF_FOLDER;
@@ -63,6 +65,11 @@ fi
 if [ ! -f $PTQUERY_RESULTS ]
 then
     echo "input file,k,pthash file,pt time,bbhash file,bb time" > $PTQUERY_RESULTS
+fi
+
+if [ ! -f $SIC_RESULTS ]
+then
+    echo "input file,k,sichash size,sichash space,input file,sichash time" > $PTQUERY_RESULTS
 fi
 
 ## -----------------------------------------------------------------------------
@@ -353,3 +360,23 @@ PTMPHF="$MPHF_FOLDER/human.k$K.pthash.bin"
 BBMPHF="$MPHF_FOLDER/human.k$K.bbhash.bin"
 $PTBUILD $UNITIGS $K -t $THREADS -p $PTMPHF -b $BBMPHF -d $TMP_FOLDER -c $C >> $PTBUILD_RESULTS
 $PTQUERY $QUERY $K -p $PTMPHF -b $BBMPHF >> $PTQUERY_RESULTS
+
+## SicHash --------------------------------------------------------------------------------------------------------------
+
+K=21 # Remember: SicHash loads all k-mers in memory as std::strings; smaller k --> lighter memory usage
+
+UNITIGS=$UNITIGS_FOLDER/"yeast.k$K.unitigs.fa.ust.fa.gz"
+$SICEXE $UNITIGS $QUERY $K -p 0.21 -P 0.78 --check >> $SIC_RESULTS
+
+# UNITIGS=$UNITIGS_FOLDER/"celegans.k$K.unitigs.fa.ust.fa.gz"
+# $SICEXE $UNITIGS $QUERY $K -p 0.21 -P 0.78 --check >> $SIC_RESULTS
+
+# UNITIGS=$UNITIGS_FOLDER/"cod.k$K.unitigs.fa.ust.fa.gz"
+# $SICEXE $UNITIGS $QUERY $K -p 0.21 -P 0.78 --check >> $SIC_RESULTS
+
+# UNITIGS=$UNITIGS_FOLDER/"kestrel.k$K.unitigs.fa.ust.fa.gz"
+# $SICEXE $UNITIGS $QUERY $K -p 0.21 -P 0.78 --check >> $SIC_RESULTS
+
+# UNITIGS=$UNITIGS_FOLDER/"human.k$K.unitigs.fa.ust.fa.gz"
+# $SICEXE $UNITIGS $QUERY $K -p 0.21 -P 0.78 --check >> $SIC_RESULTS
+

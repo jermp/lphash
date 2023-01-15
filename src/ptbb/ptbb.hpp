@@ -10,6 +10,7 @@ KSEQ_INIT(gzFile, gzread)
 
 #include "../../include/constants.hpp"
 #include "../../external/BooPHF.hpp"
+#include "../../external/SicHash/include/SicHash.h"
 
 namespace ptbb {
 
@@ -149,6 +150,24 @@ ptbb_file_itr::~ptbb_file_itr() {
             --(*ref_count);
         }
     }
+}
+
+std::vector<std::string> load_kmers(std::string fasta_file, uint64_t kmer_len) {
+    gzFile fp = nullptr;
+    kseq_t* seq = nullptr;
+    if ((fp = gzopen(fasta_file.c_str(), "r")) == NULL) 
+        throw std::runtime_error("Unable to open the input file " + fasta_file + "\n");
+
+    seq = kseq_init(fp);
+    std::vector<std::string> kmers;
+    while (kseq_read(seq) >= 0) {
+        for (std::size_t i = 0; i < seq->seq.l - kmer_len + 1; ++i) {
+            kmers.emplace_back(seq->seq.s[i], kmer_len);
+        }
+    }
+    if (seq) kseq_destroy(seq);
+    gzclose(fp);
+    return kmers;
 }
 
 }  // namespace ptbb

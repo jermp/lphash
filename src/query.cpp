@@ -24,7 +24,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     std::size_t total_dumb_time = 0;
     std::size_t total_aggregated_time = 0;
     std::size_t total_aggregated_dumb_time = 0;
-    bool canonical = false;
+    // bool canonical = false;
     cmd_line_parser::parser parser(argc, argv);
 
     try {
@@ -35,7 +35,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     std::string mphf_filename = parser.get<std::string>("mphf");
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());
     std::string query_filename = parser.get<std::string>("query_filename");
-    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
+    // if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
 
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
     fp = NULL;
@@ -46,7 +46,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto n = hf.barebone_streaming_query(seq->seq.s, seq->seq.l, canonical);
+        auto n = hf.barebone_streaming_query(seq->seq.s, seq->seq.l);
         total_kmers += n;
     }
     t.stop();
@@ -63,7 +63,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto n = hf.barebone_dumb_query(seq->seq.s, seq->seq.l, canonical);
+        auto n = hf.barebone_dumb_query(seq->seq.s, seq->seq.l);
         total_dumb_kmers += n;
     }
     t.stop();
@@ -80,7 +80,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto hashes = hf(seq->seq.s, seq->seq.l, canonical);
+        auto hashes = hf(seq->seq.s, seq->seq.l);
         total_aggregated_kmers += hashes.size();
         essentials::do_not_optimize_away(hashes.data());
     }
@@ -98,7 +98,7 @@ int query_partitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto hashes = hf(seq->seq.s, seq->seq.l, canonical, false);
+        auto hashes = hf(seq->seq.s, seq->seq.l, false);
         total_aggregated_dumb_kmers += hashes.size();
         essentials::do_not_optimize_away(hashes.data());
     }
@@ -132,7 +132,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     std::size_t total_dumb_time = 0;
     std::size_t total_aggregated_time = 0;
     std::size_t total_aggregated_dumb_time = 0;
-    bool canonical = false;
+    // bool canonical = false;
     cmd_line_parser::parser parser(argc, argv);
 
     try {
@@ -143,7 +143,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     std::string mphf_filename = parser.get<std::string>("mphf");
     [[maybe_unused]] uint64_t num_bytes_read = essentials::load(hf, mphf_filename.c_str());
     std::string query_filename = parser.get<std::string>("query_filename");
-    if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
+    // if (parser.parsed("canonical_parsing")) canonical = parser.get<bool>("canonical_parsing");
 
     essentials::timer<std::chrono::high_resolution_clock, std::chrono::microseconds> t;
     fp = NULL;
@@ -154,7 +154,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto n = hf.barebone_streaming_query(seq->seq.s, seq->seq.l, canonical);
+        auto n = hf.barebone_streaming_query(seq->seq.s, seq->seq.l);
         total_kmers += n;
     }
     t.stop();
@@ -171,7 +171,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto n = hf.barebone_dumb_query(seq->seq.s, seq->seq.l, canonical);
+        auto n = hf.barebone_dumb_query(seq->seq.s, seq->seq.l);
         total_dumb_kmers += n;
     }
     t.stop();
@@ -188,7 +188,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto hashes = hf(seq->seq.s, seq->seq.l, canonical);
+        auto hashes = hf(seq->seq.s, seq->seq.l);
         total_aggregated_kmers += hashes.size();
         essentials::do_not_optimize_away(hashes.data());
     }
@@ -206,7 +206,7 @@ int query_unpartitioned_main(int argc, char* argv[]) {
     seq = kseq_init(fp);
     t.start();
     while (kseq_read(seq) >= 0) {
-        auto hashes = hf(seq->seq.s, seq->seq.l, canonical, false);
+        auto hashes = hf(seq->seq.s, seq->seq.l, false);
         total_aggregated_dumb_kmers += hashes.size();
         essentials::do_not_optimize_away(hashes.data());
     }
