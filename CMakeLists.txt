@@ -48,15 +48,11 @@ set(LPHASH_SOURCES
 add_executable(lphash src/lphash.cpp ${LPHASH_SOURCES})
 target_link_libraries(lphash z)
 
-add_subdirectory(external/SicHash)
-
-# benchmark with competitors
+# competitors
 add_executable(ptbb_build src/ptbb/ptbb_build.cpp src/constants.cpp)
 target_link_libraries(ptbb_build z)
 add_executable(ptbb_query src/ptbb/ptbb_query.cpp src/constants.cpp)
 target_link_libraries(ptbb_query z)
-add_executable(sichash_build_query src/ptbb/sichash_build_query.cpp src/constants.cpp)
-target_link_libraries(sichash_build_query PRIVATE SicHash z)
 
 # tests
 add_executable(test_sev tests/test_sev.cpp src/constants.cpp)
