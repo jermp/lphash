@@ -48,7 +48,7 @@ set(LPHASH_SOURCES
 add_executable(lphash src/lphash.cpp ${LPHASH_SOURCES})
 target_link_libraries(lphash z)
 
-# benchmark with competitors
+# competitors
 add_executable(ptbb_build src/ptbb/ptbb_build.cpp src/constants.cpp)
 target_link_libraries(ptbb_build z)
 add_executable(ptbb_query src/ptbb/ptbb_query.cpp src/constants.cpp)

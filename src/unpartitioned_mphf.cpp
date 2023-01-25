@@ -277,7 +277,6 @@ std::ostream& operator<<(std::ostream& out, mphf_alt const& hf) {
 }
 
 void check_alt(mphf_alt const& hf, configuration& config) {
-    constexpr bool canonical = false;
     gzFile fp = nullptr;
     kseq_t* seq = nullptr;
     pthash::bit_vector_builder population(hf.get_kmer_count());
@@ -286,9 +285,9 @@ void check_alt(mphf_alt const& hf, configuration& config) {
                                  " for checking\n");
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
-        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
+        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, population);
         if (config.check)
-            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
+            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);

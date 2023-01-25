@@ -255,16 +255,30 @@ void mphf::build_inverted_index(external_memory_vector<mm_triplet_t>::const_iter
     none_pos_start = none_sizes_start + none_sizes.size();
 
     if (mphf_configuration.verbose_output) {
-        double maximal = static_cast<double>(n_maximal) / distinct_minimizers * 100;
-        double left = static_cast<double>(left_positions.size()) / distinct_minimizers * 100;
-        double right = static_cast<double>(right_or_collision_sizes.size() - colliding_minimizers) /
-                       distinct_minimizers * 100;
-        double none = static_cast<double>(none_positions.size()) / distinct_minimizers * 100;
+        // double maximal = static_cast<double>(n_maximal) / distinct_minimizers * 100;
+        // double left = static_cast<double>(left_positions.size()) / distinct_minimizers * 100;
+        // double right = static_cast<double>(right_or_collision_sizes.size() -
+        // colliding_minimizers) /
+        //                distinct_minimizers * 100;
+        // double none = static_cast<double>(none_positions.size()) / distinct_minimizers * 100;
+        // double ambiguous = static_cast<double>(colliding_minimizers) / distinct_minimizers * 100;
+        // std::cerr << "Percentage of maximal super-k-mers: " << maximal << "%\n";
+        // std::cerr << "Percentage of left-maximal super-k-mers: " << left << "%\n";
+        // std::cerr << "Percentage of right-maximal super-k-mers : " << right << "%\n";
+        // std::cerr << "Percentage of unclassified super-k-mers: " << none << "%\n";
+        // std::cerr << "Percentage of ambiguous minimizers: " << ambiguous << "%\n";
+        uint64_t n = distinct_minimizers - colliding_minimizers;
+        double maximal = static_cast<double>(n_maximal) / n * 100;
+        double left = static_cast<double>(left_positions.size()) / n * 100;
+        double right =
+            static_cast<double>(right_or_collision_sizes.size() - colliding_minimizers) / n * 100;
+        double none = static_cast<double>(none_positions.size()) / n * 100;
         double ambiguous = static_cast<double>(colliding_minimizers) / distinct_minimizers * 100;
         std::cerr << "Percentage of maximal super-k-mers: " << maximal << "%\n";
         std::cerr << "Percentage of left-maximal super-k-mers: " << left << "%\n";
         std::cerr << "Percentage of right-maximal super-k-mers : " << right << "%\n";
         std::cerr << "Percentage of unclassified super-k-mers: " << none << "%\n";
+        std::cerr << "Total = " << (maximal + left + right + none) << "%\n";
         std::cerr << "Percentage of ambiguous minimizers: " << ambiguous << "%\n";
     }
 
@@ -434,7 +448,6 @@ std::ostream& operator<<(std::ostream& out, mphf const& hf) {
 }
 
 void check(mphf const& hf, configuration& config) {
-    constexpr bool canonical = false;
     gzFile fp = nullptr;
     kseq_t* seq = nullptr;
     pthash::bit_vector_builder population(hf.get_kmer_count());
@@ -443,9 +456,9 @@ void check(mphf const& hf, configuration& config) {
                                  " for checking\n");
     seq = kseq_init(fp);
     while (config.check && kseq_read(seq) >= 0) {
-        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, canonical, population);
+        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, population);
         if (config.check)
-            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l, canonical);
+            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l);
     }
     if (seq) kseq_destroy(seq);
     gzclose(fp);

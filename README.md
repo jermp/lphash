@@ -206,7 +206,7 @@ Input Files
 LPHash is meant to index k-mers from collections that do not contain duplicates.
 These collections can be obtained, for example, by extracting the maximal unitigs of a de Bruijn graph.
 
-To do so, we can use the tool [BCALM2](https://github.com/GATB/bcalm)[4].
+To do so, we can use the tool [BCALM2](https://github.com/GATB/bcalm) [4].
 This tool builds a compacted de Bruijn graph and outputs its maximal unitigs.
 From the output of BCALM2, we can then *stitch* (i.e., glue) some unitigs to reduce the number of nucleotides.
 The stitiching process is carried out using the [UST](https://github.com/jermp/UST) tool.

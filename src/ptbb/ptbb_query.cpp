@@ -10,10 +10,11 @@ int main(int argc, char* argv[]) {
     parser.add("input_filename",
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.");
     parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").");
-    parser.add("pthash_filename", "Output file name where the pthash mphf will be serialized.",
+    parser.add("pthash_filename", "PTHash MPHF",
                "-p", false);
-    parser.add("bbhash_filename", "Output file name where the BBHash mphf will be serialized.",
+    parser.add("bbhash_filename", "BBHash MPHF",
                "-b", false);
+    // parser.add("sichash_filename", "SicHash MPHF", "-s", false); Does not work since SicHash doesn't support saving
     if (!parser.parse()) return 1;
 
     std::string input_filename = parser.get<std::string>("input_filename");

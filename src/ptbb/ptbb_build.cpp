@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
                "-p", false);
     parser.add("bbhash_filename", "Output file name where the BBHash mphf will be serialized.",
                "-b", false);
+    // parser.add("sichash_filename", "Output file name where the sichash mphf will be serialized.", "-s", false);
     parser.add("alpha",
                "The table load factor. It must be a quantity > 0 and <= 1. (default is " +
                    std::to_string(0.94) + ").",
@@ -28,6 +29,8 @@ int main(int argc, char* argv[]) {
                    std::to_string(constants::c) + ").",
                "-c", false);
     parser.add("gamma", "Load factor for BBHash (default is 1)", "-g", false);
+    // parser.add("p1", "SicHash p1", "-p", false);
+    // parser.add("p2", "SicHash p2", "P", false);
     parser.add(
         "tmp_dirname",
         "Temporary directory used for construction in external memory. Default is directory '" +
@@ -197,6 +200,12 @@ int main(int argc, char* argv[]) {
     } else {
         std::cout << ",,";
     }
+
+    // if (parser.parsed("sichash_filename")) {
+    //     // Moved to sichash_build_query.cpp
+    // } else {
+    //     std::cout << ",,";
+    // }
 
     std::cout << std::endl;
 }
