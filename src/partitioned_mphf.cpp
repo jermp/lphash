@@ -35,7 +35,6 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     k = config.k;
     m = config.m;
     mm_seed = config.mm_seed;
-    // nkmers = total_number_of_kmers
     nkmers = 0;
     distinct_minimizers = 0;
     n_maximal = 0;
@@ -87,7 +86,6 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     if (config.verbose) std::cerr << "Part 2: build MPHF\n";
     auto [unique_mms, coll_ids] =
         minimizer::classify(std::move(all_minimizers), max_ram, mphf_configuration.tmp_dir);
-    // mphf f(k, m, mm_seed, total_kmers, c, num_threads, max_memory, tmp_dirname, verbose);
     {
         auto itr = unique_mms.cbegin();
         build_minimizers_mphf(itr, unique_mms.size());
@@ -171,9 +169,7 @@ void mphf::build_inverted_index(external_memory_vector<mm_triplet_t>::const_iter
     std::size_t colliding_minimizers = 0;
     uint64_t universe = 0;
     quartet_wtree_builder wtb(distinct_minimizers);
-    // auto cmp64 = []([[maybe_unused]] uint64_t const& a, [[maybe_unused]] uint64_t const& b) {
-    //     return false;
-    // };
+
     uint64_t array_mem = max_ram * essentials::GB / 4;
     array_mem = array_mem < 4000000 ? 4000000 : array_mem;
     external_memory_vector<uint64_t, false> left_positions(array_mem, mphf_configuration.tmp_dir,

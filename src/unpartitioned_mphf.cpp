@@ -25,13 +25,8 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     k = config.k;
     m = config.m;
     mm_seed = config.mm_seed;
-    // nkmers = total_number_of_kmers
     nkmers = 0;
     distinct_minimizers = 0;
-    // n_maximal = 0;
-    // right_coll_sizes_start = 0;
-    // none_sizes_start = 0;
-    // none_pos_start = 0;
     max_ram = config.max_memory;
     mphf_configuration.minimal_output = true;
     mphf_configuration.seed = constants::default_pthash_seed;
@@ -40,10 +35,8 @@ void mphf_alt::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.verbose_output = config.verbose;
     mphf_configuration.num_threads = config.num_threads;
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
-    // if (config.tmp_dirname != "") {
     mphf_configuration.tmp_dir = config.tmp_dirname;
-    // essentials::create_directory(config.tmp_dirname);
-    // }
+
     uint64_t check_total_kmers = 0;
     uint64_t total_contigs = 0;
     uint64_t total_minimizers = 0;
