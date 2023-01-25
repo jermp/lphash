@@ -35,13 +35,10 @@ set(LPHASH_SOURCES
   src/constants.cpp
   src/quartet_wtree.cpp
   src/minimizer.cpp
-  src/build_configuration.cpp
   src/partitioned_mphf.cpp
   src/unpartitioned_mphf.cpp
   src/mphf_utils.cpp
   src/parser_build.cpp
-  src/build.cpp
-  src/query.cpp
 )
 
 # main tool

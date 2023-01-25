@@ -4,7 +4,7 @@
 #include "ef_sequence.hpp"
 #include "quartet_wtree.hpp"
 #include "mm_quartet.hpp"
-#include "build_configuration.hpp"
+#include "util.hpp"
 
 namespace lphash {
 
@@ -23,7 +23,8 @@ public:
     // template <typename MinimizerHasher = pthash::murmurhash2_64>
     // std::vector<uint64_t> operator()(const char* contig, std::size_t length) const;
     template <typename MinimizerHasher = pthash::murmurhash2_64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool streaming = true) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
+                                     bool streaming = true) const;
     // template <typename MinimizerHasher = pthash::murmurhash2_64>
     // std::vector<uint64_t> operator()(std::string const& contig) const;
     template <typename MinimizerHasher = pthash::murmurhash2_64>
@@ -73,10 +74,9 @@ private:
     uint64_t get_minimizer_order(uint64_t mm) const;
 };
 
-void check(mphf const& hf, configuration& config);
-
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, bool streaming) const {
+std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length,
+                                       bool streaming) const {
     using namespace minimizer;
     std::vector<uint64_t> res;
     if (streaming) {
@@ -110,9 +110,10 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, b
                     mm[0] = (mm[0] << 2 | c) & mask;            /* forward m-mer */
                     mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift; /* reverse m-mer */
                     km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
-                    km[1] =
-                        (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
-                    // if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1;  // strand, if symmetric k-mer then use previous strand
+                    km[1] = (km[1] >> 2) |
+                            ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
+                    // if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1;  //
+                    // strand, if symmetric k-mer then use previous strand
                     ++nbases_since_last_break;
                     if (nbases_since_last_break >= m) {
                         current.itself = mm[z];
@@ -134,9 +135,10 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, b
                             case 0: {
                                 if (nbases_since_last_break >= k) {
                                     if (mm_ctx.type == (NONE + 1)) {
-                                        mm_ctx.local_rank = fallback_kmer_order(km[z]);  // collision
+                                        mm_ctx.local_rank =
+                                            fallback_kmer_order(km[z]);  // collision
                                     } else if (mm_ctx.type == RIGHT_OR_COLLISION ||
-                                            mm_ctx.type == NONE) {
+                                               mm_ctx.type == NONE) {
                                         ++mm_ctx.local_rank;
                                     } else {
                                         --mm_ctx.local_rank;
@@ -149,8 +151,8 @@ std::vector<uint64_t> mphf::operator()(const char* contig, std::size_t length, b
                                 min_pos = (buf_pos + 1) % buffer.size();
                                 p1 = 0;
                                 uint32_t tmp = 1;
-                                for (std::size_t j = (buf_pos + 2) % buffer.size(); j < buffer.size();
-                                    ++j) {
+                                for (std::size_t j = (buf_pos + 2) % buffer.size();
+                                     j < buffer.size(); ++j) {
                                     if (buffer[min_pos].hash > buffer[j].hash) {
                                         min_pos = j;
                                         p1 = tmp;
@@ -220,7 +222,8 @@ std::vector<uint64_t> mphf::operator()(std::string const& contig, bool streaming
 }
 
 // template <typename MinimizerHasher>
-// std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool dummy) const {
+// std::vector<uint64_t> mphf::operator()(std::string const& contig, [[maybe_unused]] bool dummy)
+// const {
 //     return operator()<MinimizerHasher>(contig.c_str(), contig.length(), dummy);
 // }
 
@@ -259,7 +262,8 @@ uint64_t mphf::barebone_streaming_query(const char* contig, std::size_t length) 
                 km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
                 km[1] =
                     (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
-                // if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1;  // strand, if symmetric k-mer then use previous strand
+                // if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1;  // strand, if
+                // symmetric k-mer then use previous strand
                 ++nbases_since_last_break;
                 if (nbases_since_last_break >= m) {
                     current.itself = mm[z];

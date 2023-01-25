@@ -30,32 +30,6 @@ mphf::mphf()
     mphf_configuration.ram = 8 * essentials::GB;
 };
 
-// mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double
-// c,
-//            uint8_t nthreads, uint8_t max_memory, std::string temporary_directory, bool verbose)
-//     : k(klen)
-//     , m(mm_size)
-//     , mm_seed(seed)
-//     , nkmers(total_number_of_kmers)
-//     , distinct_minimizers(0)
-//     , n_maximal(0)
-//     , right_coll_sizes_start(0)
-//     , none_sizes_start(0)
-//     , none_pos_start(0)
-//     , max_ram(max_memory) {
-//     mphf_configuration.minimal_output = true;
-//     mphf_configuration.seed = constants::default_pthash_seed;
-//     mphf_configuration.c = c;
-//     mphf_configuration.alpha = 0.94;
-//     mphf_configuration.verbose_output = verbose;
-//     mphf_configuration.num_threads = nthreads;
-//     mphf_configuration.ram = static_cast<uint64_t>(max_memory) * essentials::GB;
-//     if (temporary_directory != "") {
-//         mphf_configuration.tmp_dir = temporary_directory;
-//         essentials::create_directory(temporary_directory);
-//     }
-// }
-
 void mphf::build(configuration const& config, std::ostream& res_strm) {
     constexpr bool canonical = false;
     k = config.k;
@@ -445,24 +419,6 @@ std::ostream& operator<<(std::ostream& out, mphf const& hf) {
     out << "starting index of none sizes = " << hf.none_sizes_start << "\n";
     out << "starting index of none positions = " << hf.none_pos_start << "\n";
     return out;
-}
-
-void check(mphf const& hf, configuration& config) {
-    gzFile fp = nullptr;
-    kseq_t* seq = nullptr;
-    pthash::bit_vector_builder population(hf.get_kmer_count());
-    if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
-        throw std::runtime_error("Unable to open input file " + config.input_filename +
-                                 " for checking\n");
-    seq = kseq_init(fp);
-    while (config.check && kseq_read(seq) >= 0) {
-        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, population);
-        if (config.check)
-            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l);
-    }
-    if (seq) kseq_destroy(seq);
-    gzclose(fp);
-    if (config.check) check_perfection(hf, population);
 }
 
 }  // namespace lphash

@@ -3,6 +3,8 @@
 #include <exception>
 #include <string>
 
+#include "constants.hpp"
+
 namespace lphash {
 
 class ParseError : public std::exception {
@@ -21,7 +23,19 @@ private:
 };
 
 struct configuration {
-    configuration();
+    configuration()
+        : input_filename("")
+        , output_filename("")
+        , k(0)
+        , m(0)
+        , mm_seed(constants::default_seed)
+        , c(constants::c)
+        , num_threads(constants::default_num_threads)
+        , max_memory(8)
+        , tmp_dirname(constants::default_tmp_dirname)
+        , check(false)
+        , verbose(false) {}
+
     std::string input_filename;
     std::string output_filename;
     uint64_t k;
@@ -31,7 +45,8 @@ struct configuration {
     uint64_t num_threads;
     uint64_t max_memory;
     std::string tmp_dirname;
-    bool check, verbose;
+    bool check;
+    bool verbose;
 };
 
 }  // namespace lphash

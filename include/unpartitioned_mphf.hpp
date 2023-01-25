@@ -3,7 +3,7 @@
 #include "mphf_utils.hpp"
 #include "ef_sequence.hpp"
 #include "mm_quartet.hpp"
-#include "build_configuration.hpp"
+#include "util.hpp"
 
 namespace lphash {
 
@@ -71,10 +71,9 @@ private:
     uint64_t get_minimizer_order(uint64_t mm) const;
 };
 
-void check_alt(mphf_alt const& hf, configuration& config);
-
 template <typename MinimizerHasher>
-std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t length, bool streaming) const {
+std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t length,
+                                           bool streaming) const {
     using namespace minimizer;
     std::vector<uint64_t> res;
     if (streaming) {
@@ -108,9 +107,10 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
                     mm[0] = (mm[0] << 2 | c) & mask;             // forward m-mer
                     mm[1] = (mm[1] >> 2) | (3ULL ^ c) << shift;  // reverse m-mer
                     km[0] = (km[0] << 2 | static_cast<kmer_t>(c)) & km_mask;
-                    km[1] =
-                        (km[1] >> 2) | ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
-                    // if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1;  // strand, if symmetric k-mer then use previous strand
+                    km[1] = (km[1] >> 2) |
+                            ((static_cast<kmer_t>(3) ^ static_cast<kmer_t>(c)) << km_shift);
+                    // if (canonical_m_mers && mm[0] != mm[1]) z = mm[0] < mm[1] ? 0 : 1;  //
+                    // strand, if symmetric k-mer then use previous strand
                     ++nbases_since_last_break;
                     if (nbases_since_last_break >= m) {
                         current.itself = mm[z];
@@ -133,7 +133,7 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
                                 if (nbases_since_last_break >= k) {
                                     if (mm_ctx.collision)
                                         mm_ctx.hval = fallback_kmer_order(km[z]) +
-                                                    sizes.access(sizes.size() - 1);  // collision
+                                                      sizes.access(sizes.size() - 1);  // collision
                                     else
                                         ++mm_ctx.hval;
                                     res.push_back(mm_ctx.hval);
@@ -143,8 +143,8 @@ std::vector<uint64_t> mphf_alt::operator()(const char* contig, std::size_t lengt
                                 min_pos = (buf_pos + 1) % buffer.size();
                                 p1 = 0;
                                 uint32_t tmp = 1;
-                                for (std::size_t j = (buf_pos + 2) % buffer.size(); j < buffer.size();
-                                    ++j) {
+                                for (std::size_t j = (buf_pos + 2) % buffer.size();
+                                     j < buffer.size(); ++j) {
                                     if (buffer[min_pos].hash > buffer[j].hash) {
                                         min_pos = j;
                                         p1 = tmp;
