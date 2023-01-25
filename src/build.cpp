@@ -3,7 +3,11 @@
 #include "../include/unpartitioned_mphf.hpp"
 #include "../include/parser_build.hpp"
 
+#include <chrono>
+
 namespace lphash {
+
+typedef std::chrono::high_resolution_clock clock_type;
 
 int build_partitioned_main(int argc, char* argv[]) {
     configuration config;
@@ -16,21 +20,24 @@ int build_partitioned_main(int argc, char* argv[]) {
         std::cerr << e.what() << std::endl;
         return 3;
     }
-    external_memory_vector<uint64_t, false> bla(1000, ".", "bla");
+
+    auto start = clock_type::now();
     mphf f;
     f.build(config, std::cout);
-
     if (config.output_filename != "") {
         if (config.verbose) std::cerr << "Saving data structure to disk...  ";
         essentials::save(f, config.output_filename.c_str());
         if (config.verbose) std::cerr << "DONE\n";
     }
+    auto stop = clock_type::now();
+    std::cout << "function built in "
+              << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << " [sec]"
+              << std::endl;
 
     if (config.check) {
         std::cerr << "Checking...\n";
         if (config.output_filename != "") {
-            [[maybe_unused]] uint64_t num_bytes_read =
-                essentials::load(f, config.output_filename.c_str());
+            uint64_t num_bytes_read = essentials::load(f, config.output_filename.c_str());
             std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
         }
         check(f, config);
@@ -56,20 +63,23 @@ int build_unpartitioned_main(int argc, char* argv[]) {
         return 3;
     }
 
+    auto start = clock_type::now();
     mphf_alt f;
     f.build(config, std::cout);
-
     if (config.output_filename != "") {
-        std::cerr << "\tSaving data structure to disk...\n";
+        if (config.verbose) std::cerr << "Saving data structure to disk...  ";
         essentials::save(f, config.output_filename.c_str());
-        std::cerr << "\tDONE\n";
+        if (config.verbose) std::cerr << "DONE\n";
     }
+    auto stop = clock_type::now();
+    std::cout << "function built in "
+              << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << " [sec]"
+              << std::endl;
 
     if (config.check) {
         std::cerr << "Checking...\n";
         if (config.output_filename != "") {
-            [[maybe_unused]] uint64_t num_bytes_read =
-                essentials::load(f, config.output_filename.c_str());
+            uint64_t num_bytes_read = essentials::load(f, config.output_filename.c_str());
             std::cerr << "[Info] Loaded " << num_bytes_read * 8 << " bits\n";
         }
         check_alt(f, config);
