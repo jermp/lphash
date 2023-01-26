@@ -81,7 +81,7 @@ int query(int argc, char* argv[]) {
 
     std::cout << query_filename << "," << mphf_filename << "," << total_kmers_streaming_on << ","
               << static_cast<double>(time_streaming_on * 1000) / total_kmers_streaming_on << ","
-              << static_cast<double>(time_streaming_off * 1000) / total_kmers_streaming_off << ","
+              << static_cast<double>(time_streaming_off * 1000) / total_kmers_streaming_off
               << std::endl;
     return 0;
 }
