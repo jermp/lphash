@@ -11,13 +11,14 @@ int main(int argc, char* argv[]) {
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n"
                "\t- without duplicate nor invalid kmers\n"
                "\t- one DNA sequence per line.\n"
-               "\tFor example, it could be the de Bruijn graph topology output by BCALM.");
-    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").");
+               "\tFor example, it could be the de Bruijn graph topology output by BCALM.",
+               "-i", true);
+    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").", "-k",
+               true);
     parser.add("pthash_filename", "Output file name where the pthash mphf will be serialized.",
                "-p", false);
     parser.add("bbhash_filename", "Output file name where the BBHash mphf will be serialized.",
                "-b", false);
-    // parser.add("sichash_filename", "Output file name where the sichash mphf will be serialized.", "-s", false);
     parser.add("alpha",
                "The table load factor. It must be a quantity > 0 and <= 1. (default is " +
                    std::to_string(0.94) + ").",
@@ -29,16 +30,14 @@ int main(int argc, char* argv[]) {
                    std::to_string(constants::c) + ").",
                "-c", false);
     parser.add("gamma", "Load factor for BBHash (default is 1)", "-g", false);
-    // parser.add("p1", "SicHash p1", "-p", false);
-    // parser.add("p2", "SicHash p2", "P", false);
     parser.add(
         "tmp_dirname",
         "Temporary directory used for construction in external memory. Default is directory '" +
             constants::default_tmp_dirname + "'.",
         "-d", false);
     parser.add("threads", "Number of threads for pthash (default is 1).", "-t", false);
-    parser.add("verbose", "Verbose output during construction.", "--verbose", true);
-    parser.add("check", "Check output", "--check", true);
+    parser.add("verbose", "Verbose output during construction.", "--verbose", false, true);
+    parser.add("check", "Check output", "--check", false, true);
     if (!parser.parse()) return 1;
 
     auto input_filename = parser.get<std::string>("input_filename");
@@ -200,12 +199,6 @@ int main(int argc, char* argv[]) {
     } else {
         std::cout << ",,";
     }
-
-    // if (parser.parsed("sichash_filename")) {
-    //     // Moved to sichash_build_query.cpp
-    // } else {
-    //     std::cout << ",,";
-    // }
 
     std::cout << std::endl;
 }

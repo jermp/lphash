@@ -13,9 +13,10 @@ namespace lphash {
 
 cmd_line_parser::parser get_query_parser(int argc, char* argv[]) {
     cmd_line_parser::parser parser(argc, argv);
-    parser.add("mphf", "LP-Hash MPHF saved on disk.\n");
+    parser.add("mphf", "LP-Hash MPHF saved on disk.\n", "-i", true);
     parser.add("query_filename",
-               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.");
+               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.",
+               "-q", true);
     if (!parser.parse()) throw ParseError();
     return parser;
 }

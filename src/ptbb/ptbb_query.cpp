@@ -8,13 +8,12 @@ using namespace lphash;
 int main(int argc, char* argv[]) {
     cmd_line_parser::parser parser(argc, argv);
     parser.add("input_filename",
-               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.");
-    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").");
-    parser.add("pthash_filename", "PTHash MPHF",
-               "-p", false);
-    parser.add("bbhash_filename", "BBHash MPHF",
-               "-b", false);
-    // parser.add("sichash_filename", "SicHash MPHF", "-s", false); Does not work since SicHash doesn't support saving
+               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.",
+               "-i", true);
+    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").", "-k",
+               true);
+    parser.add("pthash_filename", "PTHash MPHF", "-p", false);
+    parser.add("bbhash_filename", "BBHash MPHF", "-b", false);
     if (!parser.parse()) return 1;
 
     std::string input_filename = parser.get<std::string>("input_filename");

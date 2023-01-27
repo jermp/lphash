@@ -12,9 +12,11 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n"
                "\t- without duplicate nor invalid kmers\n"
                "\t- one DNA sequence per line.\n"
-               "\tFor example, it could be the de Bruijn graph topology output by BCALM.");
-    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").");
-    parser.add("m", "Minimizer length (must be < k and <= 32).");
+               "\tFor example, it could be the de Bruijn graph topology output by BCALM.",
+               "-i", true);
+    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").", "-k",
+               true);
+    parser.add("m", "Minimizer length (must be < k and <= 32).", "-m", true);
 
     /* optional arguments */
     parser.add("seed",
@@ -47,9 +49,9 @@ cmd_line_parser::parser get_build_parser(int argc, char* argv[]) {
                "needed.",
                "--max-memory", false);
     parser.add("check", "Check correctness after construction (disabled by default).", "--check",
-               true);
+               false, true);
     parser.add("verbose", "Verbose output during construction (disabled by default).", "--verbose",
-               true);
+               false, true);
 
     if (!parser.parse()) throw ParseError();
     return parser;
