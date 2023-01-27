@@ -2,6 +2,7 @@
 
 #include "constants.hpp"
 #include "external_memory_vector.hpp"
+#include "util.hpp"
 
 namespace lphash {
 
@@ -47,15 +48,15 @@ private:
     external_memory_vector<mm_triplet_t>::const_iterator& m_iterator;
 };
 
-template <typename MPHFType>
+template <typename MPHF>
 bool check_collisions(
-    MPHFType const& hf, char const* contig, std::size_t contig_len,
+    MPHF const& f, char const* contig, std::size_t contig_len,
     pthash::bit_vector_builder&
         population) {  // Note fast and dumb hashes are compared in check_streaming_correctness
-    auto hashes = hf(contig, contig_len, false);
+    auto hashes = f(contig, contig_len, false);
     for (auto hash : hashes) {
-        if (hash > hf.get_kmer_count()) {
-            std::cerr << "[Error] overflow : " << hash << " > " << hf.get_kmer_count() << std::endl;
+        if (hash > f.get_kmer_count()) {
+            std::cerr << "[Error] overflow : " << hash << " > " << f.get_kmer_count() << std::endl;
             return false;
         } else if (population.get(hash) == 1) {
             std::cerr << "[Error] collision at position (hash) : " << hash << std::endl;
@@ -66,10 +67,10 @@ bool check_collisions(
     return true;
 }
 
-template <typename MPHFType>
-bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population) {
+template <typename MPHF>
+bool check_perfection(MPHF const& f, pthash::bit_vector_builder& population) {
     bool perfect = true;
-    for (std::size_t i = 0; i < hf.get_kmer_count(); ++i)
+    for (std::size_t i = 0; i < f.get_kmer_count(); ++i)
         if (!population.get(i)) { perfect = false; }
     if (!perfect) {
         std::cerr << "[Error] Not all k-mers have been marked by a hash" << std::endl;
@@ -79,11 +80,10 @@ bool check_perfection(MPHFType const& hf, pthash::bit_vector_builder& population
     return perfect;
 }
 
-template <typename MPHFType>
-bool check_streaming_correctness(MPHFType const& hf, char const* contig, std::size_t contig_len
-                                 ) {
-    auto dumb_hashes = hf(contig, contig_len, false);
-    auto fast_hashes = hf(contig, contig_len);
+template <typename MPHF>
+bool check_streaming_correctness(MPHF const& f, char const* contig, std::size_t contig_len) {
+    auto dumb_hashes = f(contig, contig_len, false);
+    auto fast_hashes = f(contig, contig_len);
     if (dumb_hashes.size() != fast_hashes.size()) {
         std::cerr << "[Error] different number of hashes, maybe there were some Ns in the input "
                      "(not supported as of now)\n";

@@ -21,8 +21,7 @@ public:
 
     typename ItrType::value_type operator*() const { return *(iterators[i].first); }
 
-    bool has_next() const {  // FIXME This is not very C++-ish, rewrite the class as a dummy
-                             // container with methods begin() and end()
+    bool has_next() const {
         if (i == iterators.size()) return false;
         return true;
     }
@@ -98,7 +97,6 @@ public:
 
 private:
     void init(uint64_t available_space_bytes);
-    // std::function<bool(T const&, T const&)> m_sorter;
     std::size_t m_buffer_size;
     std::size_t m_total_elems;
     std::string m_tmp_dirname;
@@ -241,7 +239,7 @@ void external_memory_vector<T, sorted>::const_iterator::operator++() {
 template <typename T, bool sorted>
 bool external_memory_vector<T, sorted>::const_iterator::operator==(
     const_iterator const& other) const {
-    return m_idx_heap.size() == other.m_idx_heap.size();  // TODO make it a little bit stronger
+    return m_idx_heap.size() == other.m_idx_heap.size();
 }
 
 template <typename T, bool sorted>
