@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
     cmd_line_parser::parser parser(argc, argv);
     parser.add("input_filename",
                "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.",
-               "-i", true);
+               "-q", true);
     parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").", "-k",
                true);
     parser.add("pthash_filename", "PTHash MPHF", "-p", false);
