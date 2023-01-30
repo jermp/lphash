@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
         "Temporary directory used for construction in external memory. Default is directory '" +
             constants::default_tmp_dirname + "'.",
         "-d", false);
-    parser.add("threads", "Number of threads for pthash (default is 1).", "-t", false);
+    parser.add("threads", "Number of threads (default is 1).", "-t", false);
     parser.add("verbose", "Verbose output during construction.", "--verbose", false, true);
     parser.add("check", "Check output", "--check", false, true);
     if (!parser.parse()) return 1;
@@ -73,12 +73,22 @@ int main(int argc, char* argv[]) {
     for (; kmer_itr != kmer_end; ++kmer_itr) { ++check_total_kmers; }
     assert(total_kmers == check_total_kmers);
 
+    uint32_t num_threads = 1;
+    if (parser.parsed("threads")) num_threads = parser.get<uint32_t>("threads");
+
     pthash::build_configuration pt_config;
-    if (parser.parsed("threads")) {
-        pt_config.num_threads = parser.get<uint32_t>("threads");
-    } else {
-        pt_config.num_threads = 1;
+    pt_config.num_threads = 1;
+
+#if defined(__x86_64__)
+    pt_config.num_threads = num_threads;
+#elif defined(__aarch64__)  // arm64 processor
+    if (num_threads > 1) {
+        std::cerr << "Warning: building with 1 thread since multiple threads are not yet supported "
+                     "on ARM processors."
+                  << std::endl;
     }
+#endif
+
     bool check = parser.get<bool>("check");
     if (parser.parsed("verbose")) {
         pt_config.verbose_output = parser.get<bool>("verbose");
@@ -155,8 +165,8 @@ int main(int argc, char* argv[]) {
         ptbb::ptbb_file_itr boo_itr_end;
         for (; boo_itr_begin != boo_itr_end; ++boo_itr_begin) keys.push_back(*boo_itr_begin);
         auto data_iterator = boomphf::range(keys.begin(), keys.end());
-        ptbb::bbhash_mphf_t bbhash_mphf(total_kmers, data_iterator, pt_config.num_threads,
-                                        gammaFactor, true, pt_config.verbose_output, 0);
+        ptbb::bbhash_mphf_t bbhash_mphf(total_kmers, data_iterator, num_threads, gammaFactor, true,
+                                        pt_config.verbose_output, 0);
         assert(keys.size() == total_kmers);
         keys.reserve(0);
         std::cout << "," << bbhash_mphf.totalBitSize() << ","
