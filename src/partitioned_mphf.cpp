@@ -47,12 +47,18 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.c = config.c;
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = config.verbose;
+    mphf_configuration.num_threads = 1;
+#if defined(__x86_64__)
     mphf_configuration.num_threads = config.num_threads;
+#elif defined(__aarch64__)  // arm64 processor
+    if (config.num_threads > 1 and config.verbose) {
+        std::cerr << "Warning: building with 1 thread since multiple threads are not yet supported "
+                     "on ARM processors."
+                  << std::endl;
+    }
+#endif
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
-    // if (config.tmp_dirname != "") {
     mphf_configuration.tmp_dir = config.tmp_dirname;
-    // essentials::create_directory(config.tmp_dirname);
-    // }
     uint64_t check_total_kmers = 0;
     uint64_t total_contigs = 0;
     uint64_t total_minimizers = 0;
@@ -294,22 +300,14 @@ uint64_t mphf::get_minimizer_order(uint64_t mm) const { return minimizer_order(m
 mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const {
     mm_context_t res;
     uint64_t mp_hash = minimizer_order(minimizer);
-    // std::cerr << mp_hash << " ";
     auto [mm_type, mm_type_rank] = wtree.rank_of(mp_hash);
-    // std::cerr << mm_type << " " << mm_type_rank << "\n";
 
-    // std::cerr << n_maximal << "\n";
-
-    // std::cerr << kmer << ", " << minimizer << " (" << mp_hash << "), ";
     switch (mm_type) {
         case LEFT:
             res.global_rank = sizes_and_positions.access(mm_type_rank) +
                               (k - m + 1) * n_maximal;  // number of left-KMERS before our bucket
             res.local_rank = position;
             res.type = LEFT;
-            // std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
-            // std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
-            // res.local_rank;
             break;
         case RIGHT_OR_COLLISION: {
             auto [val1, val2] = sizes_and_positions.pair(right_coll_sizes_start + mm_type_rank);
@@ -321,17 +319,10 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
                     (k - m + 1) * n_maximal;  // prefix sum of all sizes (sizes of collisions are 0)
                 res.local_rank = fallback_kmer_order(kmer);
                 res.type = NONE + 1;
-                // std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " <<
-                // res.global_rank << ", "; std::cerr << "local shift = " << res.local_rank;
             } else {
                 res.global_rank = val1 + (k - m + 1) * n_maximal;  // global shift
                 res.local_rank = k - m - position;                 // local shift
-                res.type =
-                    RIGHT_OR_COLLISION;  // in this case it is only RIGHT
-                                         // std::cerr << "[RIGHT] rank = " << right_coll_sizes_start
-                                         // + mm_type_rank << ", "; std::cerr << "global shift = "
-                                         // << res.global_rank << ", "; std::cerr << "local shift =
-                                         // " << res.local_rank;
+                res.type = RIGHT_OR_COLLISION;                     // in this case it is only RIGHT
             }
         } break;
         case MAXIMAL:  // easy case
@@ -339,30 +330,19 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
             res.global_rank = (k - m + 1) * mm_type_rank;
             res.local_rank = position;
             res.type = MAXIMAL;
-            // std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
-            // std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
-            // res.local_rank;
             break;
         case NONE: {
-            // locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  //
-            // prefix sum of sizes locpres_hash += sk_size - position;  // position in the first
-            // k-mer - actual position = local shift
             res.global_rank = sizes_and_positions.access(none_sizes_start + mm_type_rank) +
                               (k - m + 1) * n_maximal;
             uint64_t sk_size =
                 sizes_and_positions.diff(none_pos_start + mm_type_rank);  // p1 actually
             res.local_rank = sk_size - position;
             res.type = NONE;
-            // std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " <<
-            // none_sizes_start << " + " << mm_type_rank << ", "; std::cerr << "global rank = " <<
-            // res.global_rank << ", "; std::cerr << "local shift = " << res.local_rank << ", p1 = "
-            // << sk_size << ", p = " << position;
         } break;
         default:
             throw std::runtime_error("Unrecognized minimizer type");
     }
     res.hval = res.global_rank + res.local_rank;
-    // if (res.type == NONE + 1) std::cerr << "; hash value = " << res.hval << "\n";
     return res;
 }
 
