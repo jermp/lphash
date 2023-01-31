@@ -77,17 +77,7 @@ int main(int argc, char* argv[]) {
     if (parser.parsed("threads")) num_threads = parser.get<uint32_t>("threads");
 
     pthash::build_configuration pt_config;
-    pt_config.num_threads = 1;
-
-#if defined(__x86_64__)
     pt_config.num_threads = num_threads;
-#elif defined(__aarch64__)  // arm64 processor
-    if (num_threads > 1) {
-        std::cerr << "Warning: building with 1 thread since multiple threads are not yet supported "
-                     "on ARM processors."
-                  << std::endl;
-    }
-#endif
 
     bool check = parser.get<bool>("check");
     if (parser.parsed("verbose")) {

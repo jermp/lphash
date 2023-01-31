@@ -47,18 +47,10 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.c = config.c;
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = config.verbose;
-    mphf_configuration.num_threads = 1;
-#if defined(__x86_64__)
     mphf_configuration.num_threads = config.num_threads;
-#elif defined(__aarch64__)  // arm64 processor
-    if (config.num_threads > 1 and config.verbose) {
-        std::cerr << "Warning: building with 1 thread since multiple threads are not yet supported "
-                     "on ARM processors."
-                  << std::endl;
-    }
-#endif
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
     mphf_configuration.tmp_dir = config.tmp_dirname;
+
     uint64_t check_total_kmers = 0;
     uint64_t total_contigs = 0;
     uint64_t total_minimizers = 0;

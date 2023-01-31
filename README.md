@@ -30,7 +30,7 @@ Datasets are available on Zenodo here: [https://zenodo.org/record/7239205](https
 Compiling the Code
 ------------------
 
-The code is tested on Linux with `gcc` and on Mac OS with `clang` (Intel and **Apple M1** processor supported).
+The code is tested on Linux with `gcc` and on Mac OS with `clang` (Intel and ARM processors supported, like Apple M1).
 To build the code, [`CMake`](https://cmake.org/) is required.
 
 Clone the repository with
