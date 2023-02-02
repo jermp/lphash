@@ -30,38 +30,11 @@ mphf::mphf()
     mphf_configuration.ram = 8 * essentials::GB;
 };
 
-// mphf::mphf(uint8_t klen, uint8_t mm_size, uint64_t seed, uint64_t total_number_of_kmers, double
-// c,
-//            uint8_t nthreads, uint8_t max_memory, std::string temporary_directory, bool verbose)
-//     : k(klen)
-//     , m(mm_size)
-//     , mm_seed(seed)
-//     , nkmers(total_number_of_kmers)
-//     , distinct_minimizers(0)
-//     , n_maximal(0)
-//     , right_coll_sizes_start(0)
-//     , none_sizes_start(0)
-//     , none_pos_start(0)
-//     , max_ram(max_memory) {
-//     mphf_configuration.minimal_output = true;
-//     mphf_configuration.seed = constants::default_pthash_seed;
-//     mphf_configuration.c = c;
-//     mphf_configuration.alpha = 0.94;
-//     mphf_configuration.verbose_output = verbose;
-//     mphf_configuration.num_threads = nthreads;
-//     mphf_configuration.ram = static_cast<uint64_t>(max_memory) * essentials::GB;
-//     if (temporary_directory != "") {
-//         mphf_configuration.tmp_dir = temporary_directory;
-//         essentials::create_directory(temporary_directory);
-//     }
-// }
-
 void mphf::build(configuration const& config, std::ostream& res_strm) {
     constexpr bool canonical = false;
     k = config.k;
     m = config.m;
     mm_seed = config.mm_seed;
-    // nkmers = total_number_of_kmers
     nkmers = 0;
     distinct_minimizers = 0;
     n_maximal = 0;
@@ -76,10 +49,8 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.verbose_output = config.verbose;
     mphf_configuration.num_threads = config.num_threads;
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
-    // if (config.tmp_dirname != "") {
     mphf_configuration.tmp_dir = config.tmp_dirname;
-    // essentials::create_directory(config.tmp_dirname);
-    // }
+
     uint64_t check_total_kmers = 0;
     uint64_t total_contigs = 0;
     uint64_t total_minimizers = 0;
@@ -113,7 +84,6 @@ void mphf::build(configuration const& config, std::ostream& res_strm) {
     if (config.verbose) std::cerr << "Part 2: build MPHF\n";
     auto [unique_mms, coll_ids] =
         minimizer::classify(std::move(all_minimizers), max_ram, mphf_configuration.tmp_dir);
-    // mphf f(k, m, mm_seed, total_kmers, c, num_threads, max_memory, tmp_dirname, verbose);
     {
         auto itr = unique_mms.cbegin();
         build_minimizers_mphf(itr, unique_mms.size());
@@ -197,9 +167,7 @@ void mphf::build_inverted_index(external_memory_vector<mm_triplet_t>::const_iter
     std::size_t colliding_minimizers = 0;
     uint64_t universe = 0;
     quartet_wtree_builder wtb(distinct_minimizers);
-    // auto cmp64 = []([[maybe_unused]] uint64_t const& a, [[maybe_unused]] uint64_t const& b) {
-    //     return false;
-    // };
+
     uint64_t array_mem = max_ram * essentials::GB / 4;
     array_mem = array_mem < 4000000 ? 4000000 : array_mem;
     external_memory_vector<uint64_t, false> left_positions(array_mem, mphf_configuration.tmp_dir,
@@ -324,22 +292,14 @@ uint64_t mphf::get_minimizer_order(uint64_t mm) const { return minimizer_order(m
 mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const {
     mm_context_t res;
     uint64_t mp_hash = minimizer_order(minimizer);
-    // std::cerr << mp_hash << " ";
     auto [mm_type, mm_type_rank] = wtree.rank_of(mp_hash);
-    // std::cerr << mm_type << " " << mm_type_rank << "\n";
 
-    // std::cerr << n_maximal << "\n";
-
-    // std::cerr << kmer << ", " << minimizer << " (" << mp_hash << "), ";
     switch (mm_type) {
         case LEFT:
             res.global_rank = sizes_and_positions.access(mm_type_rank) +
                               (k - m + 1) * n_maximal;  // number of left-KMERS before our bucket
             res.local_rank = position;
             res.type = LEFT;
-            // std::cerr << "[LEFT] rank = " << mm_type_rank << ", ";
-            // std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
-            // res.local_rank;
             break;
         case RIGHT_OR_COLLISION: {
             auto [val1, val2] = sizes_and_positions.pair(right_coll_sizes_start + mm_type_rank);
@@ -351,17 +311,10 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
                     (k - m + 1) * n_maximal;  // prefix sum of all sizes (sizes of collisions are 0)
                 res.local_rank = fallback_kmer_order(kmer);
                 res.type = NONE + 1;
-                // std::cerr << "[COLLISION] rank = " << none_pos_start << ", global shift = " <<
-                // res.global_rank << ", "; std::cerr << "local shift = " << res.local_rank;
             } else {
                 res.global_rank = val1 + (k - m + 1) * n_maximal;  // global shift
                 res.local_rank = k - m - position;                 // local shift
-                res.type =
-                    RIGHT_OR_COLLISION;  // in this case it is only RIGHT
-                                         // std::cerr << "[RIGHT] rank = " << right_coll_sizes_start
-                                         // + mm_type_rank << ", "; std::cerr << "global shift = "
-                                         // << res.global_rank << ", "; std::cerr << "local shift =
-                                         // " << res.local_rank;
+                res.type = RIGHT_OR_COLLISION;                     // in this case it is only RIGHT
             }
         } break;
         case MAXIMAL:  // easy case
@@ -369,30 +322,19 @@ mphf::mm_context_t mphf::query(kmer_t kmer, uint64_t minimizer, uint32_t positio
             res.global_rank = (k - m + 1) * mm_type_rank;
             res.local_rank = position;
             res.type = MAXIMAL;
-            // std::cerr << "[MAXIMAL] rank = " << mm_type_rank << ", ";
-            // std::cerr << "global shift = " << res.global_rank << ", local shift = " <<
-            // res.local_rank;
             break;
         case NONE: {
-            // locpres_hash = sizes_and_positions.access(none_sizes_start + mm_type_rank);  //
-            // prefix sum of sizes locpres_hash += sk_size - position;  // position in the first
-            // k-mer - actual position = local shift
             res.global_rank = sizes_and_positions.access(none_sizes_start + mm_type_rank) +
                               (k - m + 1) * n_maximal;
             uint64_t sk_size =
                 sizes_and_positions.diff(none_pos_start + mm_type_rank);  // p1 actually
             res.local_rank = sk_size - position;
             res.type = NONE;
-            // std::cerr << "[NONE] rank = " << none_sizes_start + mm_type_rank << " = " <<
-            // none_sizes_start << " + " << mm_type_rank << ", "; std::cerr << "global rank = " <<
-            // res.global_rank << ", "; std::cerr << "local shift = " << res.local_rank << ", p1 = "
-            // << sk_size << ", p = " << position;
         } break;
         default:
             throw std::runtime_error("Unrecognized minimizer type");
     }
     res.hval = res.global_rank + res.local_rank;
-    // if (res.type == NONE + 1) std::cerr << "; hash value = " << res.hval << "\n";
     return res;
 }
 
@@ -445,24 +387,6 @@ std::ostream& operator<<(std::ostream& out, mphf const& hf) {
     out << "starting index of none sizes = " << hf.none_sizes_start << "\n";
     out << "starting index of none positions = " << hf.none_pos_start << "\n";
     return out;
-}
-
-void check(mphf const& hf, configuration& config) {
-    gzFile fp = nullptr;
-    kseq_t* seq = nullptr;
-    pthash::bit_vector_builder population(hf.get_kmer_count());
-    if ((fp = gzopen(config.input_filename.c_str(), "r")) == NULL)
-        throw std::runtime_error("Unable to open input file " + config.input_filename +
-                                 " for checking\n");
-    seq = kseq_init(fp);
-    while (config.check && kseq_read(seq) >= 0) {
-        config.check = check_collisions(hf, seq->seq.s, seq->seq.l, population);
-        if (config.check)
-            config.check = check_streaming_correctness(hf, seq->seq.s, seq->seq.l);
-    }
-    if (seq) kseq_destroy(seq);
-    gzclose(fp);
-    if (config.check) check_perfection(hf, population);
 }
 
 }  // namespace lphash

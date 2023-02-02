@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+
 #include "../include/constants.hpp"
 #include "../include/mm_quartet.hpp"
 #include "../include/external_memory_vector.hpp"

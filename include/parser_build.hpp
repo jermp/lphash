@@ -1,6 +1,6 @@
 #pragma once
 
-#include "build_configuration.hpp"
+#include "util.hpp"
 
 namespace lphash {
 
