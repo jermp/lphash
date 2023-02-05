@@ -64,7 +64,7 @@ struct fallback_hasher {
             return pthash::MurmurHash2_64(reinterpret_cast<char const*>(&low), sizeof(uint64_t),
                                           seed) ^
                    pthash::MurmurHash2_64(reinterpret_cast<char const*>(&high), sizeof(uint64_t),
-                                          seed);
+                                          ~seed);
         }
     }
 };
