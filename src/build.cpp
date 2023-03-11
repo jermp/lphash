@@ -29,7 +29,7 @@ int build(int argc, char* argv[]) {
         if (config.verbose) std::cerr << "DONE\n";
     }
     auto stop = clock_type::now();
-    std::cout << "function built in "
+    std::cerr << "function built in "
               << std::chrono::duration_cast<std::chrono::seconds>(stop - start).count() << " [sec]"
               << std::endl;
 

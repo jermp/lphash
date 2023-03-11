@@ -216,6 +216,9 @@ void mphf_alt::print_statistics() const noexcept {
                            sizeof(nkmers) + sizeof(distinct_minimizers)) *
                               8;
     std::cerr << "Total number of k-mers: " << nkmers << "\n";
+    std::cerr << "Total number of k-mers belonging to ambiguous minimizers: "
+              << fallback_kmer_order.num_keys() << "\n";
+    std::cerr << "xi = " << static_cast<double>(fallback_kmer_order.num_keys()) / nkmers << "\n";
     std::cerr << "Minimizer MPHF size in bits : " << mm_mphf_size_bits << " ("
               << static_cast<double>(mm_mphf_size_bits) / total_bit_size * 100 << "%)\n";
     std::cerr << "\t = " << static_cast<double>(mm_mphf_size_bits) / minimizer_order.num_keys()
