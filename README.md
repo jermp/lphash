@@ -12,8 +12,9 @@ LPHash is a *minimal perfect hash function* (or MPHF) designed for k-mer sets wh
 
 3. Preserve the *locality* of k-mers: consecutive k-mers are likely to receive consecutive hash codes.
 
-The data structure and its construction/query algorithms are described in the paper *Locality-Preserving Minimal Perfect Hashing of k-mers* [1].
-A pre-print is available here: [https://arxiv.org/abs/2210.13097](https://arxiv.org/abs/2210.13097).
+The data structure and its construction/query algorithms are described in the paper [*Locality-Preserving Minimal Perfect Hashing of k-mers*](https://academic.oup.com/bioinformatics/article/39/Supplement_1/i534/7210438) [1].
+
+Please, cite this paper if you use LPHash.
 
 Datasets are available on Zenodo here: [https://zenodo.org/record/7239205](https://zenodo.org/record/7239205).
 
@@ -234,7 +235,7 @@ Authors
 
 References
 -----
-* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya, and Antoine Limasset. Locality-Preserving Minimal Perfect Hashing of k-mers. ArXiv. [https://arxiv.org/abs/2210.13097](https://arxiv.org/abs/2210.13097).
+* [1] Giulio Ermanno Pibiri, Yoshihiro Shibuya, and Antoine Limasset. [Locality-Preserving Minimal Perfect Hashing of k-mers](https://doi.org/10.1093/bioinformatics/btad219). Bioinformatics, Volume 39, Pages i534–i543, 2023.
 * [2] Giulio Ermanno Pibiri and Roberto Trani. [PTHash: Revisiting FCH Minimal Perfect Hashing](https://dl.acm.org/doi/10.1145/3404835.3462849). In The 44th International ACM SIGIR Conference on Research and Development in Information Retrieval, pages 1339–1348, 2021.
 * [3] Giulio Ermanno Pibiri and Roberto Trani. [Parallel and external-memory construction of minimal perfect hash functions with PTHash](https://arxiv.org/abs/2106.02350). CoRR, abs/2106.02350, 2021.
 * [4] Rayan Chikhi, Antoine Limasset, and Paul Medvedev. [Compacting de Bruijn graphs from sequencing data quickly and in low memory](https://academic.oup.com/bioinformatics/article/32/12/i201/2289008?login=false). Bioinformatics, 32(12):i201–i208, 2016.
