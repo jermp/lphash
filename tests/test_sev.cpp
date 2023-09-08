@@ -1,5 +1,5 @@
-#include "../include/external_memory_vector.hpp"
-#include "../include/constants.hpp"
+#include "../lib/include/external_memory_vector.hpp"
+#include "../lib/include/constants.hpp"
 
 using namespace lphash;
 
