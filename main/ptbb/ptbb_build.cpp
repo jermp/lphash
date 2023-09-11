@@ -1,48 +1,69 @@
 #include <iostream>
 
 #include "../include/constants.hpp"
-#include "../../external/pthash/external/cmd_line_parser/include/parser.hpp"
 #include "ptbb.hpp"
+
+#include <argparse/argparse.hpp>
 
 using namespace lphash;
 
 int main(int argc, char* argv[]) {
-    cmd_line_parser::parser parser(argc, argv);
-    parser.add("input_filename",
-               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n"
+    // cmd_line_parser::parser parser(argc, argv);
+    argparse::ArgumentParser parser(argv[0]);
+    parser.add_argument("-i", "--input-filename")
+        .help("Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not:\n"
                "\t- without duplicate nor invalid kmers\n"
                "\t- one DNA sequence per line.\n"
-               "\tFor example, it could be the de Bruijn graph topology output by BCALM.",
-               "-i", true);
-    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").", "-k",
-               true);
-    parser.add("pthash_filename", "Output file name where the pthash mphf will be serialized.",
-               "-p", false);
-    parser.add("bbhash_filename", "Output file name where the BBHash mphf will be serialized.",
-               "-b", false);
-    parser.add("alpha",
-               "The table load factor. It must be a quantity > 0 and <= 1. (default is " +
-                   std::to_string(0.94) + ").",
-               "-a", false);
-    parser.add("c",
-               "A (floating point) constant that trades construction speed for space effectiveness "
+               "\tFor example, it could be the de Bruijn graph topology output by BCALM.")
+        .required();
+    parser.add_argument("-k")
+        .help("K-mer length (must be <= " + std::to_string(constants::max_k) + ").")
+        .scan<'u', uint64_t>()
+        .required();
+    parser.add_argument("-p", "--pthash-filename")
+        .help("Output file name where the pthash mphf will be serialized.");
+    parser.add_argument("-b", "--bbhash-filename")
+        .help("Output file name where the BBHash mphf will be serialized.");
+    parser.add_argument("-a", "--alpha")
+        .help("The table load factor. It must be a quantity > 0 and <= 1. (default is " + std::to_string(0.94) + ").")
+        .scan<'g', double>()
+        .default_value(double(0.94));
+    parser.add_argument("-c")
+        .help( "A (floating point) constant that trades construction speed for space effectiveness "
                "of minimal perfect hashing. "
                "A reasonable value lies between 3.0 and 10.0 (default is " +
-                   std::to_string(constants::c) + ").",
-               "-c", false);
-    parser.add("gamma", "Load factor for BBHash (default is 1)", "-g", false);
-    parser.add(
-        "tmp_dirname",
-        "Temporary directory used for construction in external memory. Default is directory '" +
-            constants::default_tmp_dirname + "'.",
-        "-d", false);
-    parser.add("threads", "Number of threads (default is 1).", "-t", false);
-    parser.add("verbose", "Verbose output during construction.", "--verbose", false, true);
-    parser.add("check", "Check output", "--check", false, true);
-    if (!parser.parse()) return 1;
+                   std::to_string(constants::c) + ").")
+        .scan<'g', double>()
+        .default_value(double(constants::c));
+    parser.add_argument("-g", "--gamma")
+        .help("Load factor for BBHash (default is 1)")
+        .scan<'g', double>()
+        .default_value(double(1));
+    parser.add_argument("-d", "--tmp-dirname")
+        .help("Temporary directory used for construction in external memory. Default is directory '" + constants::default_tmp_dirname + "'.")
+        .default_value(constants::default_tmp_dirname);
+    parser.add_argument("-t", "--threads")
+        .help("Number of threads (default is 1).")
+        .scan<'u', std::size_t>()
+        .default_value(std::size_t(1));
+    parser.add_argument("-v", "--verbose")
+        .help("Verbose output during construction.")
+        .implicit_value(true)
+        .default_value(false);
+    parser.add_argument("-c", "--check")
+        .help("Check output")
+        .implicit_value(true)
+        .default_value(false);
+    try {
+        parser.parse_args(argc, argv);
+    } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
 
-    auto input_filename = parser.get<std::string>("input_filename");
-    auto k = parser.get<uint64_t>("k");
+    auto input_filename = parser.get<std::string>("-i");
+    auto k = parser.get<uint64_t>("-k");
 
     gzFile fp = NULL;
     if ((fp = gzopen(input_filename.c_str(), "r")) == NULL) {
@@ -71,33 +92,26 @@ int main(int argc, char* argv[]) {
     ptbb::ptbb_file_itr kmer_itr(input_filename, k);
     ptbb::ptbb_file_itr kmer_end;
     uint64_t check_total_kmers = 0;
-    for (; kmer_itr != kmer_end; ++kmer_itr) { ++check_total_kmers; }
+    for (; kmer_itr != kmer_end; ++kmer_itr) ++check_total_kmers;
     assert(total_kmers == check_total_kmers);
 
-    uint32_t num_threads = 1;
-    if (parser.parsed("threads")) num_threads = parser.get<uint32_t>("threads");
+    auto num_threads = parser.get<std::size_t>("--threads");
 
     pthash::build_configuration pt_config;
     pt_config.num_threads = num_threads;
 
-    bool check = parser.get<bool>("check");
-    if (parser.parsed("verbose")) {
-        pt_config.verbose_output = parser.get<bool>("verbose");
-    } else {
-        pt_config.verbose_output = false;
-    }
-
-    if (parser.parsed("pthash_filename")) {
-        std::string pthash_filename = parser.get<std::string>("pthash_filename");
+    bool check = parser.get<bool>("--check");
+    pt_config.verbose_output = parser.get<bool>("--verbose");
+    
+    if (parser.is_used("-p")) {
+        std::string pthash_filename = parser.get<std::string>("--pthash-filename");
         pt_config.minimal_output = true;
         pt_config.seed = constants::default_pthash_seed;
-        pt_config.c = (parser.parsed("c")) ? parser.get<double>("c") : constants::c;
-        pt_config.alpha = 0.94;
+        pt_config.c = parser.get<double>("-c");
+        pt_config.alpha = parser.get<double>("--alpha");
         pt_config.ram = 8 * essentials::GB;
-        if (parser.parsed("tmp_dirname")) {
-            pt_config.tmp_dir = parser.get<std::string>("tmp_dirname");
-            essentials::create_directory(pt_config.tmp_dir);
-        }
+        pt_config.tmp_dir = parser.get<std::string>("--tmp-dirname");
+        if (pt_config.tmp_dir != constants::default_tmp_dirname) essentials::create_directory(pt_config.tmp_dir);
         ptbb::pthash_mphf_t pthash_mphf;
         {
             ptbb::ptbb_file_itr kmer_itr(input_filename, k);
@@ -141,14 +155,9 @@ int main(int argc, char* argv[]) {
         std::cout << ",,";
     }
 
-    if (parser.parsed("bbhash_filename")) {
-        std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
-        double gammaFactor;
-        if (parser.parsed("gamma")) {
-            gammaFactor = parser.get<double>("gamma");
-        } else {
-            gammaFactor = 1.0;
-        }
+    if (parser.is_used("--bbhash-filename")) {
+        std::string bbhash_filename = parser.get<std::string>("--bbhash-filename");
+        double gammaFactor = parser.get<double>("--gamma");
         if (gammaFactor < 1.0) throw std::runtime_error("BBHash gamma factor < 1");
 
         std::vector<kmer_t> keys;

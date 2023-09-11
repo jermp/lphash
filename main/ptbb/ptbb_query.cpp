@@ -1,43 +1,55 @@
 #include <iostream>
 
 #include "../include/constants.hpp"
-#include "../../external/pthash/external/cmd_line_parser/include/parser.hpp"
 #include "ptbb.hpp"
+
+#include <argparse/argparse.hpp>
 
 using namespace lphash;
 
 int main(int argc, char* argv[]) {
-    cmd_line_parser::parser parser(argc, argv);
-    parser.add("input_filename",
-               "Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.",
-               "-q", true);
-    parser.add("k", "K-mer length (must be <= " + std::to_string(constants::max_k) + ").", "-k",
-               true);
-    parser.add("pthash_filename", "PTHash MPHF", "-p", false);
-    parser.add("bbhash_filename", "BBHash MPHF", "-b", false);
-    if (!parser.parse()) return 1;
+    argparse::ArgumentParser parser(argv[0]);
+    parser.add_argument("-q", "--query-filename")
+        .help("Must be a FASTA file (.fa/fasta extension) compressed with gzip (.gz) or not.")
+        .required();
+    parser.add_argument("-k")
+        .help("K-mer length (must be <= " + std::to_string(constants::max_k) + ").")
+        .scan<'u', uint64_t>()
+        .required();
+    parser.add_argument("-p", "--pthash-filename")
+        .help("PTHash MPHF");
+    parser.add_argument("-b", "--bbhash-filename")
+        .help("BBHash MPHF");
+    
+    try {
+        parser.parse_args(argc, argv);
+    } catch (const std::runtime_error& e) {
+        std::cerr << e.what() << std::endl;
+        std::cerr << parser;
+        return 1;
+    }
 
-    std::string input_filename = parser.get<std::string>("input_filename");
-    uint64_t k = parser.get<uint64_t>("k");
+    std::string input_filename = parser.get<std::string>("-q");
+    uint64_t k = parser.get<uint64_t>("-k");
 
     std::cout << input_filename << "," << k;
 
     ptbb::pthash_mphf_t pthash_mphf;
-    if (parser.parsed("pthash_filename")) {
-        std::string pthash_filename = parser.get<std::string>("pthash_filename");
+    if (parser.is_used("--pthash-filename")) {
+        std::string pthash_filename = parser.get<std::string>("--pthash-filename");
         essentials::load(pthash_mphf, pthash_filename.c_str());
     }
 
     ptbb::bbhash_mphf_t bbhash_mphf;
-    if (parser.parsed("bbhash_filename")) {
-        std::string bbhash_filename = parser.get<std::string>("bbhash_filename");
+    if (parser.is_used("--bbhash-filename")) {
+        std::string bbhash_filename = parser.get<std::string>("--bbhash-filename");
         std::ifstream bbh_strm(bbhash_filename, std::ios::binary);
         bbhash_mphf.load(bbh_strm);
     }
 
     uint64_t pt_us = 0, bb_us = 0;
     uint64_t pt_total_kmers = 1, bb_total_kmers = 1;
-    if (parser.parsed("pthash_filename")) {
+    if (parser.is_used("--pthash-filename")) {
         pt_total_kmers = 0;
         ptbb::ptbb_file_itr kmer_itr(input_filename, k);
         ptbb::ptbb_file_itr kmer_end;
@@ -51,7 +63,7 @@ int main(int argc, char* argv[]) {
         pt_timer.stop();
         pt_us = pt_timer.elapsed();
     }
-    if (parser.parsed("bbhash_filename")) {
+    if (parser.is_used("--bbhash-filename")) {
         bb_total_kmers = 0;
         ptbb::ptbb_file_itr kmer_itr(input_filename, k);
         ptbb::ptbb_file_itr kmer_end;
@@ -66,14 +78,14 @@ int main(int argc, char* argv[]) {
         bb_us = bb_timer.elapsed();
     }
 
-    if (parser.parsed("pthash_filename")) {
-        std::cout << "," << parser.get<std::string>("pthash_filename") << ","
+    if (parser.is_used("--pthash-filename")) {
+        std::cout << "," << parser.get<std::string>("--pthash-filename") << ","
                   << static_cast<double>(pt_us * 1000) / pt_total_kmers;
     } else {
         std::cout << ",,";
     }
-    if (parser.parsed("bbhash_filename")) {
-        std::cout << "," << parser.get<std::string>("bbhash_filename") << ","
+    if (parser.is_used("--bbhash-filename")) {
+        std::cout << "," << parser.get<std::string>("--bbhash-filename") << ","
                   << static_cast<double>(bb_us * 1000) / bb_total_kmers;
     } else {
         std::cout << ",,";

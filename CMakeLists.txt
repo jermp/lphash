@@ -72,9 +72,9 @@ target_link_libraries(lphash argparse z)
 
 # competitors
 add_executable(ptbb_build main/ptbb/ptbb_build.cpp ${PTBB_SOURCES})
-target_link_libraries(ptbb_build z)
+target_link_libraries(ptbb_build argparse z)
 add_executable(ptbb_query main/ptbb/ptbb_query.cpp ${PTBB_SOURCES})
-target_link_libraries(ptbb_query z)
+target_link_libraries(ptbb_query argparse z)
 
 # tests
 add_executable(test_sev tests/test_sev.cpp lib/src/constants.cpp)
