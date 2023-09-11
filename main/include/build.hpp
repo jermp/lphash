@@ -19,7 +19,7 @@ typename MPHF::configuration get_configuration(const argparse::ArgumentParser& p
     config.k = parser.get<uint64_t>("-k");
     config.m = parser.get<uint64_t>("-m");
     config.mm_seed = parser.get<uint64_t>("-s");
-    config.pt_seed = parser.get<uint64_t>("--pthash_seed");
+    config.pt_seed = parser.get<uint64_t>("--pthash-seed");
     config.c = parser.get<double>("-c");
     config.num_threads = parser.get<uint64_t>("-t");
     config.max_memory = parser.get<uint64_t>("--max-memory");

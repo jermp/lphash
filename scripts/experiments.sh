@@ -1,9 +1,25 @@
 #!/bin/sh
 
-THIS_PATH=$(echo $PWD)
+function debian_realpath() {
+    f=$@;
+    if [ -d "$f" ]; then
+        base="";
+        dir="$f";
+    else
+        base="/$(basename "$f")";
+        dir=$(dirname "$f");
+    fi
+    dir=$(cd "$dir" && /bin/pwd);
+    echo "$dir$base";
+}
+
+# THIS_PATH=$(echo $PWD)
+THIS_PATH=$0
+THIS_FULL_PATH=$(dirname $(debian_realpath "$0"))
 DATASETS_PATH="/data2/DNA/lphash_datasets"
 BINARIES_PATH="/data2/DNA/lphash_binaries"
-LPHASH_DIR="/home/shibuya/lphash"
+# LPHASH_DIR="/home/shibuya/lphash"
+LPHASH_DIR=$(dirname "$THIS_FULL_PATH")
 BUILD_DIR=$LPHASH_DIR/build
 COMPILE_OPTIONS=$LPHASH_DIR/"include/compile_constants.tpd"
 UNITIGS_FOLDER=$DATASETS_PATH
@@ -13,10 +29,10 @@ MPHF_FOLDER=$BINARIES_PATH
 RESULTS_FOLDER=$LPHASH_DIR/results
 TMP_FOLDER="/data2/DNA/tmp_dir"
 
-LPBUILD="$LPHASH_DIR/build/lphash build-p"
-LPQUERY="$LPHASH_DIR/build/lphash query-p"
-LPBUILD_ALT="$LPHASH_DIR/build/lphash build-u"
-LPQUERY_ALT="$LPHASH_DIR/build/lphash query-u"
+LPBUILD="$LPHASH_DIR/build/lphash partitioned build"
+LPQUERY="$LPHASH_DIR/build/lphash partitioned query"
+LPBUILD_ALT="$LPHASH_DIR/build/lphash unpartitioned build"
+LPQUERY_ALT="$LPHASH_DIR/build/lphash unpartitioned query"
 PTBUILD=$LPHASH_DIR/build/ptbb_build
 PTQUERY=$LPHASH_DIR/build/ptbb_query
 

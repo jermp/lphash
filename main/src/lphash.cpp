@@ -16,9 +16,9 @@ argparse::ArgumentParser get_parser_partitioned();
 argparse::ArgumentParser get_parser_unpartitioned();
 
 template<class MPHF>
-int dispatch(const argparse::ArgumentParser& parser) {
-    if (parser.is_subcommand_used("build")) return build_main<MPHF>(parser);
-    else if (parser.is_subcommand_used("query")) return query_main<MPHF>(parser);
+int dispatch(argparse::ArgumentParser& parser) {
+    if (parser.is_subcommand_used("build")) return build_main<MPHF>(parser.at<argparse::ArgumentParser>("build"));
+    else if (parser.is_subcommand_used("query")) return query_main<MPHF>(parser.at<argparse::ArgumentParser>("query"));
     else throw std::runtime_error("This should never happen");
 }
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
         std::cerr << program;
         return 1;
     }
-
+    std::cerr << "checkpoint" << std::endl;
     if (program.is_subcommand_used(pparser)) return dispatch<mphf::partitioned>(pparser);
     else if (program.is_subcommand_used(uparser)) return dispatch<mphf::unpartitioned>(uparser);
     else std::cerr << program << std::endl;
