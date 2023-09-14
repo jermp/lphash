@@ -36,6 +36,34 @@ public:
         bool check;
         bool verbose;
     };
+
+    interface();
+    void build(configuration const& config, std::ostream& res_strm);
+    uint8_t get_k() const noexcept;
+    uint8_t get_m() const noexcept;
+    uint64_t get_minimizer_L0() const noexcept;
+    uint64_t get_kmer_count() const noexcept;
+    uint64_t num_bits() const noexcept; // = 0
+    void print_statistics() const noexcept; // = 0
+
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool streaming = true) const;
+    std::vector<uint64_t> operator()(std::string const& contig, bool streaming = true) const;
+    // uint64_t barebone_streaming_query(const char* contig, std::size_t length) const;
+    // uint64_t barebone_dumb_query(const char* contig, std::size_t length) const;
+
+protected:
+    uint64_t get_minimizer_order(uint64_t mm) const;
+    void build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr, std::size_t number_of_minimizers);
+    void build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr, std::size_t number_of_colliding_kmers);
+
+    pthash::build_configuration mphf_configuration;
+    uint8_t k, m;
+    uint64_t mm_seed;
+    uint64_t nkmers;
+    uint64_t distinct_minimizers;
+    uint64_t max_ram;
+    pthash_minimizers_mphf_t minimizer_order;
+    pthash_fallback_mphf_t fallback_kmer_order;
 };
 
 template <typename MPHF>

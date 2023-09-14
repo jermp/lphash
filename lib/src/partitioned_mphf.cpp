@@ -11,16 +11,11 @@ namespace lphash {
 namespace mphf {
 
 partitioned::partitioned()
-    : k(0)
-    , m(0)
-    , mm_seed(0)
-    , nkmers(0)
-    , distinct_minimizers(0)
+    : interface()
     , n_maximal(0)
     , right_coll_sizes_start(0)
     , none_sizes_start(0)
-    , none_pos_start(0)
-    , max_ram(0) {
+    , none_pos_start(0) {
     mphf_configuration.minimal_output = true;
     mphf_configuration.seed = 0;
     mphf_configuration.c = 0;
@@ -145,21 +140,20 @@ void partitioned::build(configuration const& config, std::ostream& res_strm) {
     res_strm << "\n";
 }
 
-void partitioned::build_minimizers_mphf(
-    external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
-    std::size_t number_of_distinct_minimizers) {
-    mm_itr_t dummy_itr(mm_itr);
-    distinct_minimizers = number_of_distinct_minimizers;
-    minimizer_order.build_in_external_memory(std::move(dummy_itr), distinct_minimizers,
-                                             mphf_configuration);
-}
+// void partitioned::build_minimizers_mphf(
+//     external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
+//     std::size_t number_of_distinct_minimizers) {
+//     mm_itr_t dummy_itr(mm_itr);
+//     distinct_minimizers = number_of_distinct_minimizers;
+//     minimizer_order.build_in_external_memory(std::move(dummy_itr), distinct_minimizers, mphf_configuration);
+// }
 
-void partitioned::build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr,
-                               std::size_t number_of_colliding_kmers) {
-    km_itr_t dummy_itr(km_itr);
-    fallback_kmer_order.build_in_external_memory(dummy_itr, number_of_colliding_kmers,
-                                                 mphf_configuration);
-}
+// void partitioned::build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr,
+//                                std::size_t number_of_colliding_kmers) {
+//     km_itr_t dummy_itr(km_itr);
+//     fallback_kmer_order.build_in_external_memory(dummy_itr, number_of_colliding_kmers,
+//                                                  mphf_configuration);
+// }
 
 void partitioned::build_inverted_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                                 [[maybe_unused]] std::size_t number_of_distinct_minimizers) {
@@ -268,10 +262,6 @@ void partitioned::build_inverted_index(external_memory_vector<mm_triplet_t>::con
     sizes_and_positions.encode(c_itr, none_pos_start + none_positions.size(), universe);
 }
 
-uint64_t partitioned::get_minimizer_L0() const noexcept { return distinct_minimizers; }
-
-uint64_t partitioned::get_kmer_count() const noexcept { return nkmers; }
-
 uint64_t partitioned::num_bits() const noexcept {
     auto mm_mphf_size_bits = minimizer_order.num_bits();
     auto triplet_tree_size_bits = wtree.num_bits();
@@ -287,8 +277,6 @@ uint64_t partitioned::num_bits() const noexcept {
                               8;
     return total_bit_size;
 }
-
-uint64_t partitioned::get_minimizer_order(uint64_t mm) const { return minimizer_order(mm); }
 
 partitioned::mm_context_t partitioned::query(kmer_t kmer, uint64_t minimizer, uint32_t position) const {
     mm_context_t res;

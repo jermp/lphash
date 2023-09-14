@@ -11,27 +11,15 @@ namespace mphf {
 class partitioned : public interface {
 public:
     partitioned();
-
     void build(configuration const& config, std::ostream& res_strm);
-
-    uint64_t get_minimizer_L0() const noexcept;
-    uint64_t get_kmer_count() const noexcept;
     uint64_t num_bits() const noexcept;
+    void print_statistics() const noexcept;
 
     template <typename MinimizerHasher = pthash::murmurhash2_64>
-    std::vector<uint64_t> operator()(const char* contig, std::size_t length,
-                                     bool streaming = true) const;
+    std::vector<uint64_t> operator()(const char* contig, std::size_t length, bool streaming = true) const;
 
     template <typename MinimizerHasher = pthash::murmurhash2_64>
     std::vector<uint64_t> operator()(std::string const& contig, bool streaming = true) const;
-
-    template <typename MinimizerHasher = pthash::murmurhash2_64>
-    uint64_t barebone_streaming_query(const char* contig, std::size_t length) const;
-
-    template <typename MinimizerHasher = pthash::murmurhash2_64>
-    uint64_t barebone_dumb_query(const char* contig, std::size_t length) const;
-
-    void print_statistics() const noexcept;
 
     template <typename Visitor>
     void visit(Visitor& visitor);
@@ -39,18 +27,9 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const partitioned& obj);
 
 private:
-    pthash::build_configuration mphf_configuration;
-    uint8_t k, m;
-    uint64_t mm_seed;
-    uint64_t nkmers;
-    uint64_t distinct_minimizers;
-    uint64_t n_maximal, right_coll_sizes_start, none_sizes_start,
-        none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
-    pthash_minimizers_mphf_t minimizer_order;
-    pthash_fallback_mphf_t fallback_kmer_order;
+    uint64_t n_maximal, right_coll_sizes_start, none_sizes_start, none_pos_start;  // Left positions | right + coll sizes | none sizes | none positions
     quartet_wtree wtree;
     ef_sequence sizes_and_positions;
-    uint64_t max_ram;
 
     struct mm_context_t {
         uint64_t hval;
@@ -59,15 +38,8 @@ private:
         uint8_t type;
     };
     mm_context_t query(kmer_t kmer, uint64_t minimizer, uint32_t position) const;
-
-    void build_minimizers_mphf(external_memory_vector<mm_triplet_t, false>::const_iterator& mm_itr,
-                               std::size_t number_of_minimizers);
-    void build_fallback_mphf(external_memory_vector<kmer_t, false>::const_iterator& km_itr,
-                             std::size_t number_of_colliding_kmers);
     void build_inverted_index(external_memory_vector<mm_triplet_t>::const_iterator& mm_itr,
                               std::size_t number_of_distinct_minimizers);
-
-    uint64_t get_minimizer_order(uint64_t mm) const;
 };
 
 template <typename MinimizerHasher>
