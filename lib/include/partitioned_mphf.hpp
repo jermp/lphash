@@ -90,7 +90,7 @@ std::vector<uint64_t> partitioned::operator()(const char* contig, std::size_t le
                             find_brand_new_min = 1;  // old minimum out of the window
                         buffer[buf_pos] = current;
                         if (nbases_since_last_break == k) {  // first window
-                            assert(buf_pos == k - m);
+                            assert(buf_pos == static_cast<std::size_t>(k - m));
                             find_brand_new_min = 1;
                         } else if (nbases_since_last_break > k) {
                             if (buffer[min_pos].hash > buffer[buf_pos].hash) {  // new minimum
