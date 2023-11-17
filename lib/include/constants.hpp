@@ -61,7 +61,7 @@ struct fallback_hasher {
     }
 };
 
-typedef pthash::single_phf<pthash::murmurhash2_64, pthash::dictionary_dictionary, true>
+typedef pthash::partitioned_phf<pthash::murmurhash2_64, pthash::dictionary_dictionary, true>
     pthash_minimizers_mphf_t;
 typedef pthash::single_phf<fallback_hasher, pthash::dictionary_dictionary, true>
     pthash_fallback_mphf_t;
