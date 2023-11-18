@@ -44,6 +44,7 @@ void partitioned::build(configuration const& config, std::ostream& res_strm) {
     mphf_configuration.alpha = 0.94;
     mphf_configuration.verbose_output = config.verbose;
     mphf_configuration.num_threads = config.num_threads;
+    mphf_configuration.num_partitions = config.num_threads; // FIXME add proper option
     mphf_configuration.ram = static_cast<uint64_t>(max_ram) * essentials::GB;
     mphf_configuration.tmp_dir = config.tmp_dirname;
 
